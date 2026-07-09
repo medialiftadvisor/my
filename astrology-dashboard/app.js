@@ -784,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (natalRes.status === 'success' && natalRes.data && natalRes.data.svg) {
                             natalChartHtml = `
                                 <div class="chart-section" style="display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 2rem;">
-                                    <div class="natal-chart-wheel-container" style="width: 100%; max-width: 440px;">
+                                    <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 440px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
                                         ${natalRes.data.svg}
                                     </div>
                                 </div>
@@ -858,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="result-badge">Natal Chart</span>
                                 </div>
                                 <div class="result-content" style="width: 100%; display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
-                                    <div class="natal-chart-wheel-container" style="width: 100%; max-width: 480px;">
+                                    <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 480px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
                                         ${res.data.svg}
                                     </div>
                                 </div>
@@ -878,5 +878,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
     }
+
+    // 10. Natal Chart Lightbox Modal Logic
+    const lightboxModal = document.getElementById('chart-lightbox-modal');
+    const lightboxBody = document.getElementById('lightbox-modal-body');
+    const closeLightboxBtn = document.getElementById('close-lightbox-modal');
+    const closeLightboxBackdrop = document.getElementById('close-lightbox-backdrop');
+
+    document.addEventListener('click', (e) => {
+        const expandContainer = e.target.closest('.click-expand-wheel');
+        if (expandContainer) {
+            const svgContent = expandContainer.innerHTML;
+            if (lightboxBody && lightboxModal) {
+                lightboxBody.innerHTML = svgContent;
+                const modalSvg = lightboxBody.querySelector('svg');
+                if (modalSvg) {
+                    modalSvg.style.width = '100%';
+                    modalSvg.style.height = '100%';
+                    modalSvg.style.maxWidth = '100%';
+                    modalSvg.style.maxHeight = '100%';
+                }
+                lightboxModal.classList.add('active');
+            }
+        }
+    });
+
+    const closeLightbox = () => {
+        if (lightboxModal) {
+            lightboxModal.classList.remove('active');
+        }
+    };
+
+    if (closeLightboxBtn) closeLightboxBtn.addEventListener('click', closeLightbox);
+    if (closeLightboxBackdrop) closeLightboxBackdrop.addEventListener('click', closeLightbox);
 
 });

@@ -584,6 +584,17 @@
         </div>
     </div>
 
+    <!-- Natal Chart Wheel Lightbox Modal -->
+    <div class="modal" id="chart-lightbox-modal">
+        <div class="modal-backdrop" id="close-lightbox-backdrop"></div>
+        <div class="modal-content glass-card" style="max-width: 90vw; width: 90vw; max-height: 90vh; height: 90vh; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+            <button class="modal-close" id="close-lightbox-modal" aria-label="Close modal" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; background: none; border: none; color: #ffd700; cursor: pointer;">&times;</button>
+            <div id="lightbox-modal-body" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <!-- SVG injected dynamically -->
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

@@ -206,136 +206,296 @@ def get_mock_kundli(datetime_str, lat, lng):
     }
 
 def get_mock_planet_position(datetime_str, lat, lng):
+    import hashlib
+    seed_str = f"{datetime_str or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
+    h = hashlib.sha256(seed_str.encode('utf-8')).digest()
+    
+    signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    nakshatras = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Svati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"]
+    
+    planets_raw = [
+        ("Sun", (h[0] + h[10]) % 360, False),
+        ("Moon", (h[1] + h[11]) % 360, False),
+        ("Mars", (h[2] + h[12]) % 360, (h[2] % 5 == 0)),
+        ("Mercury", (h[3] + h[13]) % 360, (h[3] % 4 == 0)),
+        ("Jupiter", (h[4] + h[14]) % 360, (h[4] % 7 == 0)),
+        ("Venus", (h[5] + h[15]) % 360, (h[5] % 6 == 0)),
+        ("Saturn", (h[6] + h[16]) % 360, (h[6] % 5 == 0)),
+        ("Uranus", (h[7] + h[17]) % 360, False),
+        ("Neptune", (h[8] + h[18]) % 360, False),
+        ("Pluto", (h[9] + h[19]) % 360, True)
+    ]
+    
+    positions = []
+    for name, lon, is_retro in planets_raw:
+        sign_idx = int(lon // 30)
+        sign_name = signs[sign_idx]
+        deg = lon % 30
+        nak_idx = int(lon * 27 / 360)
+        nak_name = nakshatras[nak_idx]
+        house = int((lon // 30) + 1)
+        positions.append({
+            "planet": name,
+            "sign": sign_name,
+            "house": house,
+            "longitude": round(lon, 2),
+            "degree": round(deg, 2),
+            "nakshatra": {"name": nak_name},
+            "is_retrograde": is_retro
+        })
+        
     return {
         "status": "success",
         "data": {
-            "planetary_positions": [
-                {"planet": "Sun", "sign": "Taurus", "house": 7, "longitude": 59.2, "degree": 29.1, "nakshatra": {"name": "Mrigashira"}, "is_retrograde": False},
-                {"planet": "Moon", "sign": "Taurus", "house": 7, "longitude": 38.5, "degree": 8.5, "nakshatra": {"name": "Krittika"}, "is_retrograde": False},
-                {"planet": "Mars", "sign": "Pisces", "house": 5, "longitude": 345.3, "degree": 15.3, "nakshatra": {"name": "Uttara Bhadrapada"}, "is_retrograde": False},
-                {"planet": "Mercury", "sign": "Gemini", "house": 8, "longitude": 64.1, "degree": 4.1, "nakshatra": {"name": "Ardra"}, "is_retrograde": True},
-                {"planet": "Jupiter", "sign": "Aquarius", "house": 4, "longitude": 322.8, "degree": 22.8, "nakshatra": {"name": "Purva Bhadrapada"}, "is_retrograde": False},
-                {"planet": "Venus", "sign": "Aries", "house": 6, "longitude": 11.2, "degree": 11.2, "nakshatra": {"name": "Ashwini"}, "is_retrograde": False},
-                {"planet": "Saturn", "sign": "Capricorn", "house": 3, "longitude": 276.4, "degree": 6.4, "nakshatra": {"name": "Uttarashadha"}, "is_retrograde": False}
-            ]
+            "planetary_positions": positions
         }
     }
 
 def get_mock_chart(dt, lat, lng):
     import math
-    svg = """<svg viewBox="0 0 500 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    import hashlib
+    
+    data_res = get_mock_planet_position(dt, lat, lng)
+    positions = data_res["data"]["planetary_positions"]
+    
+    symbols = {
+        "Sun": "☉", "Moon": "☽", "Mars": "♂", "Mercury": "☿",
+        "Jupiter": "♃", "Venus": "♀", "Saturn": "♄", "Uranus": "♅",
+        "Neptune": "♆", "Pluto": "♇"
+    }
+    colors = {
+        "Sun": "#ffe600", "Moon": "#ffffff", "Mars": "#ff3333", "Mercury": "#33ff57",
+        "Jupiter": "#ffb333", "Venus": "#ff33b3", "Saturn": "#e033ff", "Uranus": "#33e0ff",
+        "Neptune": "#3357ff", "Pluto": "#999999"
+    }
+    
+    planets = []
+    for p in positions:
+        name = p["planet"]
+        lon = p["longitude"]
+        planets.append((name, symbols.get(name, "?"), lon, colors.get(name, "#ffffff")))
+        
+    seed_str = f"{dt or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
+    h = hashlib.sha256(seed_str.encode('utf-8')).digest()
+    
+    signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    planets.sort(key=lambda x: x[2])
+    
+    svg = f"""<svg viewBox="0 0 520 520" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#160c33" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#090514" stop-opacity="1"/>
+    <filter id="glow-light" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1b124a"/>
+      <stop offset="60%" stop-color="#0a0521"/>
+      <stop offset="100%" stop-color="#04020f"/>
     </radialGradient>
-    <radialGradient id="wheelCenter" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#0c081d" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#1a113d" stop-opacity="0.3"/>
+    <radialGradient id="centerGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0d0826" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#140d3b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1e1354" stop-opacity="0.1"/>
     </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe600"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#aa7c11"/>
+    </linearGradient>
   </defs>
   
-  <rect width="100%" height="100%" fill="url(#bgGlow)" rx="12"/>
+  <rect width="100%" height="100%" fill="url(#bgGrad)" rx="16"/>
   
-  <circle cx="250" cy="250" r="210" stroke="#ffd700" stroke-width="2.5" fill="none" opacity="0.8" />
-  <circle cx="250" cy="250" r="185" stroke="#ffd700" stroke-width="1.5" fill="none" opacity="0.6" />
+  <g fill="#ffffff" opacity="0.3">
+    <circle cx="80" cy="90" r="1"/>
+    <circle cx="420" cy="110" r="1.2"/>
+    <circle cx="110" cy="400" r="0.8"/>
+    <circle cx="390" cy="430" r="1"/>
+    <circle cx="70" cy="280" r="1.5" opacity="0.5"/>
+    <circle cx="450" cy="220" r="0.7"/>
+    <circle cx="200" cy="60" r="1"/>
+    <circle cx="320" cy="460" r="1.3"/>
+  </g>
   
-  <g stroke="#ffd700" stroke-width="1" opacity="0.4">
+  <!-- Main outer wheel borders -->
+  <circle cx="260" cy="260" r="230" stroke="url(#goldGrad)" stroke-width="3" fill="none" filter="url(#glow-light)"/>
+  <circle cx="260" cy="260" r="200" stroke="#d4af37" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <circle cx="260" cy="260" r="185" stroke="#d4af37" stroke-width="1.0" fill="none" opacity="0.4"/>
+  <circle cx="260" cy="260" r="150" stroke="#d4af37" stroke-width="1" fill="url(#centerGrad)" opacity="0.5"/>
+  <circle cx="260" cy="260" r="70" stroke="#d4af37" stroke-width="1" fill="none" opacity="0.25" stroke-dasharray="4,4"/>
+  
+  <!-- Detailed 360 Degree Tick Marks -->
+  <g stroke="#d4af37" opacity="0.55">
 """
-    signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    for d in range(360):
+        theta = d * math.pi / 180
+        if d % 10 == 0:
+            r1 = 185
+            r2 = 200
+            stroke_w = 0.8
+        elif d % 5 == 0:
+            r1 = 188
+            r2 = 200
+            stroke_w = 0.5
+        else:
+            r1 = 192
+            r2 = 200
+            stroke_w = 0.3
+            
+        x1 = 260 + r1 * math.cos(theta)
+        y1 = 260 + r1 * math.sin(theta)
+        x2 = 260 + r2 * math.cos(theta)
+        y2 = 260 + r2 * math.sin(theta)
+        svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="{stroke_w}"/>\n'
+
+    svg += """  </g>
+  
+  <!-- Outer Zodiac Sign Sectors -->
+  <g stroke="#d4af37" stroke-width="1" opacity="0.4">
+"""
     for i in range(12):
         angle = i * 30 * math.pi / 180
-        x1 = 250 + 185 * math.cos(angle)
-        y1 = 250 + 185 * math.sin(angle)
-        x2 = 250 + 210 * math.cos(angle)
-        y2 = 250 + 210 * math.sin(angle)
+        x1 = 260 + 200 * math.cos(angle)
+        y1 = 260 + 200 * math.sin(angle)
+        x2 = 260 + 230 * math.cos(angle)
+        y2 = 260 + 230 * math.sin(angle)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
         
-        label_angle = (i * 30 + 15) * math.pi / 180
-        lx = 250 + 197 * math.cos(label_angle)
-        ly = 250 + 197 * math.sin(label_angle) + 4
-        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffd700" font-size="8" font-family="Outfit" font-weight="700" text-anchor="middle" transform="rotate({i*30+105}, {lx:.1f}, {ly:.1f})" opacity="0.8">{signs[i]}</text>\n'
+        lbl_angle = (i * 30 + 15) * math.pi / 180
+        lx = 260 + 215 * math.cos(lbl_angle)
+        ly = 260 + 215 * math.sin(lbl_angle) + 3
+        rot_deg = i * 30 + 105
+        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="8.5" font-family="Outfit" font-weight="700" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{signs[i]}</text>\n'
 
     svg += """  </g>
   
-  <circle cx="250" cy="250" r="140" stroke="#ffd700" stroke-width="1.5" fill="url(#wheelCenter)" opacity="0.5" />
-  <circle cx="250" cy="250" r="60" stroke="#ffd700" stroke-width="1" fill="none" opacity="0.3" />
-  
-  <g stroke="#ffffff" stroke-dasharray="3,3" stroke-width="0.8" opacity="0.3">
+  <!-- House boundaries (12 sectors) -->
+  <g stroke="#ffffff" stroke-width="0.8" opacity="0.25" stroke-dasharray="2,3">
 """
+    house_offset = (h[20] % 30) * math.pi / 180
     for i in range(12):
-        angle = (i * 30 - 15) * math.pi / 180
-        x1 = 250 + 60 * math.cos(angle)
-        y1 = 250 + 60 * math.sin(angle)
-        x2 = 250 + 140 * math.cos(angle)
-        y2 = 250 + 140 * math.sin(angle)
+        angle = (i * 30) * math.pi / 180 + house_offset
+        x1 = 260 + 70 * math.cos(angle)
+        y1 = 260 + 70 * math.sin(angle)
+        x2 = 260 + 150 * math.cos(angle)
+        y2 = 260 + 150 * math.sin(angle)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
+        
+        num_angle = (i * 30 + 15) * math.pi / 180 + house_offset
+        nx = 260 + 110 * math.cos(num_angle)
+        ny = 260 + 110 * math.sin(num_angle) + 4
+        svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="8" font-family="Outfit" opacity="0.4" text-anchor="middle">{i+1}</text>\n'
 
-    aspects = [
-        (30, 150, "blue"), (90, 210, "blue"), (120, 240, "blue"),
-        (0, 180, "red"), (90, 270, "red"),
-        (30, 120, "red"), (150, 240, "red"), (210, 300, "red"),
-        (0, 60, "blue"), (180, 240, "blue"),
-        (45, 135, "green"), (160, 200, "green")
-    ]
-    
     svg += """  </g>
   
-  <g stroke-width="1.2" opacity="0.6">
+  <!-- Dynamic Aspect Lines -->
+  <g stroke-width="1.2" filter="url(#glow-light)">
 """
-    for a in aspects:
-        ang1 = a[0] * math.pi / 180
-        ang2 = a[1] * math.pi / 180
-        x1 = 250 + 140 * math.cos(ang1)
-        y1 = 250 + 140 * math.sin(ang1)
-        x2 = 250 + 140 * math.cos(ang2)
-        y2 = 250 + 140 * math.sin(ang2)
-        color = "#2ef56a" if a[2] == "green" else "#ff5757" if a[2] == "red" else "#00d2ff"
-        svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" />\n'
+    aspect_lines_drawn = 0
+    for i in range(len(planets)):
+        for j in range(i + 1, len(planets)):
+            p1_name, _, a1, _ = planets[i]
+            p2_name, _, a2, _ = planets[j]
+            diff = abs(a1 - a2) % 360
+            if diff > 180:
+                diff = 360 - diff
+                
+            color = None
+            if abs(diff - 120) <= 6:
+                color = "#00d2ff"
+            elif abs(diff - 180) <= 6:
+                color = "#ff4d4d"
+            elif abs(diff - 90) <= 6:
+                color = "#ff8533"
+            elif abs(diff - 60) <= 5:
+                color = "#33ffaa"
+                
+            if color and aspect_lines_drawn < 15:
+                r1 = a1 * math.pi / 180
+                r2 = a2 * math.pi / 180
+                x1 = 260 + 150 * math.cos(r1)
+                y1 = 260 + 150 * math.sin(r1)
+                x2 = 260 + 150 * math.cos(r2)
+                y2 = 260 + 150 * math.sin(r2)
+                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.6"/>\n'
+                aspect_lines_drawn += 1
 
-    planets_pos = [
-        ("Sun", "☉", 45), ("Moon", "☽", 85), ("Mars", "♂", 155),
-        ("Mercury", "☿", 35), ("Jupiter", "♃", 280), ("Venus", "♀", 115),
-        ("Saturn", "♄", 340), ("Uranus", "♅", 215), ("Neptune", "♆", 175),
-        ("Pluto", "♇", 195)
-    ]
-    
     svg += """  </g>
   
-  <g font-size="16" font-family="Arial" text-anchor="middle">
+  <!-- Planet placements & glyph indicators -->
+  <g font-size="14.5" font-family="Arial" text-anchor="middle">
 """
-    for p in planets_pos:
-        angle = p[2] * math.pi / 180
-        px = 250 + 162 * math.cos(angle)
-        py = 250 + 162 * math.sin(angle) + 5
-        svg += f'    <circle cx="{px:.1f}" cy="{py-5:.1f}" r="11" fill="#090514" stroke="#ffd700" stroke-width="0.5" opacity="0.8"/>\n'
-        svg += f'    <text x="{px:.1f}" y="{py:.1f}" fill="#ffffff">{p[1]}</text>\n'
+    for name, symbol, angle, color in planets:
+        rad = angle * math.pi / 180
+        ix1 = 260 + 150 * math.cos(rad)
+        iy1 = 260 + 150 * math.sin(rad)
+        ix2 = 260 + 178 * math.cos(rad)
+        iy2 = 260 + 178 * math.sin(rad)
+        svg += f'    <line x1="{ix1:.1f}" y1="{iy1:.1f}" x2="{ix2:.1f}" y2="{iy2:.1f}" stroke="#d4af37" stroke-width="0.6" stroke-dasharray="1.5,1.5" opacity="0.6"/>\n'
+        
+        px = 260 + 180 * math.cos(rad)
+        py = 260 + 180 * math.sin(rad) + 4.5
+        
+        svg += f'    <circle cx="{px:.1f}" cy="{py-4.5:.1f}" r="10.5" fill="#06020c" stroke="{color}" stroke-width="0.8" opacity="0.9"/>\n'
+        svg += f'    <text x="{px:.1f}" y="{py:.1f}" fill="{color}">{symbol}</text>\n'
+        
+        dx = 260 + 163 * math.cos(rad)
+        dy = 260 + 163 * math.sin(rad) + 3
+        deg_num = int(angle % 30)
+        svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="6" font-family="Outfit" opacity="0.7">{deg_num}°</text>\n'
 
+    asc_rad = house_offset + math.pi
+    dsc_rad = house_offset
+    mc_rad = house_offset - math.pi/2
+    ic_rad = house_offset + math.pi/2
+    
     svg += """  </g>
   
-  <g stroke="#ffffff" stroke-width="1.5" opacity="0.7">
-    <line x1="65" y1="250" x2="435" y2="250" />
-    <line x1="250" y1="65" x2="250" y2="435" />
-  </g>
-  
-  <g fill="#ffd700" font-family="Syne" font-size="11" font-weight="800" text-anchor="middle">
-    <rect x="42" y="238" width="22" height="24" rx="3" fill="#090514" stroke="#ffd700" stroke-width="1"/>
-    <text x="53" y="254">ASC</text>
+  <!-- ASC, DSC, MC, IC Marker Axes -->
+  <g stroke="#ffffff" stroke-width="1.2" opacity="0.5">
+"""
+    ax1 = 260 + 150 * math.cos(asc_rad)
+    ay1 = 260 + 150 * math.sin(asc_rad)
+    ax2 = 260 + 150 * math.cos(dsc_rad)
+    ay2 = 260 + 150 * math.sin(dsc_rad)
+    svg += f'    <line x1="{ax1:.1f}" y1="{ay1:.1f}" x2="{ax2:.1f}" y2="{ay2:.1f}" stroke-width="1.5" stroke="#ffe600" />\n'
     
-    <rect x="436" y="238" width="22" height="24" rx="3" fill="#090514" stroke="#ffd700" stroke-width="1"/>
-    <text x="447" y="254">DSC</text>
+    mx1 = 260 + 150 * math.cos(mc_rad)
+    my1 = 260 + 150 * math.sin(mc_rad)
+    mx2 = 260 + 150 * math.cos(ic_rad)
+    my2 = 260 + 150 * math.sin(ic_rad)
+    svg += f'    <line x1="{mx1:.1f}" y1="{my1:.1f}" x2="{mx2:.1f}" y2="{my2:.1f}" />\n'
     
-    <rect x="239" y="42" width="22" height="24" rx="3" fill="#090514" stroke="#ffd700" stroke-width="1"/>
-    <text x="250" y="58">MC</text>
+    def draw_axis_label(rad, text, offset_dist):
+        tx = 260 + offset_dist * math.cos(rad)
+        ty = 260 + offset_dist * math.sin(rad)
+        return f"""
+    <rect x="{tx-11:.1f}" y="{ty-11:.1f}" width="22" height="22" rx="4" fill="#04020f" stroke="#ffe600" stroke-width="1" />
+    <text x="{tx:.1f}" y="{ty+3.5:.1f}" fill="#ffe600" font-family="Outfit" font-size="8.5" font-weight="800" text-anchor="middle">{text}</text>
+"""
     
-    <rect x="239" y="434" width="22" height="24" rx="3" fill="#090514" stroke="#ffd700" stroke-width="1"/>
-    <text x="250" y="450">IC</text>
-  </g>
+    svg += "  </g>\n  <g>"
+    svg += draw_axis_label(asc_rad, "ASC", 152)
+    svg += draw_axis_label(dsc_rad, "DSC", 152)
+    svg += draw_axis_label(mc_rad, "MC", 152)
+    svg += draw_axis_label(ic_rad, "IC", 152)
+
+    display_date = "July 10, 2026"
+    display_time = "12:01 AM"
+    try:
+        parts = dt.split('T')
+        display_date = parts[0]
+        if len(parts) > 1:
+            display_time = format_time_short(dt)
+    except:
+        pass
+        
+    svg += f"""  </g>
   
   <g fill="#ffffff" font-family="Outfit" font-size="8" text-anchor="middle" opacity="0.9">
-    <text x="250" y="238" fill="#ffd700" font-size="9" font-weight="700">COSMIC WHEEL</text>
-    <text x="250" y="252" font-size="7">July 9, 2026</text>
-    <text x="250" y="264" font-size="7">10:07 PM (IST)</text>
+    <text x="260" y="248" fill="#ffe600" font-size="9" font-weight="800" letter-spacing="1">COSMIC ALIGNMENT</text>
+    <text x="260" y="261" font-size="7.5" fill="#ffffff" opacity="0.8">{display_date}</text>
+    <text x="260" y="272" font-size="7" fill="#ffffff" opacity="0.6">{display_time}</text>
   </g>
 </svg>
 """
