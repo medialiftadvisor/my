@@ -51,6 +51,7 @@
                     <li><a href="#journey" class="nav-link">12-Week Journey</a></li>
                     <li><a href="#benefits" class="nav-link">Benefits</a></li>
                     <li><a href="#bonuses" class="nav-link">Bonuses</a></li>
+                    <li><a href="#cosmic-portal" class="nav-link">Cosmic Portal</a></li>
                     <li><a href="#testimonials" class="nav-link">Success Stories</a></li>
                     <li><a href="#faq" class="nav-link">FAQ</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
@@ -640,6 +641,281 @@
                         <span>Verified Cohorts</span>
                         <span><i class="fa-solid fa-circle-check"></i> VIP</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cosmic Alignment Portal Section -->
+    <section class="cosmic-portal-section" id="cosmic-portal">
+        <div class="glow-bg-cosmic"></div>
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-tag highlight-gold"><i class="fa-solid fa-star-and-crescent"></i> Cosmic Guidance</span>
+                <h2 class="section-title text-glow-gold">Cosmic Alignment Portal</h2>
+                <p class="section-subtitle">Unlock personalized cosmic blueprints and daily horoscopes to align your energy with your growth path.</p>
+                <div class="demo-badge-container" id="demo-badge-container" style="display: none;">
+                    <span class="badge-demo"><i class="fa-solid fa-triangle-exclamation"></i> Backend running in Demo Mode (Mock data)</span>
+                </div>
+            </div>
+
+            <div class="cosmic-portal-card scroll-animate" data-animation="fade-up">
+                <!-- Portal Tabs -->
+                <div class="portal-tabs">
+                    <button type="button" class="portal-tab-btn active" data-tab="horoscope-tab">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Daily Guidance
+                    </button>
+                    <button type="button" class="portal-tab-btn" data-tab="kundli-tab">
+                        <i class="fa-solid fa-dharmachakra"></i> Kundli Blueprint
+                    </button>
+                    <button type="button" class="portal-tab-btn" data-tab="mangal-tab">
+                        <i class="fa-solid fa-fire-flame-curved"></i> Obstacles (Mangal)
+                    </button>
+                    <button type="button" class="portal-tab-btn" data-tab="matching-tab">
+                        <i class="fa-solid fa-heart-pulse"></i> Alignment Matcher
+                    </button>
+                </div>
+
+                <!-- Portal Content Panes -->
+                <div class="portal-content">
+                    
+                    <!-- Tab 1: Daily Horoscope -->
+                    <div class="portal-pane active" id="horoscope-tab">
+                        <div class="pane-split">
+                            <div class="pane-form">
+                                <h3>Zodiac Guidance</h3>
+                                <p>Select your zodiac sign to receive a daily overview of your energies and coach recommendations.</p>
+                                <form id="horoscope-form" class="cosmic-form">
+                                    <div class="form-group">
+                                        <label for="zodiac-sign">Select Zodiac Sign</label>
+                                        <div class="select-wrapper">
+                                            <select id="zodiac-sign" required>
+                                                <option value="aries">Aries (Mesha)</option>
+                                                <option value="taurus">Taurus (Vrishabha)</option>
+                                                <option value="gemini">Gemini (Mithuna)</option>
+                                                <option value="cancer">Cancer (Karka)</option>
+                                                <option value="leo">Leo (Simha)</option>
+                                                <option value="virgo">Virgo (Kanya)</option>
+                                                <option value="libra">Libra (Tula)</option>
+                                                <option value="scorpio">Scorpio (Vrishchika)</option>
+                                                <option value="sagittarius">Sagittarius (Dhanu)</option>
+                                                <option value="capricorn">Capricorn (Makara)</option>
+                                                <option value="aquarius">Aquarius (Kumbha)</option>
+                                                <option value="pisces">Pisces (Meena)</option>
+                                            </select>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-gold btn-full">Fetch Daily Guidance <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                                </form>
+                            </div>
+                            <div class="pane-result" id="horoscope-result">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-moon cosmic-spin"></i>
+                                    <p>Select your sign and request guidance to display your daily cosmic update.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Kundli Blueprint -->
+                    <div class="portal-pane" id="kundli-tab">
+                        <div class="pane-split">
+                            <div class="pane-form">
+                                <h3>Birth Chart Insights</h3>
+                                <p>Generate your core astrological details to discover your primary elements and mindset patterns.</p>
+                                <form id="kundli-form" class="cosmic-form">
+                                    <div class="form-row">
+                                        <div class="form-group col-6">
+                                            <label for="kundli-dob">Date of Birth</label>
+                                            <input type="date" id="kundli-dob" required>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="kundli-tob">Time of Birth</label>
+                                            <input type="time" id="kundli-tob" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="kundli-city">Location / City Presets</label>
+                                        <div class="select-wrapper">
+                                            <select id="kundli-city" class="city-preset">
+                                                <option value="custom" selected>Custom Coordinates (Enter Below)</option>
+                                                <option value="19.0760,72.8777">Mumbai, India</option>
+                                                <option value="28.6139,77.2090">New Delhi, India</option>
+                                                <option value="12.9716,77.5946">Bengaluru, India</option>
+                                                <option value="40.7128,-74.0060">New York, USA</option>
+                                                <option value="51.5074,-0.1278">London, UK</option>
+                                                <option value="35.6762,139.6503">Tokyo, Japan</option>
+                                            </select>
+                                            <i class="fa-solid fa-location-dot"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-6">
+                                            <label for="kundli-lat">Latitude</label>
+                                            <input type="number" step="any" id="kundli-lat" placeholder="e.g. 19.076" required>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="kundli-lng">Longitude</label>
+                                            <input type="number" step="any" id="kundli-lng" placeholder="e.g. 72.877" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-gold btn-full">Calculate Kundli Blueprint <i class="fa-solid fa-circle-nodes"></i></button>
+                                </form>
+                            </div>
+                            <div class="pane-result" id="kundli-result">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-dharmachakra cosmic-spin"></i>
+                                    <p>Input your birth details and click calculate to construct your birth chart profile.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Mangal Dosha -->
+                    <div class="portal-pane" id="mangal-tab">
+                        <div class="pane-split">
+                            <div class="pane-form">
+                                <h3>Obstacles & Energy Blocks</h3>
+                                <p>In Vedic astrology, Mars (Mangal) represents drive and energy. When blocked, it can cause overthinking or frustration. Check your placement here.</p>
+                                <form id="mangal-form" class="cosmic-form">
+                                    <div class="form-row">
+                                        <div class="form-group col-6">
+                                            <label for="mangal-dob">Date of Birth</label>
+                                            <input type="date" id="mangal-dob" required>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="mangal-tob">Time of Birth</label>
+                                            <input type="time" id="mangal-tob" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="mangal-city">Location / City Presets</label>
+                                        <div class="select-wrapper">
+                                            <select id="mangal-city" class="city-preset">
+                                                <option value="custom" selected>Custom Coordinates (Enter Below)</option>
+                                                <option value="19.0760,72.8777">Mumbai, India</option>
+                                                <option value="28.6139,77.2090">New Delhi, India</option>
+                                                <option value="12.9716,77.5946">Bengaluru, India</option>
+                                                <option value="40.7128,-74.0060">New York, USA</option>
+                                                <option value="51.5074,-0.1278">London, UK</option>
+                                                <option value="35.6762,139.6503">Tokyo, Japan</option>
+                                            </select>
+                                            <i class="fa-solid fa-location-dot"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-6">
+                                            <label for="mangal-lat">Latitude</label>
+                                            <input type="number" step="any" id="mangal-lat" placeholder="e.g. 19.076" required>
+                                        </div>
+                                        <div class="form-group col-6">
+                                            <label for="mangal-lng">Longitude</label>
+                                            <input type="number" step="any" id="mangal-lng" placeholder="e.g. 72.877" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-gold btn-full">Check Energy Obstacles <i class="fa-solid fa-shield-halved"></i></button>
+                                </form>
+                            </div>
+                            <div class="pane-result" id="mangal-result">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-fire-flame-simple cosmic-pulse"></i>
+                                    <p>Find out if your energy channels face energetic blocks (Mangal Dosha) by submitting your birth time.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Kundli Matching -->
+                    <div class="portal-pane" id="matching-tab">
+                        <div class="pane-split">
+                            <div class="pane-form">
+                                <h3>Relationship Synergy</h3>
+                                <p>Align your personal or professional relationships. Check compatibility score using Vedic Ashta Kuta matching.</p>
+                                <form id="matching-form" class="cosmic-form">
+                                    <div class="matching-panels">
+                                        <!-- Partner 1 -->
+                                        <div class="partner-panel">
+                                            <h4>First Profile (e.g. Self)</h4>
+                                            <div class="form-row">
+                                                <div class="form-group col-12">
+                                                    <label for="match-g-dob">Date & Time of Birth</label>
+                                                    <input type="datetime-local" id="match-g-dob" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="match-g-city">City Preset</label>
+                                                <div class="select-wrapper">
+                                                    <select id="match-g-city" class="city-preset">
+                                                        <option value="custom" selected>Custom Coordinates (Enter Below)</option>
+                                                        <option value="19.0760,72.8777">Mumbai, India</option>
+                                                        <option value="28.6139,77.2090">New Delhi, India</option>
+                                                        <option value="12.9716,77.5946">Bengaluru, India</option>
+                                                        <option value="40.7128,-74.0060">New York, USA</option>
+                                                        <option value="51.5074,-0.1278">London, UK</option>
+                                                    </select>
+                                                    <i class="fa-solid fa-location-dot"></i>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-6">
+                                                    <label for="match-g-lat">Lat</label>
+                                                    <input type="number" step="any" id="match-g-lat" placeholder="19.076" required>
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="match-g-lng">Lng</label>
+                                                    <input type="number" step="any" id="match-g-lng" placeholder="72.877" required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Partner 2 -->
+                                        <div class="partner-panel">
+                                            <h4>Second Profile (Partner/Peer)</h4>
+                                            <div class="form-row">
+                                                <div class="form-group col-12">
+                                                    <label for="match-b-dob">Date & Time of Birth</label>
+                                                    <input type="datetime-local" id="match-b-dob" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="match-b-city">City Preset</label>
+                                                <div class="select-wrapper">
+                                                    <select id="match-b-city" class="city-preset">
+                                                        <option value="custom" selected>Custom Coordinates (Enter Below)</option>
+                                                        <option value="19.0760,72.8777">Mumbai, India</option>
+                                                        <option value="28.6139,77.2090">New Delhi, India</option>
+                                                        <option value="12.9716,77.5946">Bengaluru, India</option>
+                                                        <option value="40.7128,-74.0060">New York, USA</option>
+                                                        <option value="51.5074,-0.1278">London, UK</option>
+                                                    </select>
+                                                    <i class="fa-solid fa-location-dot"></i>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-6">
+                                                    <label for="match-b-lat">Lat</label>
+                                                    <input type="number" step="any" id="match-b-lat" placeholder="19.076" required>
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="match-b-lng">Lng</label>
+                                                    <input type="number" step="any" id="match-b-lng" placeholder="72.877" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-gold btn-full margin-top-md">Verify Energy Compatibility <i class="fa-solid fa-heart-circle-check"></i></button>
+                                </form>
+                            </div>
+                            <div class="pane-result" id="matching-result">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-heart cosmic-pulse"></i>
+                                    <p>Provide birth dates and coordinates for both profiles to assess compatibility and synergy tips.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

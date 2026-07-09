@@ -606,10 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Newsletter Form Handler
-    const newsletterForm = document.getElementById('newsletter-form');
-    const newsletterSuccess = document.getElementById('newsletter-success');
-
     if (newsletterForm && newsletterSuccess) {
         newsletterForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -635,4 +631,434 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1200);
         });
     }
+
+    /* --------------------------------------------------------------------------
+       10. COSMIC ALIGNMENT PORTAL LOGIC
+       -------------------------------------------------------------------------- */
+    const apiBase = '/api';
+
+    // 10.1 Config Check (Demo Mode Check)
+    fetch(`${apiBase}/config`)
+        .then(res => res.json())
+        .then(data => {
+            const demoBadge = document.getElementById('demo-badge-container');
+            if (data.demo_mode && demoBadge) {
+                demoBadge.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.warn("[Cosmic Portal] Could not connect to API server. Operating in fallback mock mode.", err);
+            const demoBadge = document.getElementById('demo-badge-container');
+            if (demoBadge) {
+                demoBadge.style.display = 'block';
+            }
+        });
+
+    // 10.2 Tab Switcher
+    const tabButtons = document.querySelectorAll('.portal-tab-btn');
+    const tabPanes = document.querySelectorAll('.portal-pane');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+
+            // Remove active classes
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+
+            // Add active classes
+            btn.classList.add('active');
+            const activePane = document.getElementById(targetTab);
+            if (activePane) {
+                activePane.classList.add('active');
+            }
+        });
+    });
+
+    // 10.3 Location Coordinates City Preset Handler
+    const cityPresets = document.querySelectorAll('.city-preset');
+    cityPresets.forEach(select => {
+        select.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const container = e.target.closest('form');
+            if (!container) return;
+
+            const latInput = container.querySelector('input[id$="-lat"]') || container.querySelector('input[id="match-g-lat"]') || container.querySelector('input[id="match-b-lat"]');
+            const lngInput = container.querySelector('input[id$="-lng"]') || container.querySelector('input[id="match-g-lng"]') || container.querySelector('input[id="match-b-lng"]');
+            
+            // Check if it's dual matching panel
+            if (select.id === 'match-g-city' || select.id === 'match-b-city') {
+                const prefix = select.id.includes('g-city') ? 'match-g-' : 'match-b-';
+                const latEl = document.getElementById(`${prefix}lat`);
+                const lngEl = document.getElementById(`${prefix}lng`);
+                if (val !== 'custom') {
+                    const [lat, lng] = val.split(',');
+                    if (latEl) latEl.value = lat;
+                    if (lngEl) lngEl.value = lng;
+                } else {
+                    if (latEl) latEl.value = '';
+                    if (lngEl) lngEl.value = '';
+                }
+                return;
+            }
+
+            if (val !== 'custom') {
+                const [lat, lng] = val.split(',');
+                if (latInput) latInput.value = lat;
+                if (lngInput) lngInput.value = lng;
+            } else {
+                if (latInput) latInput.value = '';
+                if (lngInput) lngInput.value = '';
+            }
+        });
+    });
+
+    // Helper for loading state
+    const showLoader = (containerId) => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = `
+                <div class="spinner-container">
+                    <span class="loader-cosmic"></span>
+                    <span class="loader-text">Consulting the alignment of the stars...</span>
+                </div>
+            `;
+        }
+    };
+
+    // Helper for generating standard ISO datetime offset (IST +05:30)
+    const getISODatetime = (dateStr, timeStr) => {
+        return `${dateStr}T${timeStr}:00+05:30`;
+    };
+
+    // 10.4 Tab 1: Daily Horoscope Form Submission
+    const horoscopeForm = document.getElementById('horoscope-form');
+    if (horoscopeForm) {
+        horoscopeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const sign = document.getElementById('zodiac-sign').value;
+            const resultBox = document.getElementById('horoscope-result');
+
+            showLoader('horoscope-result');
+
+            // Send call
+            fetch(`${apiBase}/horoscope/daily?sign=${sign}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        const data = res.data;
+                        resultBox.innerHTML = `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div class="result-title">${data.sign} Guidance</div>
+                                    <span class="result-badge">${data.date}</span>
+                                </div>
+                                <div class="result-content">
+                                    <p class="prediction-main font-italic">"${data.prediction}"</p>
+                                    <div class="result-areas">
+                                        <div class="area-box">
+                                            <h4><i class="fa-solid fa-user"></i> Personal</h4>
+                                            <p>${data.areas?.personal || 'Focus on self-reflection and inner balance.'}</p>
+                                        </div>
+                                        <div class="area-box">
+                                            <h4><i class="fa-solid fa-heart"></i> Love</h4>
+                                            <p>${data.areas?.relationship || 'Express appreciation and build synergy with loved ones.'}</p>
+                                        </div>
+                                        <div class="area-box">
+                                            <h4><i class="fa-solid fa-briefcase"></i> Work</h4>
+                                            <p>${data.areas?.profession || 'Plan long-term goals and stay organized.'}</p>
+                                        </div>
+                                        <div class="area-box">
+                                            <h4><i class="fa-solid fa-dumbbell"></i> Health</h4>
+                                            <p>${data.areas?.health || 'Maintain grounding physical habits.'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(res.message || "Failed to load");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error fetching daily guidance: ${err.message}. Please verify the backend is running.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+
+    // 10.5 Tab 2: Kundli Form Submission
+    const kundliForm = document.getElementById('kundli-form');
+    if (kundliForm) {
+        kundliForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dob = document.getElementById('kundli-dob').value;
+            const tob = document.getElementById('kundli-tob').value;
+            const lat = document.getElementById('kundli-lat').value;
+            const lng = document.getElementById('kundli-lng').value;
+            const resultBox = document.getElementById('kundli-result');
+
+            showLoader('kundli-result');
+            const isoDt = getISODatetime(dob, tob);
+
+            fetch(`${apiBase}/astrology/kundli?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        const data = res.data;
+                        const planets = data.planetary_positions || [];
+                        
+                        let planetRows = '';
+                        planets.forEach(p => {
+                            planetRows += `
+                                <tr>
+                                    <td><strong>${p.planet}</strong></td>
+                                    <td>${p.sign}</td>
+                                    <td>House ${p.house}</td>
+                                    <td>${p.degree.toFixed(1)}°</td>
+                                </tr>
+                            `;
+                        });
+
+                        resultBox.innerHTML = `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div class="result-title">Birth Chart Blueprint</div>
+                                    <span class="result-badge">Vedic Kundli</span>
+                                </div>
+                                <div class="result-content">
+                                    <div class="kundli-grid-meta">
+                                        <div class="meta-box">
+                                            <span>Ascendant (Lagna)</span>
+                                            <strong>${data.ascendant?.name || 'N/A'}</strong>
+                                        </div>
+                                        <div class="meta-box">
+                                            <span>Moon Sign (Rashi)</span>
+                                            <strong>${data.moon_sign?.name || 'N/A'}</strong>
+                                        </div>
+                                        <div class="meta-box">
+                                            <span>Nakshatra</span>
+                                            <strong>${data.nakshatra?.name || 'N/A'}</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <p><strong>Zodiac Profiles & Tendenices:</strong></p>
+                                    <p class="small text-muted font-italic">
+                                        ${data.ascendant?.description || ''} ${data.moon_sign?.description || ''} ${data.nakshatra?.description || ''}
+                                    </p>
+
+                                    <h4 class="margin-top-md" style="font-size: 1rem; color: var(--color-white); font-weight: 700;">Planetary Coordinates</h4>
+                                    <div class="planet-table-wrapper">
+                                        <table class="planet-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Planet</th>
+                                                    <th>Sign</th>
+                                                    <th>Placement</th>
+                                                    <th>Degree</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${planetRows || '<tr><td colspan="4">No planetary positions available</td></tr>'}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(res.message || "Failed to load");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error calculating birth chart: ${err.message}. Please verify the backend is running.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+
+    // 10.6 Tab 3: Mangal Dosha Form Submission
+    const mangalForm = document.getElementById('mangal-form');
+    if (mangalForm) {
+        mangalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dob = document.getElementById('mangal-dob').value;
+            const tob = document.getElementById('mangal-tob').value;
+            const lat = document.getElementById('mangal-lat').value;
+            const lng = document.getElementById('mangal-lng').value;
+            const resultBox = document.getElementById('mangal-result');
+
+            showLoader('mangal-result');
+            const isoDt = getISODatetime(dob, tob);
+
+            fetch(`${apiBase}/astrology/mangal-dosha?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        const data = res.data;
+                        const hasDosha = data.has_mangal_dosha;
+
+                        resultBox.innerHTML = `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div class="result-title">Energy Obstacle Report</div>
+                                    <span class="result-badge">Mars Check</span>
+                                </div>
+                                <div class="result-content">
+                                    <div class="margin-bottom-md text-center">
+                                        <span class="verdict-badge ${hasDosha ? 'low' : 'excellent'}">
+                                            ${hasDosha ? 'Dosha Detected' : 'No Dosha'}
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="margin-top-md" style="font-size: 1.05rem; line-height: 1.7;">
+                                        <strong>Analysis:</strong><br>
+                                        ${data.description}
+                                    </p>
+
+                                    <div class="match-advice" style="background: ${hasDosha ? 'rgba(235, 87, 87, 0.05)' : 'rgba(46, 245, 106, 0.05)'}; border-color: ${hasDosha ? 'rgba(235, 87, 87, 0.15)' : 'rgba(46, 245, 106, 0.15)'};">
+                                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--color-white); margin-bottom: 0.5rem;">
+                                            <i class="fa-solid ${hasDosha ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> Recommended Action
+                                        </h4>
+                                        <p style="margin: 0; font-size: 0.9rem;">${data.remedy}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(res.message || "Failed to load");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error checking energy blocks: ${err.message}. Please verify the backend is running.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+
+    // 10.7 Tab 4: Relationship Matching Form Submission
+    const matchingForm = document.getElementById('matching-form');
+    if (matchingForm) {
+        matchingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const gDobVal = document.getElementById('match-g-dob').value;
+            const gLat = document.getElementById('match-g-lat').value;
+            const gLng = document.getElementById('match-g-lng').value;
+            
+            const bDobVal = document.getElementById('match-b-dob').value;
+            const bLat = document.getElementById('match-b-lat').value;
+            const bLng = document.getElementById('match-b-lng').value;
+            
+            const resultBox = document.getElementById('matching-result');
+
+            showLoader('matching-result');
+
+            // Format datetime local format (YYYY-MM-DDTHH:MM) to ISO with offset
+            const gIso = `${gDobVal}:00+05:30`;
+            const bIso = `${bDobVal}:00+05:30`;
+
+            fetch(`${apiBase}/astrology/kundli-matching?girl_dob=${encodeURIComponent(gIso)}&girl_latitude=${gLat}&girl_longitude=${gLng}&boy_dob=${encodeURIComponent(bIso)}&boy_latitude=${bLat}&boy_longitude=${bLng}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        const data = res.data;
+                        const score = data.score;
+                        const maxScore = data.max_score || 36;
+                        
+                        // Calculate dasharray stroke offsets
+                        const radius = 60;
+                        const circumference = 2 * Math.PI * radius;
+                        const offset = circumference - (score / maxScore) * circumference;
+
+                        let verdictClass = 'average';
+                        if (score >= 25) verdictClass = 'excellent';
+                        else if (score < 18) verdictClass = 'low';
+
+                        let gunaRows = '';
+                        const gunas = data.guna_details || {};
+                        for (const [key, value] of Object.entries(gunas)) {
+                            gunaRows += `
+                                <tr>
+                                    <td><strong>${key}</strong></td>
+                                    <td>${value}</td>
+                                </tr>
+                            `;
+                        }
+
+                        resultBox.innerHTML = `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div class="result-title">Energy Compatibility Report</div>
+                                    <span class="result-badge">Ashta Kuta</span>
+                                </div>
+                                <div class="result-content">
+                                    <div class="compatibility-display">
+                                        <div class="score-circle-wrapper">
+                                            <svg class="score-svg" width="150" height="150">
+                                                <circle class="score-bg" cx="75" cy="75" r="60"></circle>
+                                                <circle class="score-bar" cx="75" cy="75" r="60" 
+                                                        stroke-dasharray="${circumference}" 
+                                                        stroke-dashoffset="${offset}"></circle>
+                                            </svg>
+                                            <div class="score-text">
+                                                <span class="score-num">${score}</span>
+                                                <span class="score-max">/ ${maxScore}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <span class="verdict-badge ${verdictClass}">${data.verdict}</span>
+                                    </div>
+                                    
+                                    <h4 class="margin-top-md" style="font-size: 1rem; color: var(--color-white); font-weight: 700;">Guna Milap Breakdowns</h4>
+                                    <div class="guna-table-wrapper">
+                                        <table class="guna-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Koot / Category</th>
+                                                    <th>Obtained Points / Max</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${gunaRows}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="match-advice">
+                                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--color-white); margin-bottom: 0.5rem;">
+                                            <i class="fa-solid fa-lightbulb"></i> Compatibility Insights
+                                        </h4>
+                                        <p style="margin: 0; font-size: 0.9rem;">${data.alignment_advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(res.message || "Failed to load");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error checking compatibility: ${err.message}. Please verify the backend is running.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
 });
+
