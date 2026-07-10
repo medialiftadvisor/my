@@ -251,6 +251,50 @@ def get_mock_planet_position(datetime_str, lat, lng):
         }
     }
 
+def calculate_aspects(planetary_positions):
+    aspects = []
+    aspect_defs = [
+        {"name": "Conjunction", "angle": 0, "orb_limit": 8, "type": "major"},
+        {"name": "Semi-Sextile", "angle": 30, "orb_limit": 2, "type": "minor"},
+        {"name": "Semi-Square", "angle": 45, "orb_limit": 2, "type": "minor"},
+        {"name": "Sextile", "angle": 60, "orb_limit": 6, "type": "major"},
+        {"name": "Quintile", "angle": 72, "orb_limit": 2, "type": "minor"},
+        {"name": "Square", "angle": 90, "orb_limit": 8, "type": "major"},
+        {"name": "Trine", "angle": 120, "orb_limit": 8, "type": "major"},
+        {"name": "Sesquiquadrate", "angle": 135, "orb_limit": 2, "type": "minor"},
+        {"name": "Quincunx", "angle": 150, "orb_limit": 2, "type": "minor"},
+        {"name": "Opposition", "angle": 180, "orb_limit": 8, "type": "major"}
+    ]
+    
+    for i in range(len(planetary_positions)):
+        for j in range(i + 1, len(planetary_positions)):
+            p1 = planetary_positions[i]
+            p2 = planetary_positions[j]
+            
+            lon1 = p1.get("longitude")
+            lon2 = p2.get("longitude")
+            
+            if lon1 is None or lon2 is None:
+                continue
+                
+            diff = abs(lon1 - lon2) % 360
+            if diff > 180:
+                diff = 360 - diff
+                
+            for asp in aspect_defs:
+                orb = abs(diff - asp["angle"])
+                if orb <= asp["orb_limit"]:
+                    aspects.append({
+                        "planet_one": p1["planet"],
+                        "planet_two": p2["planet"],
+                        "aspect_name": asp["name"],
+                        "type": asp["type"],
+                        "angle": asp["angle"],
+                        "exact_diff": round(diff, 2),
+                        "orb": round(orb, 2)
+                    })
+    return aspects
+
 def get_mock_chart(dt, lat, lng):
     import math
     import hashlib
@@ -1077,6 +1121,22 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     coordinates = f"{lat},{lng}"
                     api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
                     response_data = self.fetch_prokerala_api(api_url, token, fallback_func=lambda: get_mock_planet_position(dt, lat, lng))
+
+            if response_data.get("status") in ["success", "ok"] and "data" in response_data:
+                data_dict = response_data["data"]
+                planets = data_dict.get("planet_position") or data_dict.get("planetary_positions")
+                if planets:
+                    normalized_planets = []
+                    for p in planets:
+                        name = p.get("name") or p.get("planet") or "N/A"
+                        longitude = p.get("longitude")
+                        if longitude is not None:
+                            normalized_planets.append({
+                                "planet": name,
+                                "longitude": float(longitude)
+                            })
+                    aspects = calculate_aspects(normalized_planets)
+                    response_data["data"]["aspects"] = aspects
 
         # 7. Western Natal Chart
         elif path == '/api/astrology/natal-chart':

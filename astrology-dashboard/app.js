@@ -791,13 +791,30 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         }
 
+                        const aspects = data.aspects || [];
+                        const planetSet = new Set();
+                        planets.forEach(p => {
+                            const name = p.name || p.planet;
+                            if (name) planetSet.add(name);
+                        });
+                        let selectOptions = '<option value="all">All Objects</option>';
+                        planetSet.forEach(pName => {
+                            selectOptions += `<option value="${pName}">${pName}</option>`;
+                        });
+
                         resultBox.innerHTML = `
                             <div class="result-card">
                                 <div class="result-header">
-                                    <div class="result-title">Celestial Placements</div>
-                                    <span class="result-badge">Planet Positions</span>
+                                    <div class="result-title">Celestial Placements & Aspects</div>
+                                    <span class="result-badge">Positions & Aspects</span>
                                 </div>
-                                <div class="result-content">
+                                
+                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                                    <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
+                                    <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
+                                </div>
+                                
+                                <div id="placements-pane" class="aspects-pane-content">
                                     ${natalChartHtml}
                                     <div class="planet-table-wrapper">
                                         <table class="planet-table">
@@ -816,8 +833,138 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </table>
                                     </div>
                                 </div>
+                                
+                                <div id="aspects-pane" class="aspects-pane-content" style="display: none;">
+                                    <div class="aspect-filters" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: center; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="filter-type-btn active" data-type="all" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; transition: all 0.2s;">All Aspects</button>
+                                            <button class="filter-type-btn" data-type="major" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); color: var(--color-text-secondary); padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 500; cursor: pointer; transition: all 0.2s;">Major Only</button>
+                                            <button class="filter-type-btn" data-type="minor" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); color: var(--color-text-secondary); padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 500; cursor: pointer; transition: all 0.2s;">Minor Only</button>
+                                        </div>
+                                        
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-left: auto;">
+                                            <label style="font-size: 0.8rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500;">Filter by Planet:</label>
+                                            <select id="aspect-planet-filter" style="background: #0d0826; border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-family: Outfit; outline: none; cursor: pointer;">
+                                                ${selectOptions}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="planet-table-wrapper">
+                                        <table class="planet-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Planet 1</th>
+                                                    <th>Aspect</th>
+                                                    <th>Planet 2</th>
+                                                    <th>Type</th>
+                                                    <th>Exact Diff</th>
+                                                    <th>Orb</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="aspects-table-body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         `;
+
+                        const tabButtons = resultBox.querySelectorAll('.aspect-tab-btn');
+                        const panes = resultBox.querySelectorAll('.aspects-pane-content');
+                        
+                        tabButtons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                tabButtons.forEach(b => {
+                                    b.classList.remove('active');
+                                    b.style.color = 'var(--color-text-secondary)';
+                                    b.style.fontWeight = '500';
+                                    b.style.borderBottom = 'none';
+                                });
+                                btn.classList.add('active');
+                                btn.style.color = '#ffd700';
+                                btn.style.fontWeight = '700';
+                                btn.style.borderBottom = '2px solid #ffd700';
+                                
+                                const target = btn.getAttribute('data-target');
+                                panes.forEach(pane => {
+                                    if (pane.id === target) {
+                                        pane.style.display = 'block';
+                                    } else {
+                                        pane.style.display = 'none';
+                                    }
+                                });
+                            });
+                        });
+                        
+                        const typeButtons = resultBox.querySelectorAll('.filter-type-btn');
+                        const planetFilterSelect = resultBox.querySelector('#aspect-planet-filter');
+                        const aspectsTbody = resultBox.querySelector('#aspects-table-body');
+                        
+                        let activeType = 'all';
+                        let activePlanet = 'all';
+                        
+                        function renderFilteredAspects() {
+                            let filtered = aspects;
+                            if (activeType !== 'all') {
+                                filtered = filtered.filter(a => a.type === activeType);
+                            }
+                            if (activePlanet !== 'all') {
+                                filtered = filtered.filter(a => a.planet_one === activePlanet || a.planet_two === activePlanet);
+                            }
+                            
+                            let html = '';
+                            if (filtered.length === 0) {
+                                html = '<tr><td colspan="6" style="text-align: center; opacity: 0.6; padding: 2rem 0;">No matching aspects found for the selected filters.</td></tr>';
+                            } else {
+                                filtered.forEach(a => {
+                                    const typeBadge = a.type === 'major' 
+                                        ? '<span style="color: #ffd700; background: rgba(255,215,0,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,215,0,0.15); font-weight: 600;">Major</span>'
+                                        : '<span style="color: #a0aec0; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">Minor</span>';
+                                    
+                                    html += `
+                                        <tr>
+                                            <td><strong>${a.planet_one}</strong></td>
+                                            <td style="color: #00d2ff; font-weight: 600;">${a.aspect_name}</td>
+                                            <td><strong>${a.planet_two}</strong></td>
+                                            <td>${typeBadge}</td>
+                                            <td>${a.exact_diff.toFixed(1)}°</td>
+                                            <td>${a.orb.toFixed(1)}°</td>
+                                        </tr>
+                                    `;
+                                });
+                            }
+                            aspectsTbody.innerHTML = html;
+                        }
+                        
+                        typeButtons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                typeButtons.forEach(b => {
+                                    b.classList.remove('active');
+                                    b.style.background = 'rgba(0,0,0,0.2)';
+                                    b.style.border = '1px solid rgba(255,255,255,0.05)';
+                                    b.style.color = 'var(--color-text-secondary)';
+                                    b.style.fontWeight = '500';
+                                });
+                                btn.classList.add('active');
+                                btn.style.background = 'rgba(255,255,255,0.06)';
+                                btn.style.border = '1px solid rgba(255,255,255,0.12)';
+                                btn.style.color = '#fff';
+                                btn.style.fontWeight = '600';
+                                
+                                activeType = btn.getAttribute('data-type');
+                                renderFilteredAspects();
+                            });
+                        });
+                        
+                        if (planetFilterSelect) {
+                            planetFilterSelect.addEventListener('change', (e) => {
+                                activePlanet = e.target.value;
+                                renderFilteredAspects();
+                            });
+                        }
+                        
+                        renderFilteredAspects();
                     } else {
                         throw new Error(planetRes.message || "Failed retrieving planet positions");
                     }
