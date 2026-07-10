@@ -1372,3 +1372,34 @@ body {
         font-size: 1.3rem !important;
     }
 }
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@media (max-width: 575px) {
+    .panchang-grid-meta {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .form-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .calculator-form-container {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .planet-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .planet-table th, .planet-table td {
+        padding: 0.6rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap;
+    }
+}

@@ -37,37 +37,37 @@
                 <ul>
                     <li>
                         <a href="#home" class="menu-link active" data-view="home-view">
-                            <i class="fa-solid fa-house-chimney-window"></i> Dashboard Home
+                            <i class="fa-solid fa-house-chimney-window"></i> <span data-i18n="menu-home">Dashboard Home</span>
                         </a>
                     </li>
                     <li>
                         <a href="#horoscope" class="menu-link" data-view="horoscope-view">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Daily Horoscope
+                            <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="menu-horoscope">Daily Horoscope</span>
                         </a>
                     </li>
                     <li>
                         <a href="#panchang" class="menu-link" data-view="panchang-view">
-                            <i class="fa-solid fa-calendar-day"></i> Vedic Panchang
+                            <i class="fa-solid fa-calendar-day"></i> <span data-i18n="menu-panchang">Vedic Panchang</span>
                         </a>
                     </li>
                     <li>
                         <a href="#planet-position" class="menu-link" data-view="planet-position-view">
-                            <i class="fa-solid fa-earth-asia"></i> Planet Positions
+                            <i class="fa-solid fa-earth-asia"></i> <span data-i18n="menu-positions">Planet Positions</span>
                         </a>
                     </li>
                     <li>
                         <a href="#natal-chart" class="menu-link" data-view="natal-chart-view">
-                            <i class="fa-solid fa-compass"></i> Natal Chart Wheel
+                            <i class="fa-solid fa-compass"></i> <span data-i18n="menu-wheel">Natal Chart Wheel</span>
                         </a>
                     </li>
                     <li>
                         <a href="#kundli" class="menu-link" data-view="kundli-view">
-                            <i class="fa-solid fa-dharmachakra"></i> Kundli Generator
+                            <i class="fa-solid fa-dharmachakra"></i> <span data-i18n="menu-kundli">Kundli Generator</span>
                         </a>
                     </li>
                     <li>
                         <a href="#matching" class="menu-link" data-view="matching-view">
-                            <i class="fa-solid fa-heart-pulse"></i> Relationship Matcher
+                            <i class="fa-solid fa-heart-pulse"></i> <span data-i18n="menu-matching">Relationship Matcher</span>
                         </a>
                     </li>
                 </ul>
@@ -91,7 +91,11 @@
                     <h1 id="view-title">Dashboard Home</h1>
                     <p id="view-subtitle" class="text-muted">Welcome to your daily cosmic alignment forecast.</p>
                 </div>
-                <div class="header-right">
+                <div class="header-right" style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="lang-toggle-btn" class="btn" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #ffd700; padding: 0.5rem 1rem; font-family: Outfit; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.3s; font-size: 0.85rem;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <i class="fa-solid fa-language" style="font-size: 1.1rem;"></i>
+                        <span id="lang-btn-text">हिन्दी</span>
+                    </button>
                     <div class="date-display">
                         <i class="fa-solid fa-calendar-days"></i>
                         <span id="current-date">Thursday, July 9, 2026</span>

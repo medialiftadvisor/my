@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
-                fetch(`${apiBase}/horoscope/daily?sign=${sign}`)
+                fetch(`${apiBase}/horoscope/daily?sign=${sign}&la=${currentLang}`)
                     .then(res => res.json())
                     .then(res => {
                         if (res.status === 'success' && res.data) {
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Format date local (YYYY-MM-DDTHH:MM) to ISO with +05:30
             const isoDt = `${dateVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/panchang?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+            fetch(`${apiBase}/astrology/panchang?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
@@ -628,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showLoader('kundli-result');
             const isoDt = getISODatetime(dob, tob);
 
-            fetch(`${apiBase}/astrology/kundli?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+            fetch(`${apiBase}/astrology/kundli?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
@@ -738,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const gIso = `${gDobVal}:00+05:30`;
             const bIso = `${bDobVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/kundli-matching?girl_dob=${encodeURIComponent(gIso)}&girl_latitude=${gLat}&girl_longitude=${gLng}&boy_dob=${encodeURIComponent(bIso)}&boy_coordinates=${bLat}&boy_longitude=${bLng}`)
+            fetch(`${apiBase}/astrology/kundli-matching?girl_dob=${encodeURIComponent(gIso)}&girl_latitude=${gLat}&girl_longitude=${gLng}&boy_dob=${encodeURIComponent(bIso)}&boy_coordinates=${bLat}&boy_longitude=${bLng}&la=${currentLang}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
@@ -840,8 +840,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`).then(res => res.json());
-            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`).then(res => res.json());
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`).then(res => res.json());
 
             Promise.all([planetPosPromise, natalChartPromise])
                 .then(([planetRes, natalRes]) => {
@@ -868,15 +868,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const deg = typeof p.degree === 'number' ? `${p.degree.toFixed(1)}°` : 'N/A';
                             const isRetro = p.is_retrograde || p.isRetrograde || false;
+                            const retroText = isRetro ? translateText('Retrograde') : translateText('Direct');
                             const retroBadge = isRetro 
-                                ? '<span style="color: #ff5757; font-weight: 700; background: rgba(255,87,87,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,87,87,0.2);">Retrograde</span>' 
-                                : '<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">Direct</span>';
+                                ? `<span style="color: #ff5757; font-weight: 700; background: rgba(255,87,87,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,87,87,0.2);">${retroText}</span>` 
+                                : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
 
                             planetRows += `
                                 <tr>
-                                    <td><strong>${name}</strong></td>
-                                    <td>${sign}</td>
-                                    <td>${lordInfo}</td>
+                                    <td><strong>${translateText(name)}</strong></td>
+                                    <td>${translateText(sign)}</td>
+                                    <td>${translateText(lordInfo)}</td>
                                     <td>${deg}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
@@ -1027,9 +1028,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     
                                     html += `
                                         <tr>
-                                            <td><strong>${a.planet_one}</strong></td>
-                                            <td style="color: #00d2ff; font-weight: 600;">${a.aspect_name}</td>
-                                            <td><strong>${a.planet_two}</strong></td>
+                                            <td><strong>${translateText(a.planet_one)}</strong></td>
+                                            <td style="color: #00d2ff; font-weight: 600;">${translateText(a.aspect_name)}</td>
+                                            <td><strong>${translateText(a.planet_two)}</strong></td>
                                             <td>${typeBadge}</td>
                                             <td>${a.exact_diff.toFixed(1)}°</td>
                                             <td>${a.orb.toFixed(1)}°</td>
@@ -1097,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data && res.data.svg) {
@@ -1242,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let listHtml = '';
                     
                     if (planetsInSign.length === 0) {
-                        listHtml = `<div style="text-align: center; opacity: 0.5; font-size: 0.85rem; padding: 2rem 0; font-family: Outfit; color: #fff;">No planets currently transiting in ${sign}.</div>`;
+                        listHtml = `<div style="text-align: center; opacity: 0.5; font-size: 0.85rem; padding: 2rem 0; font-family: Outfit; color: #fff;">${translations[currentLang]['magnifier-empty']}${translateText(sign)}.</div>`;
                     } else {
                         planetsInSign.sort((a, b) => a.degree - b.degree);
                         planetsInSign.forEach(p => {
@@ -1274,9 +1275,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
                                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                                         <span style="font-size: 1.25rem; color: ${p.color}; font-weight: bold; line-height: 1;">${p.symbol}</span>
-                                        <span style="font-family: Outfit; font-weight: 700; color: #fff; font-size: 0.9rem;">${p.name}</span>
+                                        <span style="font-family: Outfit; font-weight: 700; color: #fff; font-size: 0.9rem;">${translateText(p.name)}</span>
                                     </div>
-                                    <span style="font-family: Outfit; font-weight: 600; color: #ffd700; font-size: 0.85rem;">${degInt}° ${minInt.toString().padStart(2, '0')}' ${sign}</span>
+                                    <span style="font-family: Outfit; font-weight: 600; color: #ffd700; font-size: 0.85rem;">${degInt}° ${minInt.toString().padStart(2, '0')}' ${translateText(sign)}</span>
                                 </div>
                             `;
                         });
@@ -1286,8 +1287,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     magnifierActive.style.display = 'flex';
                     magnifierActive.innerHTML = `
                         <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem; margin-bottom: 1rem; width: 100%;">
-                            <h3 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px;">${sign.toUpperCase()}</h3>
-                            <span style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; font-family: Outfit; font-weight: 600; letter-spacing: 0.5px;">30° Orbital Arc Magnifier</span>
+                            <h3 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px;">${translateText(sign).toUpperCase()}</h3>
+                            <span style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; font-family: Outfit; font-weight: 600; letter-spacing: 0.5px;">${translations[currentLang]['magnifier-arc']}</span>
                         </div>
                         
                         <div style="width: 100%; display: flex; justify-content: center; margin-bottom: 1rem;">
@@ -1296,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <path d="M 50 200 A 150 150 0 0 1 350 200" fill="none" stroke="#d4af37" stroke-width="1.8" opacity="0.5" />
                                 ${ticksHtml}
                                 ${planetsHtml}
-                                <text x="200" y="222" fill="#ffd700" font-family="Outfit" font-size="8" font-weight="700" letter-spacing="1" text-anchor="middle">ZODIAC RANGE (0° - 30°)</text>
+                                <text x="200" y="222" fill="#ffd700" font-family="Outfit" font-size="8" font-weight="700" letter-spacing="1" text-anchor="middle">${translations[currentLang]['magnifier-range']}</text>
                             </svg>
                         </div>
                         
@@ -1317,5 +1318,158 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closeLightboxBtn) closeLightboxBtn.addEventListener('click', closeLightbox);
     if (closeLightboxBackdrop) closeLightboxBackdrop.addEventListener('click', closeLightbox);
+
+    // 12. Hindi Translation Dictionary & Engine
+    let currentLang = 'en';
+
+    const translations = {
+        'en': {
+            'menu-home': 'Dashboard Home',
+            'menu-horoscope': 'Daily Horoscope',
+            'menu-panchang': 'Vedic Panchang',
+            'menu-positions': 'Planet Positions',
+            'menu-wheel': 'Natal Chart Wheel',
+            'menu-kundli': 'Kundli Generator',
+            'menu-matching': 'Relationship Matcher',
+            'demo-text': 'Demo Mode (Mock Data)',
+            
+            // Views
+            'home-view-title': 'Dashboard Home',
+            'home-view-subtitle': 'Welcome to your daily cosmic alignment forecast.',
+            'horoscope-view-title': 'Daily Horoscope',
+            'horoscope-view-subtitle': 'Receive planetary forecasts for all twelve zodiac signs.',
+            'panchang-view-title': 'Vedic Panchang',
+            'panchang-view-subtitle': 'Explore sunrise, lunar phases, and daily auspicious muhurtas.',
+            'planet-position-view-title': 'Planet Positions',
+            'planet-position-view-subtitle': 'Detailed coordinates, rasi lords, and retrograde phases for celestial bodies.',
+            'natal-chart-view-title': 'Natal Chart Wheel',
+            'natal-chart-view-subtitle': 'Interactive Western Astrology natal chart wheel showing aspect lines, signs, and houses.',
+            'kundli-view-title': 'Kundli Generator',
+            'kundli-view-subtitle': 'Calculate your birth chart elements and planetary positions.',
+            'matching-view-title': 'Relationship Matcher',
+            'matching-view-subtitle': 'Assess energy compatibility scores using Ashta Kuta matching.',
+            
+            // Magnifier
+            'magnifier-title': 'Zodiac Magnifier',
+            'magnifier-desc': 'Hover & click on any outer zodiac sector (e.g., Aries, Taurus) on the wheel to magnify its 30° orbital arc and view planet details.',
+            'magnifier-arc': '30° ORBITAL ARC MAGNIFIER',
+            'magnifier-range': 'ZODIAC RANGE (0° - 30°)',
+            'magnifier-empty': 'No planets currently transiting in ',
+            
+            // General
+            'btn-hindi': 'हिन्दी',
+            'btn-english': 'English'
+        },
+        'hi': {
+            'menu-home': 'होम',
+            'menu-horoscope': 'दैनिक राशिफल',
+            'menu-panchang': 'वैदिक पंचांग',
+            'menu-positions': 'ग्रहों की स्थिति',
+            'menu-wheel': 'कुंडली चक्र',
+            'menu-kundli': 'कुण्डली निर्माता',
+            'menu-matching': 'कुंडली मिलान',
+            'demo-text': 'डेमो मोड (काल्पनिक डेटा)',
+            
+            // Views
+            'home-view-title': 'मुख्य पृष्ठ',
+            'home-view-subtitle': 'आपके दैनिक ब्रह्मांडीय संरेखण पूर्वानुमान में आपका स्वागत है।',
+            'horoscope-view-title': 'दैनिक राशिफल',
+            'horoscope-view-subtitle': 'सभी बारह राशियों के लिए ग्रहों के राशिफल प्राप्त करें।',
+            'panchang-view-title': 'वैदिक पंचांग',
+            'panchang-view-subtitle': 'सूर्योदय, चंद्र चरण और दैनिक शुभ मुहूर्त देखें।',
+            'planet-position-view-title': 'ग्रहों की स्थिति',
+            'planet-position-view-subtitle': 'खगोलीय पिंडों के लिए विस्तृत निर्देशांक, राशि स्वामी और वक्री चरण।',
+            'natal-chart-view-title': 'जन्म कुंडली चक्र',
+            'natal-chart-view-subtitle': 'पहलू रेखाओं, राशियों और घरों को दर्शाने वाला इंटरैक्टिव वेस्टर्न कुंडली चक्र।',
+            'kundli-view-title': 'कुण्डली निर्माता',
+            'kundli-view-subtitle': 'अपने जन्म विवरण के अनुसार ग्रहों की स्थिति और कुंडली का विश्लेषण करें।',
+            'matching-view-title': 'कुंडली मिलान',
+            'matching-view-subtitle': 'अष्टकूट मिलान का उपयोग करके ऊर्जा अनुकूलता स्कोर का आकलन करें।',
+            
+            // Magnifier
+            'magnifier-title': 'राशिफल आवर्धक (Magnifier)',
+            'magnifier-desc': 'ग्रहों के विवरण और उसके 30° कक्षीय चाप (Arc) को देखने के लिए कुंडली चक्र के बाहरी राशि क्षेत्रों (जैसे मेष, वृषभ) पर क्लिक करें।',
+            'magnifier-arc': '30° कक्षीय चाप आवर्धक',
+            'magnifier-range': 'राशि सीमा (0° - 30°)',
+            'magnifier-empty': 'वर्तमान में कोई ग्रह इस राशि में नहीं है: ',
+            
+            // General
+            'btn-hindi': 'हिन्दी',
+            'btn-english': 'English'
+        }
+    };
+
+    const translationMap = {
+        'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'लग्न',
+        'Conjunction': 'युति (Conjunction)', 'Opposition': 'प्रतियुति (Opposition)', 'Trine': 'त्रिकोण (Trine)', 'Square': 'वर्ग/केंद्र (Square)', 'Sextile': 'षष्ठक (Sextile)', 'Quincunx': 'षडाष्टक (Quincunx)', 'Semi-square': 'अर्ध-वर्ग (Semi-square)', 'Semi-sextile': 'अर्ध-षष्ठक (Semi-sextile)', 'Quintile': 'पंचमेश (Quintile)', 'Sesquiquadrate': 'त्रिपाद-वर्ग (Sesquiquadrate)',
+        'Aries': 'मेष', 'Taurus': 'वृषभ', 'Gemini': 'मिथुन', 'Cancer': 'कर्क', 'Leo': 'सिंह', 'Virgo': 'कन्या', 'Libra': 'तुला', 'Scorpio': 'वृश्चिक', 'Sagittarius': 'धनु', 'Capricorn': 'मकर', 'Aquarius': 'कुंभ', 'Pisces': 'मीन',
+        'Name': 'नाम', 'Planet': 'ग्रह', 'Sign': 'राशि', 'Rasi': 'राशि', 'Rasi Lord': 'राशि स्वामी', 'Degree': 'अंश (Degree)', 'Nakshatra': 'नक्षत्र', 'Nakshatra Lord': 'नक्षत्र स्वामी', 'Retrograde': 'वक्री (Retro)', 'House': 'भाव (House)',
+        'Calculate Positions': 'ग्रहों की स्थिति की गणना करें', 'Generate Natal Chart': 'कुंडली चक्र बनाएं', 'Generate Panchang': 'पंचांग बनाएं', 'Generate Kundli Profile': 'कुंडली प्रोफाइल बनाएं', 'Check Synergy compatibility': 'कुंडली मिलान जांचें',
+        'Compatibility Score': 'अनुकूलता स्कोर', 'Daily Prediction': 'दैनिक भविष्यफल', 'Sunrise': 'सूर्ोदय', 'Sunset': 'सूर्यास्त', 'Moonrise': 'चंद्रोदय', 'Moonset': 'चंद्रस्त', 'Auspicious Period': 'शुभ काल', 'Inauspicious Period': 'अशुभ काल', 'Tithi': 'तिथि', 'Nakshatra': 'नक्षत्र', 'Yoga': 'योग', 'Karana': 'करण'
+    };
+
+    function translateText(text) {
+        if (currentLang === 'en') return text;
+        if (!text) return '';
+        
+        let translated = text;
+        Object.keys(translationMap).forEach(key => {
+            const regex = new RegExp('\\b' + key + '\\b', 'gi');
+            translated = translated.replace(regex, translationMap[key]);
+        });
+        return translated;
+    }
+
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    const langBtnText = document.getElementById('lang-btn-text');
+
+    if (langToggleBtn && langBtnText) {
+        langToggleBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            langBtnText.textContent = currentLang === 'en' ? 'हिन्दी' : 'English';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+
+            const activeView = document.querySelector('.dashboard-view.active');
+            if (activeView) {
+                const viewId = activeView.id;
+                const viewMetaKey = viewId + '-title';
+                const viewMetaSubKey = viewId + '-subtitle';
+                
+                const titleEl = document.getElementById('view-title');
+                const subtitleEl = document.getElementById('view-subtitle');
+                
+                if (titleEl && translations[currentLang][viewMetaKey]) {
+                    titleEl.textContent = translations[currentLang][viewMetaKey];
+                }
+                if (subtitleEl && translations[currentLang][viewMetaSubKey]) {
+                    subtitleEl.textContent = translations[currentLang][viewMetaSubKey];
+                }
+            }
+
+            document.querySelectorAll('.location-search-input').forEach(input => {
+                if (currentLang === 'hi') {
+                    input.placeholder = 'शहर का नाम टाइप करें (उदा. मुंबई, दिल्ली...)';
+                } else {
+                    input.placeholder = 'Type city (e.g. Mumbai, New York...)';
+                }
+            });
+
+            const demoSpan = document.querySelector('#demo-indicator span');
+            if (demoSpan) {
+                demoSpan.textContent = translations[currentLang]['demo-text'];
+            }
+            
+            const magTitle = document.querySelector('#magnifier-default-state h4');
+            const magDesc = document.querySelector('#magnifier-default-state p');
+            if (magTitle) magTitle.textContent = translations[currentLang]['magnifier-title'];
+            if (magDesc) magDesc.textContent = translations[currentLang]['magnifier-desc'];
+        });
+    }
 
 });

@@ -998,6 +998,8 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return val
             return default
 
+        la = get_param('la', 'en')
+
         # 1. Daily Horoscope
         if path == '/api/horoscope/daily':
             sign = get_param('sign', 'aries')
@@ -1009,7 +1011,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_horoscope(sign)
                 else:
                     dt = get_param('datetime', time.strftime("%Y-%m-%dT%H:%M:%S+05:30"))
-                    api_url = f"https://api.prokerala.com/v2/horoscope/daily?sign={sign}&datetime={urllib.parse.quote(dt)}"
+                    api_url = f"https://api.prokerala.com/v2/horoscope/daily?sign={sign}&datetime={urllib.parse.quote(dt)}&la={la}"
                     raw_res = fetch_raw_api(api_url, token)
                     if raw_res and raw_res.get("status") == "ok":
                         response_data = {
@@ -1033,7 +1035,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_panchang(dt, lat, lng)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/panchang/advanced?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
+                    api_url = f"https://api.prokerala.com/v2/astrology/panchang/advanced?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
                     raw_res = fetch_raw_api(api_url, token)
                     if raw_res and raw_res.get("status") == "ok":
                         response_data = {
@@ -1057,8 +1059,8 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_kundli(dt, lat, lng)
                 else:
                     coordinates = f"{lat},{lng}"
-                    kundli_url = f"https://api.prokerala.com/v2/astrology/kundli?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
-                    planet_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
+                    kundli_url = f"https://api.prokerala.com/v2/astrology/kundli?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
+                    planet_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
                     
                     kundli_res = fetch_raw_api(kundli_url, token)
                     planet_res = fetch_raw_api(planet_url, token)
@@ -1085,7 +1087,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_mangal_dosha(dt, lat, lng)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/mangal-dosha?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
+                    api_url = f"https://api.prokerala.com/v2/astrology/mangal-dosha?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
                     raw_res = fetch_raw_api(api_url, token)
                     if raw_res and raw_res.get("status") == "ok":
                         response_data = {
@@ -1113,7 +1115,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                 else:
                     g_coords = f"{g_lat},{g_lng}"
                     b_coords = f"{b_lat},{b_lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/kundli-matching/advanced?girl_dob={urllib.parse.quote(g_dob)}&girl_coordinates={urllib.parse.quote(g_coords)}&boy_dob={urllib.parse.quote(b_dob)}&boy_coordinates={urllib.parse.quote(b_coords)}&ayanamsa=1&la=en"
+                    api_url = f"https://api.prokerala.com/v2/astrology/kundli-matching/advanced?girl_dob={urllib.parse.quote(g_dob)}&girl_coordinates={urllib.parse.quote(g_coords)}&boy_dob={urllib.parse.quote(b_dob)}&boy_coordinates={urllib.parse.quote(b_coords)}&ayanamsa=1&la={la}"
                     raw_res = fetch_raw_api(api_url, token)
                     if raw_res and raw_res.get("status") == "ok":
                         response_data = {
@@ -1137,7 +1139,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_planet_position(dt, lat, lng)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la=en"
+                    api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
                     response_data = self.fetch_prokerala_api(api_url, token, fallback_func=lambda: get_mock_planet_position(dt, lat, lng))
 
             if response_data.get("status") in ["success", "ok"] and "data" in response_data:
