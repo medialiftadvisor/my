@@ -1,705 +1,139 @@
 /* ==========================================================================
-   THE CLARITY CODE™ - INTERACTIVE LOGIC & ANIMATIONS
-   Includes: GSAP animations, Testimonial Carousel, FAQ Accordion,
-             Interactive Booking Scheduler, Blog Modal, and Form Validation
+   COSMIC DASHBOARD INTERACTIVE SCRIPT
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* --------------------------------------------------------------------------
-       1. MOBILE NAVIGATION MENU
-       -------------------------------------------------------------------------- */
-    const mobileToggle = document.getElementById('mobile-toggle');
-    const navMenu = document.getElementById('nav-menu');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', () => {
-            mobileToggle.classList.toggle('active');
-            navMenu.classList.toggle('active');
-        });
-
-        // Close menu when links are clicked
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileToggle.classList.remove('active');
-                navMenu.classList.remove('active');
-            });
-        });
-    }
-
-    /* --------------------------------------------------------------------------
-       2. STICKY CTA BAR DISPLAY
-       -------------------------------------------------------------------------- */
-    const stickyCta = document.getElementById('sticky-cta');
-    const heroSection = document.getElementById('hero');
-
-    window.addEventListener('scroll', () => {
-        if (!stickyCta || !heroSection) return;
-        
-        const heroHeight = heroSection.offsetHeight;
-        const scrollPosition = window.scrollY;
-
-        // Show sticky bar after scrolling past 70% of hero section
-        if (scrollPosition > heroHeight * 0.7) {
-            stickyCta.classList.add('visible');
-        } else {
-            stickyCta.classList.remove('visible');
-        }
-    });
-
-    /* --------------------------------------------------------------------------
-       3. GSAP SCROLLTRIGGERS & ENTRANCE ANIMATIONS
-       -------------------------------------------------------------------------- */
-    // Register GSAP ScrollTrigger plugin safely
-    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger);
-
-        // Hero Section entrance
-        const tlHero = gsap.timeline({ defaults: { ease: 'power4.out', duration: 1 } });
-        tlHero.from('.fade-in', {
-            y: 40,
-            opacity: 0,
-            stagger: 0.15,
-            delay: 0.2
-        })
-        .from('.hero-portrait', {
-            scale: 0.95,
-            opacity: 0,
-            duration: 1.2
-        }, '-=0.8')
-        .from('.floating-badge', {
-            y: 20,
-            opacity: 0,
-            stagger: 0.2,
-            duration: 0.8
-        }, '-=0.5');
-
-        // Scroll animations for various blocks
-        const animatedBlocks = document.querySelectorAll('.scroll-animate');
-        animatedBlocks.forEach(block => {
-            const animationType = block.getAttribute('data-animation');
-            let fromVars = { opacity: 0, duration: 1, ease: 'power3.out' };
-
-            if (animationType === 'fade-up') {
-                fromVars.y = 50;
-            } else if (animationType === 'fade-right') {
-                fromVars.x = -60;
-            } else if (animationType === 'fade-left') {
-                fromVars.x = 60;
-            }
-
-            gsap.from(block, {
-                ...fromVars,
-                scrollTrigger: {
-                    trigger: block,
-                    start: 'top 85%',
-                    toggleActions: 'play none none none'
-                }
-            });
-        });
-
-        // About Section Counter Numbers Animation
-        const counterNums = document.querySelectorAll('.counter-num');
-        counterNums.forEach(num => {
-            const target = parseInt(num.getAttribute('data-target'), 10);
-            gsap.to(num, {
-                innerText: target,
-                duration: 2.5,
-                snap: { innerText: 1 },
-                ease: 'power2.out',
-                scrollTrigger: {
-                    trigger: num,
-                    start: 'top 90%',
-                    toggleActions: 'play none none none'
-                }
-            });
-        });
-
-        // Timeline journey items incremental animations
-        const timelineItems = document.querySelectorAll('.timeline-item');
-        timelineItems.forEach((item, index) => {
-            gsap.from(item.querySelector('.timeline-marker'), {
-                scale: 0,
-                opacity: 0,
-                duration: 0.6,
-                scrollTrigger: {
-                    trigger: item,
-                    start: 'top 80%'
-                }
-            });
-
-            gsap.from(item.querySelector('.timeline-card'), {
-                x: 30,
-                opacity: 0,
-                duration: 0.8,
-                scrollTrigger: {
-                    trigger: item,
-                    start: 'top 80%'
-                }
-            });
-        });
-    }
-
-    /* --------------------------------------------------------------------------
-       4. TESTIMONIALS SLIDER (CAROUSEL)
-       -------------------------------------------------------------------------- */
-    const slides = document.querySelectorAll('.testimonial-slide');
-    const dots = document.querySelectorAll('.slider-dots .dot');
-    const btnPrev = document.getElementById('slider-prev');
-    const btnNext = document.getElementById('slider-next');
-    let currentSlide = 0;
-    let slideInterval;
-
-    if (slides.length > 0) {
-        const updateSlider = (index) => {
-            const slider = document.getElementById('testimonial-slider');
-            if (!slider) return;
-
-            // Constrain index
-            if (index >= slides.length) currentSlide = 0;
-            else if (index < 0) currentSlide = slides.length - 1;
-            else currentSlide = index;
-
-            // Shift slide container
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-
-            // Update classes
-            slides.forEach((slide, idx) => {
-                if (idx === currentSlide) slide.classList.add('active');
-                else slide.classList.remove('active');
-            });
-
-            dots.forEach((dot, idx) => {
-                if (idx === currentSlide) dot.classList.add('active');
-                else dot.classList.remove('active');
-            });
-        };
-
-        // Click next
-        if (btnNext) {
-            btnNext.addEventListener('click', () => {
-                updateSlider(currentSlide + 1);
-                resetAutoSlide();
-            });
-        }
-
-        // Click prev
-        if (btnPrev) {
-            btnPrev.addEventListener('click', () => {
-                updateSlider(currentSlide - 1);
-                resetAutoSlide();
-            });
-        }
-
-        // Click dots
-        dots.forEach(dot => {
-            dot.addEventListener('click', (e) => {
-                const targetIdx = parseInt(e.target.getAttribute('data-index'), 10);
-                updateSlider(targetIdx);
-                resetAutoSlide();
-            });
-        });
-
-        // Auto slide
-        const startAutoSlide = () => {
-            slideInterval = setInterval(() => {
-                updateSlider(currentSlide + 1);
-            }, 6000);
-        };
-
-        const resetAutoSlide = () => {
-            clearInterval(slideInterval);
-            startAutoSlide();
-        };
-
-        startAutoSlide();
-    }
-
-    /* --------------------------------------------------------------------------
-       5. FAQ ACCORDION
-       -------------------------------------------------------------------------- */
-    const faqQuestions = document.querySelectorAll('.faq-question');
-
-    faqQuestions.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const faqItem = btn.parentElement;
-            const answer = faqItem.querySelector('.faq-answer');
-            const isActive = faqItem.classList.contains('active');
-
-            // Close all other items
-            document.querySelectorAll('.faq-item').forEach(item => {
-                item.classList.remove('active');
-                item.querySelector('.faq-answer').style.maxHeight = null;
-            });
-
-            // Toggle clicked item
-            if (!isActive) {
-                faqItem.classList.add('active');
-                answer.style.maxHeight = answer.scrollHeight + "px";
-            }
-        });
-    });
-
-    /* --------------------------------------------------------------------------
-       6. GENERAL MODAL TRIGGERS (OPEN / CLOSE)
-       -------------------------------------------------------------------------- */
-    const openModals = document.querySelectorAll('.open-booking-modal');
-    const bookingModal = document.getElementById('booking-modal');
-    const closeBookingBtn = document.querySelectorAll('.close-booking-modal, #close-booking-modal');
-    
-    // Video Modal
-    const playIntroBtn = document.getElementById('play-intro-btn');
-    const videoModal = document.getElementById('video-modal');
-    const closeVideoBtn = document.getElementById('close-video-modal');
-
-    // Open booking modal
-    openModals.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (bookingModal) {
-                bookingModal.classList.add('active');
-                resetScheduler();
-            }
-        });
-    });
-
-    // Close booking modal
-    closeBookingBtn.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (bookingModal) bookingModal.classList.remove('active');
-        });
-    });
-
-    // Open video intro modal
-    if (playIntroBtn && videoModal) {
-        playIntroBtn.addEventListener('click', () => {
-            videoModal.classList.add('active');
-        });
-    }
-
-    if (closeVideoBtn && videoModal) {
-        closeVideoBtn.addEventListener('click', () => {
-            videoModal.classList.remove('active');
-        });
-    }
-
-    // Close modals on backdrop click
-    document.querySelectorAll('.modal').forEach(modal => {
-        const backdrop = modal.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.addEventListener('click', () => {
-                modal.classList.remove('active');
-            });
-        }
-    });
-
-    /* --------------------------------------------------------------------------
-       7. INTERACTIVE SCHEDULER LOGIC (CALENDLY SIMULATION)
-       -------------------------------------------------------------------------- */
-    let selectedDate = null;
-    let selectedTime = null;
-
-    const calendarDays = document.querySelectorAll('.calendar-grid .day.available');
-    const timeSlotList = document.getElementById('slot-list');
-    const timeHintText = document.querySelector('.time-hint-text');
-    const btnGotoDetails = document.getElementById('btn-goto-details');
-    
-    const stepDateTime = document.getElementById('step-date-time');
-    const stepIntakeDetails = document.getElementById('step-intake-details');
-    const stepSuccess = document.getElementById('step-success');
-
-    const schedulerForm = document.getElementById('scheduler-form');
-
-    // Calendar day selection
-    calendarDays.forEach(day => {
-        day.addEventListener('click', () => {
-            // Remove selection class
-            calendarDays.forEach(d => d.classList.remove('selected'));
-            
-            // Set current select
-            day.classList.add('selected');
-            selectedDate = day.getAttribute('data-date');
-            
-            // Show time slots
-            if (timeSlotList && timeHintText) {
-                timeHintText.classList.add('hidden');
-                timeSlotList.classList.remove('hidden');
-            }
-
-            // Reset time slot selection
-            selectedTime = null;
-            document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
-            if (btnGotoDetails) btnGotoDetails.disabled = true;
-        });
-    });
-
-    // Time slot selection
-    const timeSlots = document.querySelectorAll('.time-slot-btn');
-    timeSlots.forEach(slot => {
-        slot.addEventListener('click', () => {
-            timeSlots.forEach(s => s.classList.remove('selected'));
-            slot.classList.add('selected');
-            selectedTime = slot.getAttribute('data-time');
-
-            if (btnGotoDetails && selectedDate) {
-                btnGotoDetails.disabled = false;
-            }
-        });
-    });
-
-    // Go to step 2 (intake details)
-    if (btnGotoDetails) {
-        btnGotoDetails.addEventListener('click', () => {
-            if (!selectedDate || !selectedTime) return;
-
-            // Update step summaries
-            const summaryDate = document.getElementById('summary-date');
-            const summaryTime = document.getElementById('summary-time');
-            
-            if (summaryDate && summaryTime) {
-                // Formatting readable date
-                const dObj = new Date(selectedDate);
-                const readableDate = dObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                summaryDate.innerHTML = `<i class="fa-regular fa-calendar"></i> ${readableDate}`;
-                summaryTime.innerHTML = `<i class="fa-regular fa-clock"></i> ${selectedTime} (IST)`;
-            }
-
-            if (stepDateTime && stepIntakeDetails) {
-                stepDateTime.classList.add('hidden');
-                stepIntakeDetails.classList.remove('hidden');
-            }
-        });
-    }
-
-    // Back to date time selection
-    const btnBackToDateTime = document.getElementById('btn-back-to-datetime');
-    if (btnBackToDateTime) {
-        btnBackToDateTime.addEventListener('click', () => {
-            if (stepDateTime && stepIntakeDetails) {
-                stepIntakeDetails.classList.add('hidden');
-                stepDateTime.classList.remove('hidden');
-            }
-        });
-    }
-
-    // Confirm Spot Form submit
-    if (schedulerForm) {
-        schedulerForm.addEventListener('click', (e) => {
-            // Check if user clicked the button or triggered form
-            // Event listener is on form, button is type submit. Let's register submit event
-        });
-
-        schedulerForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Capture client details
-            const clientName = document.getElementById('sched-name').value;
-            
-            // Format receipt
-            const receiptDate = document.getElementById('receipt-date');
-            const receiptTime = document.getElementById('receipt-time');
-            if (receiptDate && receiptTime) {
-                const dObj = new Date(selectedDate);
-                receiptDate.textContent = dObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                receiptTime.textContent = `${selectedTime} (IST)`;
-            }
-
-            // Transition to success screen
-            if (stepIntakeDetails && stepSuccess) {
-                stepIntakeDetails.classList.add('hidden');
-                stepSuccess.classList.remove('hidden');
-            }
-        });
-    }
-
-    // Reset Scheduler
-    const resetScheduler = () => {
-        selectedDate = null;
-        selectedTime = null;
-        
-        calendarDays.forEach(d => d.classList.remove('selected'));
-        if (timeSlotList) timeSlotList.classList.add('hidden');
-        if (timeHintText) timeHintText.classList.remove('hidden');
-        if (btnGotoDetails) btnGotoDetails.disabled = true;
-
-        if (stepDateTime) stepDateTime.classList.remove('hidden');
-        if (stepIntakeDetails) stepIntakeDetails.classList.add('hidden');
-        if (stepSuccess) stepSuccess.classList.add('hidden');
-
-        if (schedulerForm) schedulerForm.reset();
-    };
-
-    /* --------------------------------------------------------------------------
-       8. BLOG DATABASE & READER MODAL RENDERING
-       -------------------------------------------------------------------------- */
-    const blogArticles = {
-        'article-1': {
-            tag: 'Overthinking',
-            title: 'How to Quiet the Mind: The 5-Minute Cognitive Reset',
-            date: 'June 18, 2026',
-            readTime: '5 min read',
-            content: `
-                <p>For young professionals, overthinking isn't just a minor habit—it is a cognitive tax. We spend hours analyzing emails, projecting worst-case outcomes of stakeholder meetings, and reconsidering choices that were already made. This drains our mental energy before actual execution begins.</p>
-                
-                <h4>Why Your Brain Overthinks</h4>
-                <p>Under stress, your amygdala triggers threat-detection sequences. It treats career ambiguity (e.g. "what if my lead doesn't like my proposal?") as a physical predator. To solve this, your prefrontal cortex spins up infinite loops to find a 'perfect' resolution, leading to analysis paralysis.</p>
-
-                <h4>The 3-Step Somali Reset Protocol</h4>
-                <p>When you feel your mind racing, apply this somatic framework to shut down the survival alarm system:</p>
-                <ul>
-                    <li><strong>Ground the body (2 mins):</strong> Place your feet firmly on the ground. Scan for physical tension in your jaw, neck, and shoulders. Exhale slowly, making the exhalation twice as long as the inhalation.</li>
-                    <li><strong>Fact vs. Projection Audit (2 mins):</strong> Open a notepad and draw two columns. Write down exact physical facts in the left column (e.g. "My manager rescheduled our 1-on-1"). Write down your projections in the right column ("My manager is going to fire me"). Label the projections as 'Unverified Theories'.</li>
-                    <li><strong>Commit to a Micro-Decision (1 min):</strong> Pick a task that takes less than 3 minutes (e.g., replying to a quick slack message or opening a doc draft) and perform it immediately. Action is the biological cure for anxiety.</li>
-                </ul>
-
-                <h4>Implementing Daily Rules</h4>
-                <p>Set boundaries for your thinking. Allocate 15 minutes of "Worry Time" at 5:00 PM. If a worrying thought arises at 11:00 AM, write it down and table it for the designated period. You will find that by 5:00 PM, 90% of the items have lost their emotional charge.</p>
-            `
-        },
-        'article-2': {
-            tag: 'Habits',
-            title: 'The Science of Habit Stacking: Building Lasting Discipline',
-            date: 'June 12, 2026',
-            readTime: '4 min read',
-            content: `
-                <p>Many young professionals believe consistency is a matter of willpower. They expect themselves to wake up at 5:00 AM, go to the gym, drink green juice, and read 20 pages through sheer grit. But grit is a exhaustible fuel. The real secret to lifetime consistency is habit engineering.</p>
-                
-                <h4>The Neurology of the Habit Loop</h4>
-                <p>Habits are formed by the basal ganglia. The brain seeks to automate behaviors to conserve energy. A habit requires a cue (trigger), a routine (action), and a reward (dopamine release). If any of these are missing, the habit collapses within days.</p>
-
-                <h4>The Habit Stacking Framework</h4>
-                <p>The easiest way to install a new habit is to anchor it to an established, automatic daily routine. The formula is: <strong>After [Current Habit], I will [New Habit].</strong></p>
-                
-                <h4>Practical Examples for Corporate Professionals:</h4>
-                <ul>
-                    <li><strong>For Career Growth:</strong> "After I open my morning laptop and drink my first sip of coffee, I will write down my 3 Aligned Focus items for the day."</li>
-                    <li><strong>For Stress Management:</strong> "After I close my laptop lid at the end of the workday, I will close my eyes and take 5 deep somatic breaths to shift states."</li>
-                    <li><strong>For Physical Health:</strong> "After I brush my teeth at night, I will lay out my workout clothing on the chair for the next morning."</li>
-                </ul>
-
-                <h4>Reducing Friction</h4>
-                <p>Make the cue visible and the action simple. If you want to read more, put the book on your pillow. If you want to stop checking social media at work, block the site on your browser. Control your environment so discipline becomes the path of least resistance.</p>
-            `
-        },
-        'article-3': {
-            tag: 'Emotional Intelligence',
-            title: 'Corporate Boundaries: Say \'No\' and Gain Respect',
-            date: 'June 05, 2026',
-            readTime: '6 min read',
-            content: `
-                <p>Many young professionals suffer from people-pleasing tendencies. They take on late-night assignments, say yes to ambiguous goals, and allow managers to cross boundaries out of fear of looking lazy. Ironically, this behavior usually leads to burnout, low performance, and a lack of respect from senior leadership.</p>
-                
-                <h4>The Assertiveness Paradox</h4>
-                <p>High performers are respected not because they say yes to everything, but because they protect their focus and execute their core tasks with excellence. A professional who sets boundaries communicates high agency and executive maturity.</p>
-
-                <h4>How to Decline Work Diplomatically (Scripts)</h4>
-                <p>Never say "I don't want to do this" or "I am too busy". Instead, use priority mapping scripts:</p>
-                <ul>
-                    <li><strong>When a manager dumps an ad-hoc project:</strong> "I’d love to help with this. Currently, my main priorities are Tasks A and B. To take this on, should we deprioritize one of those, or push back the timeline of this new request?"</li>
-                    <li><strong>When asked to work over the weekend:</strong> "I want to make sure this deliverable is top quality. I am offline this weekend to recharge, but I will tackle this first thing Monday morning to have it ready for review by noon."</li>
-                    <li><strong>When meetings overload your calendar:</strong> "I see we have a sync scheduled. To protect my coding/design time, can I provide my updates via email, or is there a specific agenda item that requires my active input?"</li>
-                </ul>
-
-                <h4>Stabilizing Your Nervous System</h4>
-                <p>Setting boundaries triggers short-term guilt. Understand that this guilt is just a sign that you are breaking old, submissive habits. Sit with the discomfort, remind yourself of your long-term career mission, and watch how your team adjusts to your new boundaries.</p>
-            `
-        }
-    };
-
-    const blogModal = document.getElementById('blog-modal');
-    const blogReaderBody = document.getElementById('blog-reader-body');
-    const closeBlogBtn = document.getElementById('close-blog-modal');
-    const blogCards = document.querySelectorAll('.blog-card');
-
-    if (blogCards.length > 0 && blogModal && blogReaderBody) {
-        blogCards.forEach(card => {
-            const triggerBtn = card.querySelector('.read-blog-trigger');
-            const handler = () => {
-                const articleId = card.getAttribute('data-article-id');
-                const article = blogArticles[articleId];
-                
-                if (article) {
-                    // Populate modal content
-                    blogReaderBody.innerHTML = `
-                        <div class="blog-article-full">
-                            <span class="blog-tag">${article.tag}</span>
-                            <h2>${article.title}</h2>
-                            <div class="blog-meta-bar">
-                                <span><i class="fa-regular fa-calendar"></i> ${article.date}</span>
-                                <span><i class="fa-regular fa-clock"></i> ${article.readTime}</span>
-                                <span>By Komal Sharma</span>
-                            </div>
-                            <div class="blog-body-text">
-                                ${article.content}
-                            </div>
-                            <div style="margin-top: 3rem; text-align: center; border-top: 1px solid var(--border-glass); padding-top: 2rem;">
-                                <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">Ready to break your bottlenecks?</h4>
-                                <button class="btn btn-gold open-booking-modal" id="modal-blog-cta">Book A Free Clarity Call</button>
-                            </div>
-                        </div>
-                    `;
-
-                    // Show modal
-                    blogModal.classList.add('active');
-
-                    // Bind the CTA inside modal
-                    const blogCta = document.getElementById('modal-blog-cta');
-                    if (blogCta) {
-                        blogCta.addEventListener('click', () => {
-                            blogModal.classList.remove('active');
-                            if (bookingModal) {
-                                bookingModal.classList.add('active');
-                                resetScheduler();
-                            }
-                        });
-                    }
-                }
-            };
-
-            if (triggerBtn) triggerBtn.addEventListener('click', handler);
-            card.addEventListener('click', (e) => {
-                // Ensure clicks on buttons don't double fire, but let card clicks open as well
-                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-                    handler();
-                }
-            });
-        });
-    }
-
-    if (closeBlogBtn && blogModal) {
-        closeBlogBtn.addEventListener('click', () => {
-            blogModal.classList.remove('active');
-        });
-    }
-
-    /* --------------------------------------------------------------------------
-       9. FORM VALIDATIONS & SIMULATED SUBMISSIONS
-       -------------------------------------------------------------------------- */
-    // Contact Form Handler
-    const contactForm = document.getElementById('contact-form');
-    const contactSuccess = document.getElementById('form-success');
-
-    if (contactForm && contactSuccess) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            // Simulate server request
-            const submitBtn = contactForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                
-                // Show success message
-                contactSuccess.style.display = 'flex';
-                contactForm.reset();
-
-                // Fade out success message after 5 seconds
-                setTimeout(() => {
-                    contactSuccess.style.display = 'none';
-                }, 5000);
-            }, 1500);
-        });
-    }
-
-    if (newsletterForm && newsletterSuccess) {
-        newsletterForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const inputField = newsletterForm.querySelector('input');
-            const submitBtn = newsletterForm.querySelector('button');
-            
-            submitBtn.disabled = true;
-            inputField.disabled = true;
-
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                inputField.disabled = false;
-                
-                // Show success message
-                newsletterSuccess.style.display = 'flex';
-                newsletterForm.reset();
-
-                // Hide success message after 4 seconds
-                setTimeout(() => {
-                    newsletterSuccess.style.display = 'none';
-                }, 4000);
-            }, 1200);
-        });
-    }
-
-    /* --------------------------------------------------------------------------
-       10. COSMIC ALIGNMENT PORTAL LOGIC
-       -------------------------------------------------------------------------- */
     const apiBase = '/api';
 
-    // 10.1 Config Check (Demo Mode Check)
+    // 1. View Routing (Hash-Based)
+    const menuLinks = document.querySelectorAll('.menu-link');
+    const viewSections = document.querySelectorAll('.dashboard-view');
+    const viewTitleEl = document.getElementById('view-title');
+    const viewSubtitleEl = document.getElementById('view-subtitle');
+
+    const viewMeta = {
+        'home-view': { title: 'Dashboard Home', subtitle: 'Welcome to your daily cosmic alignment forecast.' },
+        'horoscope-view': { title: 'Daily Horoscope', subtitle: 'Receive planetary forecasts for all twelve zodiac signs.' },
+        'panchang-view': { title: 'Vedic Panchang', subtitle: 'Explore sunrise, lunar phases, and daily auspicious muhurtas.' },
+        'planet-position-view': { title: 'Planet Positions', subtitle: 'Detailed coordinates, rasi lords, and retrograde phases for celestial bodies.' },
+        'natal-chart-view': { title: 'Natal Chart Wheel', subtitle: 'Interactive Western Astrology natal chart wheel showing aspect lines, signs, and houses.' },
+        'kundli-view': { title: 'Kundli Generator', subtitle: 'Calculate your birth chart elements and planetary positions.' },
+        'matching-view': { title: 'Relationship Matcher', subtitle: 'Assess energy compatibility scores using Ashta Kuta matching.' }
+    };
+
+    const navigateToView = (viewId) => {
+        // Toggle view visibility
+        viewSections.forEach(section => {
+            if (section.id === viewId) {
+                section.classList.add('active');
+            } else {
+                section.classList.remove('active');
+            }
+        });
+
+        // Toggle active menu link
+        menuLinks.forEach(link => {
+            if (link.getAttribute('data-view') === viewId) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+
+        // Update titles
+        const meta = viewMeta[viewId] || { title: 'Dashboard', subtitle: '' };
+        if (viewTitleEl) viewTitleEl.textContent = meta.title;
+        if (viewSubtitleEl) viewSubtitleEl.textContent = meta.subtitle;
+
+        // Reset scroll position
+        window.scrollTo(0, 0);
+    };
+
+    // Listen to sidebar links
+    menuLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetView = link.getAttribute('data-view');
+            const targetHash = link.getAttribute('href');
+            window.location.hash = targetHash;
+            navigateToView(targetView);
+        });
+    });
+
+    // Listen to quick banner anchor links
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('anchor-link') || e.target.closest('.anchor-link')) {
+            const el = e.target.classList.contains('anchor-link') ? e.target : e.target.closest('.anchor-link');
+            const targetHash = el.getAttribute('href');
+            const correspondingLink = document.querySelector(`.menu-link[href="${targetHash}"]`);
+            if (correspondingLink) {
+                e.preventDefault();
+                window.location.hash = targetHash;
+                navigateToView(correspondingLink.getAttribute('data-view'));
+            }
+        }
+    });
+
+    // Check hash on load
+    const checkHashRoute = () => {
+        const hash = window.location.hash || '#home';
+        const activeLink = document.querySelector(`.menu-link[href="${hash}"]`);
+        if (activeLink) {
+            navigateToView(activeLink.getAttribute('data-view'));
+        } else {
+            navigateToView('home-view');
+        }
+    };
+    checkHashRoute();
+
+    // 2. Config & Mode Check
     fetch(`${apiBase}/config`)
         .then(res => res.json())
         .then(data => {
-            const demoBadge = document.getElementById('demo-badge-container');
-            if (data.demo_mode && demoBadge) {
-                demoBadge.style.display = 'block';
+            const indicator = document.getElementById('demo-indicator');
+            if (indicator) {
+                if (data.demo_mode) {
+                    indicator.style.display = 'flex';
+                } else {
+                    indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #2ef56a;"></i><span>Connected to Prokerala API</span>';
+                    indicator.style.backgroundColor = 'rgba(46, 245, 106, 0.08)';
+                    indicator.style.borderColor = 'rgba(46, 245, 106, 0.2)';
+                    indicator.style.color = '#2ef56a';
+                }
             }
         })
         .catch(err => {
-            console.warn("[Cosmic Portal] Could not connect to API server. Operating in fallback mock mode.", err);
-            const demoBadge = document.getElementById('demo-badge-container');
-            if (demoBadge) {
-                demoBadge.style.display = 'block';
-            }
+            console.warn("Could not check config endpoint. Operating in fallback mock mode.");
         });
 
-    // 10.2 Tab Switcher
-    const tabButtons = document.querySelectorAll('.portal-tab-btn');
-    const tabPanes = document.querySelectorAll('.portal-pane');
+    // Set header date
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateEl.textContent = new Date().toLocaleDateString('en-US', options);
+    }
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.getAttribute('data-tab');
-
-            // Remove active classes
-            tabButtons.forEach(b => b.classList.remove('active'));
-            tabPanes.forEach(p => p.classList.remove('active'));
-
-            // Add active classes
-            btn.classList.add('active');
-            const activePane = document.getElementById(targetTab);
-            if (activePane) {
-                activePane.classList.add('active');
-            }
-        });
-    });
-
-    // 10.3 Location Coordinates City Preset Handler
-    const cityPresets = document.querySelectorAll('.city-preset');
-    cityPresets.forEach(select => {
-        select.addEventListener('change', (e) => {
+    // 3. City Preset coordinates autofill
+    const presets = document.querySelectorAll('.city-preset');
+    presets.forEach(preset => {
+        preset.addEventListener('change', (e) => {
             const val = e.target.value;
-            const container = e.target.closest('form');
-            if (!container) return;
+            const form = e.target.closest('form');
+            if (!form) return;
 
-            const latInput = container.querySelector('input[id$="-lat"]') || container.querySelector('input[id="match-g-lat"]') || container.querySelector('input[id="match-b-lat"]');
-            const lngInput = container.querySelector('input[id$="-lng"]') || container.querySelector('input[id="match-g-lng"]') || container.querySelector('input[id="match-b-lng"]');
-            
-            // Check if it's dual matching panel
-            if (select.id === 'match-g-city' || select.id === 'match-b-city') {
-                const prefix = select.id.includes('g-city') ? 'match-g-' : 'match-b-';
-                const latEl = document.getElementById(`${prefix}lat`);
-                const lngEl = document.getElementById(`${prefix}lng`);
-                if (val !== 'custom') {
-                    const [lat, lng] = val.split(',');
-                    if (latEl) latEl.value = lat;
-                    if (lngEl) lngEl.value = lng;
-                } else {
-                    if (latEl) latEl.value = '';
-                    if (lngEl) lngEl.value = '';
-                }
-                return;
+            const id = e.target.id;
+            let latInput, lngInput;
+
+            if (id === 'match-g-city') {
+                latInput = document.getElementById('match-g-lat');
+                lngInput = document.getElementById('match-g-lng');
+            } else if (id === 'match-b-city') {
+                latInput = document.getElementById('match-b-lat');
+                lngInput = document.getElementById('match-b-lng');
+            } else {
+                latInput = form.querySelector('input[id$="-lat"]');
+                lngInput = form.querySelector('input[id$="-lng"]');
             }
 
             if (val !== 'custom') {
@@ -713,9 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Helper for loading state
-    const showLoader = (containerId) => {
-        const container = document.getElementById(containerId);
+    // Helper for loading animation
+    const showLoader = (targetId) => {
+        const container = document.getElementById(targetId);
         if (container) {
             container.innerHTML = `
                 <div class="spinner-container">
@@ -726,72 +160,358 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Helper for generating standard ISO datetime offset (IST +05:30)
+    // Helper to generate ISO 8601 offset strings
     const getISODatetime = (dateStr, timeStr) => {
-        return `${dateStr}T${timeStr}:00+05:30`;
+        return `${dateStr}T${timeStr || '12:00'}:00+05:30`;
     };
 
-    // 10.4 Tab 1: Daily Horoscope Form Submission
-    const horoscopeForm = document.getElementById('horoscope-form');
-    if (horoscopeForm) {
-        horoscopeForm.addEventListener('submit', (e) => {
+    // Populate default dates on inputs
+    const todayStr = new Date().toISOString().split('T')[0];
+    const defaultLocalTime = new Date().toLocaleTimeString('en-US', { hour12: false }).substring(0, 5);
+    
+    const pDateInput = document.getElementById('panchang-date');
+    if (pDateInput) {
+        pDateInput.value = `${todayStr}T${defaultLocalTime}`;
+    }
+
+    const pPosDateInput = document.getElementById('planet-pos-date');
+    if (pPosDateInput) {
+        pPosDateInput.value = `${todayStr}T${defaultLocalTime}`;
+    }
+
+    const nChartDateInput = document.getElementById('natal-chart-date');
+    if (nChartDateInput) {
+        nChartDateInput.value = `${todayStr}T${defaultLocalTime}`;
+    }
+
+    const kDobInput = document.getElementById('kundli-dob');
+    if (kDobInput) kDobInput.value = '1995-05-15';
+    const kTobInput = document.getElementById('kundli-tob');
+    if (kTobInput) kTobInput.value = '08:30';
+
+    const mDobInput = document.getElementById('match-g-dob');
+    if (mDobInput) mDobInput.value = '1996-08-20T10:15';
+    const mDobInput2 = document.getElementById('match-b-dob');
+    if (mDobInput2) mDobInput2.value = '1994-12-05T14:45';
+
+    // 4. Daily Horoscope View Handlers
+    const zodiacCards = document.querySelectorAll('.zodiac-card');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Sign elements helper
+    const signIcons = {
+        aries: 'fa-hand-fist', taurus: 'fa-leaf', gemini: 'fa-comments', cancer: 'fa-water',
+        leo: 'fa-crown', virgo: 'fa-list-check', libra: 'fa-scale-balanced', scorpio: 'fa-eye',
+        sagittarius: 'fa-compass', capricorn: 'fa-gem', aquarius: 'fa-lightbulb', pisces: 'fa-wand-sparkles'
+    };
+
+    // Element filter click
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const element = btn.getAttribute('data-element');
+            zodiacCards.forEach(card => {
+                if (element === 'all' || card.getAttribute('data-element') === element) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Horoscope Modal trigger
+    const hModal = document.getElementById('horoscope-modal');
+    const hModalClose = document.getElementById('close-horoscope-modal');
+    const hModalBody = document.getElementById('horoscope-modal-body');
+
+    zodiacCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const sign = card.getAttribute('data-sign');
+            if (hModal && hModalBody) {
+                hModal.classList.add('active');
+                
+                hModalBody.innerHTML = `
+                    <div class="spinner-container">
+                        <span class="loader-cosmic"></span>
+                        <span class="loader-text">Reading the sky charts...</span>
+                    </div>
+                `;
+
+                fetch(`${apiBase}/horoscope/daily?sign=${sign}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.status === 'success' && res.data) {
+                            const data = res.data;
+                            const iconClass = signIcons[sign] || 'fa-star-and-crescent';
+                            hModalBody.innerHTML = `
+                                <div class="h-modal-header">
+                                    <i class="fa-solid ${iconClass}"></i>
+                                    <div>
+                                        <h2>${data.sign} Daily Forecast</h2>
+                                        <span>${data.date}</span>
+                                    </div>
+                                </div>
+                                <div class="h-modal-body">
+                                    <p class="main-pred">"${data.prediction}"</p>
+                                    <div class="h-modal-grid">
+                                        <div class="h-modal-box">
+                                            <h4><i class="fa-solid fa-user"></i> Personal</h4>
+                                            <p>${data.areas?.personal || 'Reflect and establish a balanced routine.'}</p>
+                                        </div>
+                                        <div class="h-modal-box">
+                                            <h4><i class="fa-solid fa-heart"></i> Love</h4>
+                                            <p>${data.areas?.relationship || 'Express warmth and show appreciation.'}</p>
+                                        </div>
+                                        <div class="h-modal-box">
+                                            <h4><i class="fa-solid fa-briefcase"></i> Career</h4>
+                                            <p>${data.areas?.profession || 'Plan organized approaches and schedules.'}</p>
+                                        </div>
+                                        <div class="h-modal-box">
+                                            <h4><i class="fa-solid fa-dumbbell"></i> Wellness</h4>
+                                            <p>${data.areas?.health || 'Incorporate physical activity or stretching.'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            throw new Error("Unable to fetch");
+                        }
+                    })
+                    .catch(err => {
+                        hModalBody.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                                <p>Error loading forecast: ${err.message}. Ensure the API server is running.</p>
+                            </div>
+                        `;
+                    });
+            }
+        });
+    });
+
+    if (hModalClose && hModal) {
+        hModalClose.addEventListener('click', () => {
+            hModal.classList.remove('active');
+        });
+    }
+
+    // 5. Panchang Form Submission
+    const panchangForm = document.getElementById('panchang-form');
+    if (panchangForm) {
+        panchangForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const sign = document.getElementById('zodiac-sign').value;
-            const resultBox = document.getElementById('horoscope-result');
+            const dateVal = document.getElementById('panchang-date').value;
+            const lat = document.getElementById('panchang-lat').value;
+            const lng = document.getElementById('panchang-lng').value;
+            const resultBox = document.getElementById('panchang-result');
 
-            showLoader('horoscope-result');
+            showLoader('panchang-result');
 
-            // Send call
-            fetch(`${apiBase}/horoscope/daily?sign=${sign}`)
+            // Format date local (YYYY-MM-DDTHH:MM) to ISO with +05:30
+            const isoDt = `${dateVal}:00+05:30`;
+
+            fetch(`${apiBase}/astrology/panchang?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
                         const data = res.data;
+                        
+                        let auspiciousHtml = '';
+                        let inauspiciousHtml = '';
+                        
+                        const auspicious = data.auspicious_timings || [];
+                        auspicious.forEach(a => {
+                            auspiciousHtml += `
+                                <div class="muhurta-item">
+                                    <span class="name">${a.name}</span>
+                                    <span class="time-span">${a.start} - ${a.end}</span>
+                                </div>
+                            `;
+                        });
+
+                        const inauspicious = data.inauspicious_timings || [];
+                        inauspicious.forEach(i => {
+                            inauspiciousHtml += `
+                                <div class="muhurta-item">
+                                    <span class="name">${i.name}</span>
+                                    <span class="time-span">${i.start} - ${i.end}</span>
+                                </div>
+                            `;
+                        });
+
                         resultBox.innerHTML = `
                             <div class="result-card">
                                 <div class="result-header">
-                                    <div class="result-title">${data.sign} Guidance</div>
-                                    <span class="result-badge">${data.date}</span>
+                                    <div class="result-title">Vedic Panchang Report</div>
+                                    <span class="result-badge">Muhurta Chart</span>
                                 </div>
                                 <div class="result-content">
-                                    <p class="prediction-main font-italic">"${data.prediction}"</p>
-                                    <div class="result-areas">
-                                        <div class="area-box">
-                                            <h4><i class="fa-solid fa-user"></i> Personal</h4>
-                                            <p>${data.areas?.personal || 'Focus on self-reflection and inner balance.'}</p>
+                                    <div class="panchang-grid-meta">
+                                        <div class="meta-block">
+                                            <span>Tithi</span>
+                                            <strong>${data.tithi?.name || 'N/A'}</strong>
                                         </div>
-                                        <div class="area-box">
-                                            <h4><i class="fa-solid fa-heart"></i> Love</h4>
-                                            <p>${data.areas?.relationship || 'Express appreciation and build synergy with loved ones.'}</p>
+                                        <div class="meta-block">
+                                            <span>Nakshatra</span>
+                                            <strong>${data.nakshatra?.name || 'N/A'}</strong>
                                         </div>
-                                        <div class="area-box">
-                                            <h4><i class="fa-solid fa-briefcase"></i> Work</h4>
-                                            <p>${data.areas?.profession || 'Plan long-term goals and stay organized.'}</p>
+                                        <div class="meta-block">
+                                            <span>Yoga</span>
+                                            <strong>${data.yoga?.name || 'N/A'}</strong>
                                         </div>
-                                        <div class="area-box">
-                                            <h4><i class="fa-solid fa-dumbbell"></i> Health</h4>
-                                            <p>${data.areas?.health || 'Maintain grounding physical habits.'}</p>
+                                        <div class="meta-block">
+                                            <span>Karana</span>
+                                            <strong>${data.karana?.name || 'N/A'}</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="panchang-main-metrics">
+                                        <div class="panchang-metric-item">
+                                            <h4>Solar Transitions</h4>
+                                            <p>${data.sunrise} / ${data.sunset}</p>
+                                            <span>Sunrise / Sunset</span>
+                                        </div>
+                                        <div class="panchang-metric-item">
+                                            <h4>Lunar Transitions</h4>
+                                            <p>${data.moonrise} / ${data.moonset}</p>
+                                            <span>Moonrise / Moonset</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="muhurtas-split">
+                                        <div class="muhurta-box">
+                                            <h4>Auspicious Muhurtas</h4>
+                                            <div class="muhurta-list">
+                                                ${auspiciousHtml || '<p class="text-muted small">No timings calculated.</p>'}
+                                            </div>
+                                        </div>
+                                        <div class="muhurta-box inauspicious">
+                                            <h4>Inauspicious Timings</h4>
+                                            <div class="muhurta-list">
+                                                ${inauspiciousHtml || '<p class="text-muted small">No timings calculated.</p>'}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         `;
+
+                        // Feed the home view quick overview if the date is today
+                        const inputDateOnly = dateVal.split('T')[0];
+                        if (inputDateOnly === todayStr) {
+                            const homeSun = document.getElementById('home-sunrise-set');
+                            const homeTithi = document.getElementById('home-tithi');
+                            const homeNakshatra = document.getElementById('home-nakshatra');
+                            if (homeSun) homeSun.textContent = `${data.sunrise.substring(0,5)} ${data.sunrise.slice(-2)} / ${data.sunset.substring(0,5)} ${data.sunset.slice(-2)}`;
+                            if (homeTithi) homeTithi.textContent = data.tithi?.name || 'N/A';
+                            if (homeNakshatra) homeNakshatra.textContent = data.nakshatra?.name || 'N/A';
+                        }
+
                     } else {
-                        throw new Error(res.message || "Failed to load");
+                        throw new Error(res.message || "Failed parsing data");
                     }
                 })
                 .catch(err => {
                     resultBox.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-circle-exclamation text-danger"></i>
-                            <p>Error fetching daily guidance: ${err.message}. Please verify the backend is running.</p>
+                            <p>Error generating panchang: ${err.message}. Make sure the backend is active.</p>
                         </div>
                     `;
                 });
         });
     }
 
-    // 10.5 Tab 2: Kundli Form Submission
+    // 6. Kundli Form Submission
+    const zodiacNumbers = {
+        aries: 1, taurus: 2, gemini: 3, cancer: 4, leo: 5, virgo: 6,
+        libra: 7, scorpio: 8, sagittarius: 9, capricorn: 10, aquarius: 11, pisces: 12
+    };
+
+    const drawDiamondChart = (ascendantName, planetsList) => {
+        // Calculate sign numbers
+        const ascSignLower = ascendantName.toLowerCase();
+        const startSignNum = zodiacNumbers[ascSignLower] || 1;
+
+        // Map house index (1-12) to sign number
+        const houseSigns = {};
+        for (let house = 1; house <= 12; house++) {
+            houseSigns[house] = ((startSignNum + house - 2) % 12) + 1;
+        }
+
+        // Map house index (1-12) to list of planet labels
+        const housePlanets = {};
+        for (let h = 1; h <= 12; h++) housePlanets[h] = [];
+        
+        planetsList.forEach(p => {
+            const label = p.planet.substring(0, 2);
+            if (p.house >= 1 && p.house <= 12) {
+                housePlanets[p.house].push(label);
+            }
+        });
+
+        // Coordinates for text placement for each of the 12 houses
+        // House 1 (Lagna) is the central top triangle.
+        // House 2 is top-left, House 3 is left-top, etc.
+        const positions = {
+            1:  { label: { x: 150, y: 70 },  planets: { x: 150, y: 95 } },
+            2:  { label: { x: 95, y: 35 },   planets: { x: 95, y: 55 } },
+            3:  { label: { x: 35, y: 95 },   planets: { x: 55, y: 95 } },
+            4:  { label: { x: 75, y: 150 },  planets: { x: 100, y: 150 } },
+            5:  { label: { x: 35, y: 205 },  planets: { x: 55, y: 205 } },
+            6:  { label: { x: 95, y: 265 },  planets: { x: 95, y: 245 } },
+            7:  { label: { x: 150, y: 230 }, planets: { x: 150, y: 205 } },
+            8:  { label: { x: 205, y: 265 }, planets: { x: 205, y: 245 } },
+            9:  { label: { x: 265, y: 205 }, planets: { x: 245, y: 205 } },
+            10: { label: { x: 225, y: 150 }, planets: { x: 200, y: 150 } },
+            11: { label: { x: 265, y: 95 },  planets: { x: 245, y: 95 } },
+            12: { label: { x: 205, y: 35 },  planets: { x: 205, y: 55 } }
+        };
+
+        let signLabelsHtml = '';
+        let planetLabelsHtml = '';
+
+        for (let house = 1; house <= 12; house++) {
+            const pos = positions[house];
+            const sign = houseSigns[house];
+            const planets = housePlanets[house].join(', ');
+
+            // Inject sign numbers
+            signLabelsHtml += `
+                <text x="${pos.label.x}" y="${pos.label.y}" fill="#ffd700" font-size="10" font-weight="700" text-anchor="middle">${sign}</text>
+            `;
+
+            // Inject planets labels
+            if (planets) {
+                planetLabelsHtml += `
+                    <text x="${pos.planets.x}" y="${pos.planets.y}" fill="#ffffff" font-size="11" font-weight="500" text-anchor="middle">${planets}</text>
+                `;
+            }
+        }
+
+        // Return full SVG markup
+        return `
+            <svg width="300" height="300" viewBox="0 0 300 300" class="svg-chart">
+                <!-- Outer borders -->
+                <rect x="10" y="10" width="280" height="280" stroke="#ffd700" stroke-width="2" fill="none" opacity="0.6" />
+                
+                <!-- Diagonals -->
+                <line x1="10" y1="10" x2="290" y2="290" stroke="#ffd700" stroke-width="1.5" opacity="0.6" />
+                <line x1="290" y1="10" x2="10" y2="290" stroke="#ffd700" stroke-width="1.5" opacity="0.6" />
+                
+                <!-- Inner diamond polygon -->
+                <polygon points="150,10 290,150 150,290 10,150" stroke="#ffd700" stroke-width="1.5" fill="none" opacity="0.6" />
+                
+                <!-- Sign & Planets Text Injections -->
+                ${signLabelsHtml}
+                ${planetLabelsHtml}
+            </svg>
+        `;
+    };
+
     const kundliForm = document.getElementById('kundli-form');
     if (kundliForm) {
         kundliForm.addEventListener('submit', (e) => {
@@ -811,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (res.status === 'success' && res.data) {
                         const data = res.data;
                         const planets = data.planetary_positions || [];
-                        
+
                         let planetRows = '';
                         planets.forEach(p => {
                             planetRows += `
@@ -824,20 +544,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         });
 
+                        // Draw visual chart
+                        const ascName = data.ascendant?.name || 'Aries';
+                        const chartSvg = drawDiamondChart(ascName, planets);
+
                         resultBox.innerHTML = `
                             <div class="result-card">
                                 <div class="result-header">
-                                    <div class="result-title">Birth Chart Blueprint</div>
-                                    <span class="result-badge">Vedic Kundli</span>
+                                    <div class="result-title">Kundli Birth Chart</div>
+                                    <span class="result-badge">Vedic Horoscope</span>
                                 </div>
                                 <div class="result-content">
                                     <div class="kundli-grid-meta">
                                         <div class="meta-box">
-                                            <span>Ascendant (Lagna)</span>
+                                            <span>Ascendant</span>
                                             <strong>${data.ascendant?.name || 'N/A'}</strong>
                                         </div>
                                         <div class="meta-box">
-                                            <span>Moon Sign (Rashi)</span>
+                                            <span>Moon Sign</span>
                                             <strong>${data.moon_sign?.name || 'N/A'}</strong>
                                         </div>
                                         <div class="meta-box">
@@ -846,109 +570,50 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </div>
                                     </div>
                                     
-                                    <p><strong>Zodiac Profiles & Tendenices:</strong></p>
-                                    <p class="small text-muted font-italic">
+                                    <p><strong>Behavioral Profile:</strong></p>
+                                    <p class="small text-muted font-italic" style="margin-bottom: 2rem;">
                                         ${data.ascendant?.description || ''} ${data.moon_sign?.description || ''} ${data.nakshatra?.description || ''}
                                     </p>
 
-                                    <h4 class="margin-top-md" style="font-size: 1rem; color: var(--color-white); font-weight: 700;">Planetary Coordinates</h4>
-                                    <div class="planet-table-wrapper">
-                                        <table class="planet-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Planet</th>
-                                                    <th>Sign</th>
-                                                    <th>Placement</th>
-                                                    <th>Degree</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${planetRows || '<tr><td colspan="4">No planetary positions available</td></tr>'}
-                                            </tbody>
-                                        </table>
+                                    <div class="chart-section">
+                                        <div class="kundli-chart-draw">
+                                            ${chartSvg}
+                                        </div>
+                                        <div class="planet-table-wrapper">
+                                            <table class="planet-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Planet</th>
+                                                        <th>Sign</th>
+                                                        <th>House</th>
+                                                        <th>Degree</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${planetRows || '<tr><td colspan="4">No planetary positions calculated.</td></tr>'}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         `;
                     } else {
-                        throw new Error(res.message || "Failed to load");
+                        throw new Error(res.message || "Failed loading Kundli");
                     }
                 })
                 .catch(err => {
                     resultBox.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-circle-exclamation text-danger"></i>
-                            <p>Error calculating birth chart: ${err.message}. Please verify the backend is running.</p>
+                            <p>Error calculating chart: ${err.message}. Make sure the backend is active.</p>
                         </div>
                     `;
                 });
         });
     }
 
-    // 10.6 Tab 3: Mangal Dosha Form Submission
-    const mangalForm = document.getElementById('mangal-form');
-    if (mangalForm) {
-        mangalForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const dob = document.getElementById('mangal-dob').value;
-            const tob = document.getElementById('mangal-tob').value;
-            const lat = document.getElementById('mangal-lat').value;
-            const lng = document.getElementById('mangal-lng').value;
-            const resultBox = document.getElementById('mangal-result');
-
-            showLoader('mangal-result');
-            const isoDt = getISODatetime(dob, tob);
-
-            fetch(`${apiBase}/astrology/mangal-dosha?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === 'success' && res.data) {
-                        const data = res.data;
-                        const hasDosha = data.has_mangal_dosha;
-
-                        resultBox.innerHTML = `
-                            <div class="result-card">
-                                <div class="result-header">
-                                    <div class="result-title">Energy Obstacle Report</div>
-                                    <span class="result-badge">Mars Check</span>
-                                </div>
-                                <div class="result-content">
-                                    <div class="margin-bottom-md text-center">
-                                        <span class="verdict-badge ${hasDosha ? 'low' : 'excellent'}">
-                                            ${hasDosha ? 'Dosha Detected' : 'No Dosha'}
-                                        </span>
-                                    </div>
-                                    
-                                    <p class="margin-top-md" style="font-size: 1.05rem; line-height: 1.7;">
-                                        <strong>Analysis:</strong><br>
-                                        ${data.description}
-                                    </p>
-
-                                    <div class="match-advice" style="background: ${hasDosha ? 'rgba(235, 87, 87, 0.05)' : 'rgba(46, 245, 106, 0.05)'}; border-color: ${hasDosha ? 'rgba(235, 87, 87, 0.15)' : 'rgba(46, 245, 106, 0.15)'};">
-                                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--color-white); margin-bottom: 0.5rem;">
-                                            <i class="fa-solid ${hasDosha ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> Recommended Action
-                                        </h4>
-                                        <p style="margin: 0; font-size: 0.9rem;">${data.remedy}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        throw new Error(res.message || "Failed to load");
-                    }
-                })
-                .catch(err => {
-                    resultBox.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
-                            <p>Error checking energy blocks: ${err.message}. Please verify the backend is running.</p>
-                        </div>
-                    `;
-                });
-        });
-    }
-
-    // 10.7 Tab 4: Relationship Matching Form Submission
+    // 7. Matching Form Submission
     const matchingForm = document.getElementById('matching-form');
     if (matchingForm) {
         matchingForm.addEventListener('submit', (e) => {
@@ -966,19 +631,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showLoader('matching-result');
 
-            // Format datetime local format (YYYY-MM-DDTHH:MM) to ISO with offset
+            // Formulate ISO strings
             const gIso = `${gDobVal}:00+05:30`;
             const bIso = `${bDobVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/kundli-matching?girl_dob=${encodeURIComponent(gIso)}&girl_latitude=${gLat}&girl_longitude=${gLng}&boy_dob=${encodeURIComponent(bIso)}&boy_latitude=${bLat}&boy_longitude=${bLng}`)
+            fetch(`${apiBase}/astrology/kundli-matching?girl_dob=${encodeURIComponent(gIso)}&girl_latitude=${gLat}&girl_longitude=${gLng}&boy_dob=${encodeURIComponent(bIso)}&boy_coordinates=${bLat}&boy_longitude=${bLng}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
                         const data = res.data;
                         const score = data.score;
                         const maxScore = data.max_score || 36;
-                        
-                        // Calculate dasharray stroke offsets
+
                         const radius = 60;
                         const circumference = 2 * Math.PI * radius;
                         const offset = circumference - (score / maxScore) * circumference;
@@ -1001,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         resultBox.innerHTML = `
                             <div class="result-card">
                                 <div class="result-header">
-                                    <div class="result-title">Energy Compatibility Report</div>
+                                    <div class="result-title">Energy Compatibility</div>
                                     <span class="result-badge">Ashta Kuta</span>
                                 </div>
                                 <div class="result-content">
@@ -1022,13 +686,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <span class="verdict-badge ${verdictClass}">${data.verdict}</span>
                                     </div>
                                     
-                                    <h4 class="margin-top-md" style="font-size: 1rem; color: var(--color-white); font-weight: 700;">Guna Milap Breakdowns</h4>
+                                    <h4 class="margin-top-lg" style="font-size: 1rem; color: var(--color-white); font-weight: 700; border-left: 3px solid var(--color-gold); padding-left: 0.75rem;">Guna Matching Scorecard</h4>
                                     <div class="guna-table-wrapper">
                                         <table class="guna-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Koot / Category</th>
-                                                    <th>Obtained Points / Max</th>
+                                                    <th>Milap Koot</th>
+                                                    <th>Obtained / Max Points</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1038,27 +702,361 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
 
                                     <div class="match-advice">
-                                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--color-white); margin-bottom: 0.5rem;">
-                                            <i class="fa-solid fa-lightbulb"></i> Compatibility Insights
-                                        </h4>
-                                        <p style="margin: 0; font-size: 0.9rem;">${data.alignment_advice}</p>
+                                        <h4><i class="fa-solid fa-lightbulb"></i> Compatibility Analysis</h4>
+                                        <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-secondary);">${data.alignment_advice}</p>
                                     </div>
                                 </div>
                             </div>
                         `;
                     } else {
-                        throw new Error(res.message || "Failed to load");
+                        throw new Error(res.message || "Failed loading");
                     }
                 })
                 .catch(err => {
                     resultBox.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-circle-exclamation text-danger"></i>
-                            <p>Error checking compatibility: ${err.message}. Please verify the backend is running.</p>
+                            <p>Error checking compatibility: ${err.message}. Make sure the backend is active.</p>
                         </div>
                     `;
                 });
         });
     }
-});
 
+    // 8. Planet Positions Form Submission
+    const planetPosForm = document.getElementById('planet-position-form');
+    if (planetPosForm) {
+        planetPosForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dateVal = document.getElementById('planet-pos-date').value;
+            const lat = document.getElementById('planet-pos-lat').value;
+            const lng = document.getElementById('planet-pos-lng').value;
+            const resultBox = document.getElementById('planet-position-result');
+
+            showLoader('planet-position-result');
+
+            const isoDt = `${dateVal}:00+05:30`;
+
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`).then(res => res.json());
+
+            Promise.all([planetPosPromise, natalChartPromise])
+                .then(([planetRes, natalRes]) => {
+                    if (planetRes.status === 'success' && planetRes.data) {
+                        const data = planetRes.data;
+                        const planets = data.planet_position || data.planetary_positions || [];
+
+                        let planetRows = '';
+                        planets.forEach(p => {
+                            const name = p.name || p.planet || 'N/A';
+                            
+                            // Check Rasi info
+                            let sign = 'N/A';
+                            let lordInfo = 'N/A';
+                            const rasi = p.rasi;
+                            if (rasi && typeof rasi === 'object') {
+                                sign = rasi.name || 'N/A';
+                                const lordName = rasi.lord?.name || 'N/A';
+                                const lordVedic = rasi.lord?.vedic_name || rasi.lord?.vedicName || 'N/A';
+                                lordInfo = `${lordName} (${lordVedic})`;
+                            } else {
+                                sign = p.sign || 'N/A';
+                            }
+
+                            const deg = typeof p.degree === 'number' ? `${p.degree.toFixed(1)}°` : 'N/A';
+                            const isRetro = p.is_retrograde || p.isRetrograde || false;
+                            const retroBadge = isRetro 
+                                ? '<span style="color: #ff5757; font-weight: 700; background: rgba(255,87,87,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,87,87,0.2);">Retrograde</span>' 
+                                : '<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">Direct</span>';
+
+                            planetRows += `
+                                <tr>
+                                    <td><strong>${name}</strong></td>
+                                    <td>${sign}</td>
+                                    <td>${lordInfo}</td>
+                                    <td>${deg}</td>
+                                    <td>${retroBadge}</td>
+                                </tr>
+                            `;
+                        });
+
+                        let natalChartHtml = '';
+                        if (natalRes.status === 'success' && natalRes.data && natalRes.data.svg) {
+                            natalChartHtml = `
+                                <div class="chart-section" style="display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 2rem;">
+                                    <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 440px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
+                                        ${natalRes.data.svg}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        const aspects = data.aspects || [];
+                        const planetSet = new Set();
+                        planets.forEach(p => {
+                            const name = p.name || p.planet;
+                            if (name) planetSet.add(name);
+                        });
+                        let selectOptions = '<option value="all">All Objects</option>';
+                        planetSet.forEach(pName => {
+                            selectOptions += `<option value="${pName}">${pName}</option>`;
+                        });
+
+                        resultBox.innerHTML = `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <div class="result-title">Celestial Placements & Aspects</div>
+                                    <span class="result-badge">Positions & Aspects</span>
+                                </div>
+                                
+                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                                    <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
+                                    <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
+                                </div>
+                                
+                                <div id="placements-pane" class="aspects-pane-content">
+                                    ${natalChartHtml}
+                                    <div class="planet-table-wrapper">
+                                        <table class="planet-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Body / Planet</th>
+                                                    <th>Zodiac Sign</th>
+                                                    <th>Rasi Lord (Vedic)</th>
+                                                    <th>Degree</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${planetRows || '<tr><td colspan="5">No positions returned.</td></tr>'}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div id="aspects-pane" class="aspects-pane-content" style="display: none;">
+                                    <div class="aspect-filters" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: center; background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="filter-type-btn active" data-type="all" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; transition: all 0.2s;">All Aspects</button>
+                                            <button class="filter-type-btn" data-type="major" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); color: var(--color-text-secondary); padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 500; cursor: pointer; transition: all 0.2s;">Major Only</button>
+                                            <button class="filter-type-btn" data-type="minor" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); color: var(--color-text-secondary); padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 500; cursor: pointer; transition: all 0.2s;">Minor Only</button>
+                                        </div>
+                                        
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-left: auto;">
+                                            <label style="font-size: 0.8rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500;">Filter by Planet:</label>
+                                            <select id="aspect-planet-filter" style="background: #0d0826; border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-family: Outfit; outline: none; cursor: pointer;">
+                                                ${selectOptions}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="planet-table-wrapper">
+                                        <table class="planet-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Planet 1</th>
+                                                    <th>Aspect</th>
+                                                    <th>Planet 2</th>
+                                                    <th>Type</th>
+                                                    <th>Exact Diff</th>
+                                                    <th>Orb</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="aspects-table-body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        const tabButtons = resultBox.querySelectorAll('.aspect-tab-btn');
+                        const panes = resultBox.querySelectorAll('.aspects-pane-content');
+                        
+                        tabButtons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                tabButtons.forEach(b => {
+                                    b.classList.remove('active');
+                                    b.style.color = 'var(--color-text-secondary)';
+                                    b.style.fontWeight = '500';
+                                    b.style.borderBottom = 'none';
+                                });
+                                btn.classList.add('active');
+                                btn.style.color = '#ffd700';
+                                btn.style.fontWeight = '700';
+                                btn.style.borderBottom = '2px solid #ffd700';
+                                
+                                const target = btn.getAttribute('data-target');
+                                panes.forEach(pane => {
+                                    if (pane.id === target) {
+                                        pane.style.display = 'block';
+                                    } else {
+                                        pane.style.display = 'none';
+                                    }
+                                });
+                            });
+                        });
+                        
+                        const typeButtons = resultBox.querySelectorAll('.filter-type-btn');
+                        const planetFilterSelect = resultBox.querySelector('#aspect-planet-filter');
+                        const aspectsTbody = resultBox.querySelector('#aspects-table-body');
+                        
+                        let activeType = 'all';
+                        let activePlanet = 'all';
+                        
+                        function renderFilteredAspects() {
+                            let filtered = aspects;
+                            if (activeType !== 'all') {
+                                filtered = filtered.filter(a => a.type === activeType);
+                            }
+                            if (activePlanet !== 'all') {
+                                filtered = filtered.filter(a => a.planet_one === activePlanet || a.planet_two === activePlanet);
+                            }
+                            
+                            let html = '';
+                            if (filtered.length === 0) {
+                                html = '<tr><td colspan="6" style="text-align: center; opacity: 0.6; padding: 2rem 0;">No matching aspects found for the selected filters.</td></tr>';
+                            } else {
+                                filtered.forEach(a => {
+                                    const typeBadge = a.type === 'major' 
+                                        ? '<span style="color: #ffd700; background: rgba(255,215,0,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,215,0,0.15); font-weight: 600;">Major</span>'
+                                        : '<span style="color: #a0aec0; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">Minor</span>';
+                                    
+                                    html += `
+                                        <tr>
+                                            <td><strong>${a.planet_one}</strong></td>
+                                            <td style="color: #00d2ff; font-weight: 600;">${a.aspect_name}</td>
+                                            <td><strong>${a.planet_two}</strong></td>
+                                            <td>${typeBadge}</td>
+                                            <td>${a.exact_diff.toFixed(1)}°</td>
+                                            <td>${a.orb.toFixed(1)}°</td>
+                                        </tr>
+                                    `;
+                                });
+                            }
+                            aspectsTbody.innerHTML = html;
+                        }
+                        
+                        typeButtons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                typeButtons.forEach(b => {
+                                    b.classList.remove('active');
+                                    b.style.background = 'rgba(0,0,0,0.2)';
+                                    b.style.border = '1px solid rgba(255,255,255,0.05)';
+                                    b.style.color = 'var(--color-text-secondary)';
+                                    b.style.fontWeight = '500';
+                                });
+                                btn.classList.add('active');
+                                btn.style.background = 'rgba(255,255,255,0.06)';
+                                btn.style.border = '1px solid rgba(255,255,255,0.12)';
+                                btn.style.color = '#fff';
+                                btn.style.fontWeight = '600';
+                                
+                                activeType = btn.getAttribute('data-type');
+                                renderFilteredAspects();
+                            });
+                        });
+                        
+                        if (planetFilterSelect) {
+                            planetFilterSelect.addEventListener('change', (e) => {
+                                activePlanet = e.target.value;
+                                renderFilteredAspects();
+                            });
+                        }
+                        
+                        renderFilteredAspects();
+                    } else {
+                        throw new Error(planetRes.message || "Failed retrieving planet positions");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error calculating planet positions: ${err.message}. Make sure the backend is active.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+
+    // 9. Western Natal Chart Form Submission
+    const natalChartForm = document.getElementById('natal-chart-form');
+    if (natalChartForm) {
+        natalChartForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dateVal = document.getElementById('natal-chart-date').value;
+            const lat = document.getElementById('natal-chart-lat').value;
+            const lng = document.getElementById('natal-chart-lng').value;
+            const resultBox = document.getElementById('natal-chart-result');
+
+            showLoader('natal-chart-result');
+
+            const isoDt = `${dateVal}:00+05:30`;
+
+            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data && res.data.svg) {
+                        resultBox.innerHTML = `
+                            <div class="result-card" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                                <div class="result-header" style="width: 100%;">
+                                    <div class="result-title">Western Natal Wheel</div>
+                                    <span class="result-badge">Natal Chart</span>
+                                </div>
+                                <div class="result-content" style="width: 100%; display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+                                    <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 480px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
+                                        ${res.data.svg}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(res.message || "Failed retrieving natal chart SVG");
+                    }
+                })
+                .catch(err => {
+                    resultBox.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                            <p>Error generating natal chart: ${err.message}. Make sure the backend is active.</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+
+    // 10. Natal Chart Lightbox Modal Logic
+    const lightboxModal = document.getElementById('chart-lightbox-modal');
+    const lightboxBody = document.getElementById('lightbox-modal-body');
+    const closeLightboxBtn = document.getElementById('close-lightbox-modal');
+    const closeLightboxBackdrop = document.getElementById('close-lightbox-backdrop');
+
+    document.addEventListener('click', (e) => {
+        const expandContainer = e.target.closest('.click-expand-wheel');
+        if (expandContainer) {
+            const svgContent = expandContainer.innerHTML;
+            if (lightboxBody && lightboxModal) {
+                lightboxBody.innerHTML = svgContent;
+                const modalSvg = lightboxBody.querySelector('svg');
+                if (modalSvg) {
+                    modalSvg.style.width = '100%';
+                    modalSvg.style.height = '100%';
+                    modalSvg.style.maxWidth = '100%';
+                    modalSvg.style.maxHeight = '100%';
+                }
+                lightboxModal.classList.add('active');
+            }
+        }
+    });
+
+    const closeLightbox = () => {
+        if (lightboxModal) {
+            lightboxModal.classList.remove('active');
+        }
+    };
+
+    if (closeLightboxBtn) closeLightboxBtn.addEventListener('click', closeLightbox);
+    if (closeLightboxBackdrop) closeLightboxBackdrop.addEventListener('click', closeLightbox);
+
+});
