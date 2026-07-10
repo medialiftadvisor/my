@@ -15,10 +15,20 @@ CLIENT_ID = ""
 CLIENT_SECRET = ""
 DEMO_MODE = True
 
-# Load .env file manually
+# Load .env file manually and check system environment
 def load_env():
     global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE
+    
+    # 1. Read from system environment first (critical for Vercel!)
+    CLIENT_ID = os.environ.get("PROKERALA_CLIENT_ID", "")
+    CLIENT_SECRET = os.environ.get("PROKERALA_CLIENT_SECRET", "")
+    
+    # 2. Try to load local .env file overrides
     env_path = os.path.join(os.path.dirname(__file__), '.env')
+    # If running inside api/ subfolder, look in the parent directory too
+    if not os.path.exists(env_path):
+        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+        
     if os.path.exists(env_path):
         with open(env_path, 'r') as f:
             for line in f:
@@ -29,13 +39,12 @@ def load_env():
                 if len(parts) == 2:
                     key = parts[0].strip()
                     val = parts[1].strip()
-                    # Strip quotes if present
                     if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
                         val = val[1:-1]
                     
-                    if key == "PROKERALA_CLIENT_ID":
+                    if key == "PROKERALA_CLIENT_ID" and val:
                         CLIENT_ID = val
-                    elif key == "PROKERALA_CLIENT_SECRET":
+                    elif key == "PROKERALA_CLIENT_SECRET" and val:
                         CLIENT_SECRET = val
                     elif key == "PORT":
                         try:
@@ -45,11 +54,13 @@ def load_env():
                     elif key == "HOST":
                         HOST = val
 
-    # If credentials are set, disable force demo mode, else enable it
     if CLIENT_ID and CLIENT_SECRET:
         DEMO_MODE = False
     else:
         DEMO_MODE = True
+
+# Run load_env() immediately at the module level
+load_env()
 
 # Token cache variables
 _access_token = None

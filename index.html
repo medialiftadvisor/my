@@ -288,17 +288,16 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="planet-pos-city">Location Preset</label>
-                                    <div class="select-wrapper">
-                                        <select id="planet-pos-city" class="city-preset">
-                                            <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                            <option value="19.0760,72.8777">Mumbai, India</option>
-                                            <option value="28.6139,77.2090">New Delhi, India</option>
-                                            <option value="12.9716,77.5946">Bengaluru, India</option>
-                                            <option value="40.7128,-74.0060">New York, USA</option>
-                                            <option value="51.5074,-0.1278">London, UK</option>
-                                        </select>
-                                        <i class="fa-solid fa-location-dot"></i>
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. Mumbai, New York...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -338,17 +337,16 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="natal-chart-city">Location Preset</label>
-                                    <div class="select-wrapper">
-                                        <select id="natal-chart-city" class="city-preset">
-                                            <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                            <option value="19.0760,72.8777">Mumbai, India</option>
-                                            <option value="28.6139,77.2090">New Delhi, India</option>
-                                            <option value="12.9716,77.5946">Bengaluru, India</option>
-                                            <option value="40.7128,-74.0060">New York, USA</option>
-                                            <option value="51.5074,-0.1278">London, UK</option>
-                                        </select>
-                                        <i class="fa-solid fa-location-dot"></i>
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. Mumbai, London...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -388,17 +386,16 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="panchang-city">Location Preset</label>
-                                    <div class="select-wrapper">
-                                        <select id="panchang-city" class="city-preset">
-                                            <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                            <option value="19.0760,72.8777">Mumbai, India</option>
-                                            <option value="28.6139,77.2090">New Delhi, India</option>
-                                            <option value="12.9716,77.5946">Bengaluru, India</option>
-                                            <option value="40.7128,-74.0060">New York, USA</option>
-                                            <option value="51.5074,-0.1278">London, UK</option>
-                                        </select>
-                                        <i class="fa-solid fa-location-dot"></i>
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. London, Tokyo...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -442,17 +439,16 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="kundli-city">Location Preset</label>
-                                    <div class="select-wrapper">
-                                        <select id="kundli-city" class="city-preset">
-                                            <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                            <option value="19.0760,72.8777">Mumbai, India</option>
-                                            <option value="28.6139,77.2090">New Delhi, India</option>
-                                            <option value="12.9716,77.5946">Bengaluru, India</option>
-                                            <option value="40.7128,-74.0060">New York, USA</option>
-                                            <option value="51.5074,-0.1278">London, UK</option>
-                                        </select>
-                                        <i class="fa-solid fa-location-dot"></i>
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. New Delhi, Sydney...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -496,17 +492,16 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="match-g-city">City Preset</label>
-                                            <div class="select-wrapper">
-                                                <select id="match-g-city" class="city-preset">
-                                                    <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                                    <option value="19.0760,72.8777">Mumbai, India</option>
-                                                    <option value="28.6139,77.2090">New Delhi, India</option>
-                                                    <option value="12.9716,77.5946">Bengaluru, India</option>
-                                                    <option value="40.7128,-74.0060">New York, USA</option>
-                                                    <option value="51.5074,-0.1278">London, UK</option>
-                                                </select>
-                                                <i class="fa-solid fa-location-dot"></i>
+                                            <label>Search Location</label>
+                                            <div style="display: flex; gap: 0.5rem; position: relative;">
+                                                <div style="position: relative; flex: 1;">
+                                                    <input type="text" class="location-search-input" placeholder="Type city (e.g. Paris...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                                    <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                                </div>
+                                                <button type="button" class="btn btn-gold detect-gps-btn" title="Detect GPS" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="form-row">
@@ -531,17 +526,16 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="match-b-city">City Preset</label>
-                                            <div class="select-wrapper">
-                                                <select id="match-b-city" class="city-preset">
-                                                    <option value="custom" selected>Custom Coordinates (Enter Below)</option>
-                                                    <option value="19.0760,72.8777">Mumbai, India</option>
-                                                    <option value="28.6139,77.2090">New Delhi, India</option>
-                                                    <option value="12.9716,77.5946">Bengaluru, India</option>
-                                                    <option value="40.7128,-74.0060">New York, USA</option>
-                                                    <option value="51.5074,-0.1278">London, UK</option>
-                                                </select>
-                                                <i class="fa-solid fa-location-dot"></i>
+                                            <label>Search Location</label>
+                                            <div style="display: flex; gap: 0.5rem; position: relative;">
+                                                <div style="position: relative; flex: 1;">
+                                                    <input type="text" class="location-search-input" placeholder="Type city (e.g. Cairo...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                                    <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                                </div>
+                                                <button type="button" class="btn btn-gold detect-gps-btn" title="Detect GPS" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="form-row">

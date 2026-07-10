@@ -114,36 +114,139 @@ document.addEventListener('DOMContentLoaded', () => {
         dateEl.textContent = new Date().toLocaleDateString('en-US', options);
     }
 
-    // 3. City Preset coordinates autofill
-    const presets = document.querySelectorAll('.city-preset');
-    presets.forEach(preset => {
-        preset.addEventListener('change', (e) => {
-            const val = e.target.value;
-            const form = e.target.closest('form');
-            if (!form) return;
+    // 3. Location Geocoding & Geolocation Autofill
+    const searchInputs = document.querySelectorAll('.location-search-input');
+    const detectGpsBtns = document.querySelectorAll('.detect-gps-btn');
 
-            const id = e.target.id;
-            let latInput, lngInput;
+    function debounce(func, delay) {
+        let timer;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
 
-            if (id === 'match-g-city') {
-                latInput = document.getElementById('match-g-lat');
-                lngInput = document.getElementById('match-g-lng');
-            } else if (id === 'match-b-city') {
-                latInput = document.getElementById('match-b-lat');
-                lngInput = document.getElementById('match-b-lng');
-            } else {
-                latInput = form.querySelector('input[id$="-lat"]');
-                lngInput = form.querySelector('input[id$="-lng"]');
+    searchInputs.forEach(input => {
+        const dropdown = input.parentNode.querySelector('.geocoding-results-dropdown');
+        if (!dropdown) return;
+        
+        const handleSearch = async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 3) {
+                dropdown.style.display = 'none';
+                dropdown.innerHTML = '';
+                return;
             }
 
-            if (val !== 'custom') {
-                const [lat, lng] = val.split(',');
-                if (latInput) latInput.value = lat;
-                if (lngInput) lngInput.value = lng;
-            } else {
-                if (latInput) latInput.value = '';
-                if (lngInput) lngInput.value = '';
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    dropdown.innerHTML = data.map(item => {
+                        return `
+                            <div class="dropdown-item" 
+                                 data-lat="${parseFloat(item.lat).toFixed(4)}" 
+                                 data-lon="${parseFloat(item.lon).toFixed(4)}" 
+                                 data-name="${item.display_name.replace(/"/g, '&quot;')}"
+                                 style="padding: 0.5rem 1rem; font-size: 0.82rem; color: #fff; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Outfit;"
+                                 onmouseover="this.style.background='rgba(212,175,55,0.1)'"
+                                 onmouseout="this.style.background='transparent'">
+                                <i class="fa-solid fa-location-dot" style="color: #ffd700; margin-right: 0.5rem; font-size: 0.75rem;"></i>
+                                ${item.display_name}
+                            </div>
+                        `;
+                    }).join('');
+                    dropdown.style.display = 'block';
+                } else {
+                    dropdown.innerHTML = `<div style="padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--color-text-secondary); text-align: center;">No cities found</div>`;
+                    dropdown.style.display = 'block';
+                }
+            } catch (err) {
+                console.error("Geocoding error:", err);
             }
+        };
+
+        input.addEventListener('input', debounce(handleSearch, 400));
+
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        dropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                const lat = item.getAttribute('data-lat');
+                const lon = item.getAttribute('data-lon');
+                const name = item.getAttribute('data-name');
+                
+                input.value = name;
+                dropdown.style.display = 'none';
+                
+                const form = input.closest('form') || input.closest('.partner-panel');
+                if (form) {
+                    const latInput = form.querySelector('[id$="lat"]');
+                    const lngInput = form.querySelector('[id$="lng"]');
+                    if (latInput) latInput.value = lat;
+                    if (lngInput) lngInput.value = lon;
+                }
+            }
+        });
+    });
+
+    detectGpsBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const icon = btn.querySelector('i');
+            const originalClass = icon.className;
+            
+            icon.className = 'fa-solid fa-spinner fa-spin';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude.toFixed(4);
+                    const lng = position.coords.longitude.toFixed(4);
+                    
+                    const form = btn.closest('form') || btn.closest('.partner-panel');
+                    if (form) {
+                        const latInput = form.querySelector('[id$="lat"]');
+                        const lngInput = form.querySelector('[id$="lng"]');
+                        const searchInput = form.querySelector('.location-search-input');
+                        
+                        if (latInput) latInput.value = lat;
+                        if (lngInput) lngInput.value = lng;
+                        
+                        if (searchInput) {
+                            searchInput.value = `Current Location (${lat}, ${lng})`;
+                            try {
+                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                                const data = await res.json();
+                                if (data && data.display_name) {
+                                    searchInput.value = data.display_name;
+                                }
+                            } catch (e) {
+                                console.warn("Reverse geocode failed:", e);
+                            }
+                        }
+                    }
+                    
+                    icon.className = originalClass;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                },
+                (err) => {
+                    console.error("GPS detection error:", err);
+                    alert(`Unable to retrieve GPS coordinates: ${err.message}. Please enter manually or grant browser location permission.`);
+                    
+                    icon.className = originalClass;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
         });
     });
 
