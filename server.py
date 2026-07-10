@@ -424,6 +424,20 @@ def get_mock_chart(dt, lat, lng):
         rot_deg = i * 30 + 105
         svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
 
+        # Clickable sector path button for magnifying
+        a1 = i * 30 * math.pi / 180
+        a2 = (i + 1) * 30 * math.pi / 180
+        x1_in = 500 + 300 * math.cos(a1)
+        y1_in = 500 + 300 * math.sin(a1)
+        x2_in = 500 + 300 * math.cos(a2)
+        y2_in = 500 + 300 * math.sin(a2)
+        x1_out = 500 + 460 * math.cos(a1)
+        y1_out = 500 + 460 * math.sin(a1)
+        x2_out = 500 + 460 * math.cos(a2)
+        y2_out = 500 + 460 * math.sin(a2)
+        path_d = f"M {x1_in:.1f} {y1_in:.1f} L {x1_out:.1f} {y1_out:.1f} A 460 460 0 0 1 {x2_out:.1f} {y2_out:.1f} L {x2_in:.1f} {y2_in:.1f} A 300 300 0 0 0 {x1_in:.1f} {y1_in:.1f} Z"
+        svg += f'    <path class="zodiac-sector-btn" data-sign="{signs[i]}" d="{path_d}" fill="transparent" stroke="none" style="cursor: pointer; transition: fill 0.2s;" onmouseover="this.setAttribute(\'fill\', \'rgba(255,215,0,0.06)\')" onmouseout="this.setAttribute(\'fill\', \'transparent\')"/>\n'
+
     svg += """  </g>
   
   <!-- House boundaries (12 sectors) -->
@@ -496,7 +510,7 @@ def get_mock_chart(dt, lat, lng):
         # Circle backing
         svg += f'    <circle cx="{px:.1f}" cy="{py-6.5:.1f}" r="16.5" fill="#06020c" stroke="{color}" stroke-width="1.5" opacity="0.95" filter="url(#glow-light)"/>\n'
         # Symbol
-        svg += f'    <text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
+        svg += f'    <text class="svg-planet-marker" data-name="{name}" data-symbol="{symbol}" data-longitude="{angle}" data-color="{color}" x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
         
         # Text degree label
         dx = 500 + 312 * math.cos(rad)

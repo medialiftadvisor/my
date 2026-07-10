@@ -587,10 +587,26 @@
     <!-- Natal Chart Wheel Lightbox Modal -->
     <div class="modal" id="chart-lightbox-modal">
         <div class="modal-backdrop" id="close-lightbox-backdrop"></div>
-        <div class="modal-content glass-card" style="max-width: 90vw; width: 90vw; max-height: 90vh; height: 90vh; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-            <button class="modal-close" id="close-lightbox-modal" aria-label="Close modal" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; background: none; border: none; color: #ffd700; cursor: pointer;">&times;</button>
-            <div id="lightbox-modal-body" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <!-- SVG injected dynamically -->
+        <div class="modal-content glass-card" style="max-width: 95vw; width: 95vw; max-height: 90vh; height: 90vh; padding: 1.5rem; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+            <button class="modal-close" id="close-lightbox-modal" aria-label="Close modal" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 2.2rem; background: none; border: none; color: #ffd700; cursor: pointer; z-index: 10;">&times;</button>
+            
+            <div id="lightbox-modal-body" style="width: 100%; height: 100%; display: flex; gap: 2rem; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box;">
+                <!-- Left: Full 360 Wheel -->
+                <div id="lightbox-wheel-container" style="flex: 1.3; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <!-- SVG loaded here -->
+                </div>
+                
+                <!-- Right: Magnifier Panel -->
+                <div id="lightbox-magnifier-container" style="flex: 0.9; max-width: 440px; height: 100%; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border-left: 1px solid rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 12px; box-sizing: border-box; justify-content: center;">
+                    <div id="magnifier-default-state" style="text-align: center; opacity: 0.7;">
+                        <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 3rem; color: #ffd700; margin-bottom: 1.2rem; display: block;"></i>
+                        <h4 style="font-family: Outfit; color: #fff; margin-top: 0px; margin-bottom: 0.6rem; font-size: 1.25rem;">Zodiac Magnifier</h4>
+                        <p style="font-size: 0.85rem; line-height: 1.5; color: var(--color-text-secondary); margin: 0;">Hover & click on any outer zodiac sector (e.g., Aries, Taurus) on the wheel to magnify its 30° orbital arc and view planet details.</p>
+                    </div>
+                    <div id="magnifier-active-state" style="display: none; flex-direction: column; height: 100%; justify-content: space-between; box-sizing: border-box;">
+                        <!-- Active zoom contents loaded here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>

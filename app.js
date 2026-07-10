@@ -1028,7 +1028,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 10. Natal Chart Lightbox Modal Logic
     const lightboxModal = document.getElementById('chart-lightbox-modal');
-    const lightboxBody = document.getElementById('lightbox-modal-body');
+    const wheelContainer = document.getElementById('lightbox-wheel-container');
+    const magnifierDefault = document.getElementById('magnifier-default-state');
+    const magnifierActive = document.getElementById('magnifier-active-state');
     const closeLightboxBtn = document.getElementById('close-lightbox-modal');
     const closeLightboxBackdrop = document.getElementById('close-lightbox-backdrop');
 
@@ -1036,16 +1038,170 @@ document.addEventListener('DOMContentLoaded', () => {
         const expandContainer = e.target.closest('.click-expand-wheel');
         if (expandContainer) {
             const svgContent = expandContainer.innerHTML;
-            if (lightboxBody && lightboxModal) {
-                lightboxBody.innerHTML = svgContent;
-                const modalSvg = lightboxBody.querySelector('svg');
+            if (wheelContainer && lightboxModal) {
+                wheelContainer.innerHTML = svgContent;
+                const modalSvg = wheelContainer.querySelector('svg');
                 if (modalSvg) {
                     modalSvg.style.width = '100%';
                     modalSvg.style.height = '100%';
                     modalSvg.style.maxWidth = '100%';
                     modalSvg.style.maxHeight = '100%';
                 }
+                // Reset magnifier to default state
+                if (magnifierDefault) magnifierDefault.style.display = 'block';
+                if (magnifierActive) magnifierActive.style.display = 'none';
+                
                 lightboxModal.classList.add('active');
+            }
+        }
+    });
+
+    // 11. Zodiac Sector Clicking & Magnification Logic
+    document.addEventListener('click', (e) => {
+        const sectorBtn = e.target.closest('.zodiac-sector-btn');
+        if (sectorBtn) {
+            const sign = sectorBtn.getAttribute('data-sign');
+            if (sign && magnifierDefault && magnifierActive && wheelContainer) {
+                const svgElement = wheelContainer.querySelector('svg');
+                if (svgElement) {
+                    const markers = svgElement.querySelectorAll('.svg-planet-marker');
+                    const planetsInSign = [];
+                    const signsList = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+                    
+                    markers.forEach(m => {
+                        const name = m.getAttribute('data-name');
+                        const symbol = m.getAttribute('data-symbol');
+                        const lon = parseFloat(m.getAttribute('data-longitude'));
+                        const color = m.getAttribute('data-color');
+                        
+                        const signIdx = Math.floor(lon / 30);
+                        const planetSign = signsList[signIdx];
+                        
+                        if (planetSign && planetSign.toLowerCase() === sign.toLowerCase()) {
+                            planetsInSign.push({
+                                name: name,
+                                symbol: symbol,
+                                degree: lon % 30,
+                                color: color
+                            });
+                        }
+                    });
+
+                    // Highlight selected sector visually in the SVG
+                    const allSectors = svgElement.querySelectorAll('.zodiac-sector-btn');
+                    allSectors.forEach(sec => {
+                        sec.style.fill = 'transparent';
+                        sec.setAttribute('onmouseout', "this.setAttribute('fill', 'transparent')");
+                    });
+                    // Lock active sector to a glowing gold fill and override mouseout
+                    sectorBtn.style.fill = 'rgba(212,175,55,0.15)';
+                    sectorBtn.setAttribute('onmouseout', "this.setAttribute('fill', 'rgba(212,175,55,0.15)')");
+
+                    // Generate degree ticks (0 to 30) for the semi-circle
+                    let ticksHtml = '';
+                    for (let d = 0; d <= 30; d++) {
+                        const thetaDeg = 180 + (d * 6);
+                        const thetaRad = thetaDeg * Math.PI / 180;
+                        
+                        let r1 = 144;
+                        let r2 = 156;
+                        let strokeW = 0.5;
+                        let showLabel = false;
+                        
+                        if (d % 10 === 0) {
+                            r1 = 135;
+                            r2 = 165;
+                            strokeW = 1.2;
+                            showLabel = true;
+                        } else if (d % 5 === 0) {
+                            r1 = 138;
+                            r2 = 162;
+                            strokeW = 0.8;
+                            showLabel = true;
+                        }
+                        
+                        const x1 = 200 + r1 * Math.cos(thetaRad);
+                        const y1 = 200 + r1 * Math.sin(thetaRad);
+                        const x2 = 200 + r2 * Math.cos(thetaRad);
+                        const y2 = 200 + r2 * Math.sin(thetaRad);
+                        
+                        ticksHtml += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#d4af37" stroke-width="${strokeW}" opacity="0.6" />`;
+                        
+                        if (showLabel) {
+                            const lx = 200 + 178 * Math.cos(thetaRad);
+                            const ly = 200 + 178 * Math.sin(thetaRad) + 3.5;
+                            ticksHtml += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="rgba(255,255,255,0.7)" font-size="9.5" font-family="Outfit" font-weight="700" text-anchor="middle">${d}°</text>`;
+                        }
+                    }
+
+                    // Render planet glyph positions on the magnifier arc
+                    let planetsHtml = '';
+                    let listHtml = '';
+                    
+                    if (planetsInSign.length === 0) {
+                        listHtml = `<div style="text-align: center; opacity: 0.5; font-size: 0.85rem; padding: 2rem 0; font-family: Outfit; color: #fff;">No planets currently transiting in ${sign}.</div>`;
+                    } else {
+                        planetsInSign.sort((a, b) => a.degree - b.degree);
+                        planetsInSign.forEach(p => {
+                            const thetaDeg = 180 + (p.degree * 6);
+                            const thetaRad = thetaDeg * Math.PI / 180;
+                            
+                            const px1 = 200 + 130 * Math.cos(thetaRad);
+                            const py1 = 200 + 130 * Math.sin(thetaRad);
+                            const px2 = 200 + 144 * Math.cos(thetaRad);
+                            const py2 = 200 + 144 * Math.sin(thetaRad);
+                            
+                            planetsHtml += `<line x1="${px1.toFixed(1)}" y1="${py1.toFixed(1)}" x2="${px2.toFixed(1)}" y2="${py2.toFixed(1)}" stroke="${p.color}" stroke-width="1" stroke-dasharray="1.5,1.5" />`;
+                            
+                            const bx = 200 + 112 * Math.cos(thetaRad);
+                            const by = 200 + 112 * Math.sin(thetaRad);
+                            
+                            planetsHtml += `
+                                <circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="13" fill="#04020f" stroke="${p.color}" stroke-width="1.2" />
+                                <text x="${bx.toFixed(1)}" y="${(by + 4.5).toFixed(1)}" fill="${p.color}" font-size="13" font-weight="bold" text-anchor="middle">${p.symbol}</text>
+                            `;
+                            
+                            const tx = 200 + 82 * Math.cos(thetaRad);
+                            const ty = 200 + 82 * Math.sin(thetaRad) + 3;
+                            const degInt = Math.floor(p.degree);
+                            const minInt = Math.round((p.degree % 1) * 60);
+                            planetsHtml += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="#ffffff" font-size="7.5" font-family="Outfit" font-weight="700" text-anchor="middle">${degInt}°${minInt.toString().padStart(2, '0')}'</text>`;
+                            
+                            listHtml += `
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <span style="font-size: 1.25rem; color: ${p.color}; font-weight: bold; line-height: 1;">${p.symbol}</span>
+                                        <span style="font-family: Outfit; font-weight: 700; color: #fff; font-size: 0.9rem;">${p.name}</span>
+                                    </div>
+                                    <span style="font-family: Outfit; font-weight: 600; color: #ffd700; font-size: 0.85rem;">${degInt}° ${minInt.toString().padStart(2, '0')}' ${sign}</span>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    magnifierDefault.style.display = 'none';
+                    magnifierActive.style.display = 'flex';
+                    magnifierActive.innerHTML = `
+                        <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem; margin-bottom: 1rem; width: 100%;">
+                            <h3 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px;">${sign.toUpperCase()}</h3>
+                            <span style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; font-family: Outfit; font-weight: 600; letter-spacing: 0.5px;">30° Orbital Arc Magnifier</span>
+                        </div>
+                        
+                        <div style="width: 100%; display: flex; justify-content: center; margin-bottom: 1rem;">
+                            <svg viewBox="0 0 400 230" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 220px;">
+                                <path d="M 50 200 A 150 150 0 0 1 350 200" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" />
+                                <path d="M 50 200 A 150 150 0 0 1 350 200" fill="none" stroke="#d4af37" stroke-width="1.8" opacity="0.5" />
+                                ${ticksHtml}
+                                ${planetsHtml}
+                                <text x="200" y="222" fill="#ffd700" font-family="Outfit" font-size="8" font-weight="700" letter-spacing="1" text-anchor="middle">ZODIAC RANGE (0° - 30°)</text>
+                            </svg>
+                        </div>
+                        
+                        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; padding-right: 0.25rem; width: 100%;">
+                            ${listHtml}
+                        </div>
+                    `;
+                }
             }
         }
     });
