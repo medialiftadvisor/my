@@ -281,12 +281,15 @@ def get_mock_chart(dt, lat, lng):
     signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
     planets.sort(key=lambda x: x[2])
     
-    svg = f"""<svg viewBox="0 0 520 520" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    svg = f"""<svg viewBox="0 0 1000 1000" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <!-- Premium cosmic glow filters -->
     <filter id="glow-light" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
+    
+    <!-- Gradients -->
     <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#1b124a"/>
       <stop offset="60%" stop-color="#0a0521"/>
@@ -304,92 +307,102 @@ def get_mock_chart(dt, lat, lng):
     </linearGradient>
   </defs>
   
-  <rect width="100%" height="100%" fill="url(#bgGrad)" rx="16"/>
+  <!-- Outer bounds and dark background -->
+  <rect width="100%" height="100%" fill="url(#bgGrad)" rx="24"/>
   
-  <g fill="#ffffff" opacity="0.3">
-    <circle cx="80" cy="90" r="1"/>
-    <circle cx="420" cy="110" r="1.2"/>
-    <circle cx="110" cy="400" r="0.8"/>
-    <circle cx="390" cy="430" r="1"/>
-    <circle cx="70" cy="280" r="1.5" opacity="0.5"/>
-    <circle cx="450" cy="220" r="0.7"/>
-    <circle cx="200" cy="60" r="1"/>
-    <circle cx="320" cy="460" r="1.3"/>
+  <!-- Star background dots -->
+  <g fill="#ffffff" opacity="0.35">
+    <circle cx="120" cy="150" r="1.5"/>
+    <circle cx="840" cy="180" r="2"/>
+    <circle cx="210" cy="780" r="1.2"/>
+    <circle cx="780" cy="840" r="1.5"/>
+    <circle cx="100" cy="540" r="2.2" opacity="0.5"/>
+    <circle cx="900" cy="420" r="1.2"/>
+    <circle cx="380" cy="110" r="1.5"/>
+    <circle cx="620" cy="890" r="1.8"/>
   </g>
   
   <!-- Main outer wheel borders -->
-  <circle cx="260" cy="260" r="230" stroke="url(#goldGrad)" stroke-width="3" fill="none" filter="url(#glow-light)"/>
-  <circle cx="260" cy="260" r="200" stroke="#d4af37" stroke-width="1.5" fill="none" opacity="0.7"/>
-  <circle cx="260" cy="260" r="185" stroke="#d4af37" stroke-width="1.0" fill="none" opacity="0.4"/>
-  <circle cx="260" cy="260" r="150" stroke="#d4af37" stroke-width="1" fill="url(#centerGrad)" opacity="0.5"/>
-  <circle cx="260" cy="260" r="70" stroke="#d4af37" stroke-width="1" fill="none" opacity="0.25" stroke-dasharray="4,4"/>
+  <circle cx="500" cy="500" r="460" stroke="url(#goldGrad)" stroke-width="4.5" fill="none" filter="url(#glow-light)"/>
+  <circle cx="500" cy="500" r="420" stroke="#d4af37" stroke-width="2.5" fill="none" opacity="0.75"/>
+  <circle cx="500" cy="500" r="380" stroke="#d4af37" stroke-width="1.8" fill="none" opacity="0.5"/>
+  <circle cx="500" cy="500" r="300" stroke="#d4af37" stroke-width="1.5" fill="url(#centerGrad)" opacity="0.65"/>
+  <circle cx="500" cy="500" r="130" stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.3" stroke-dasharray="6,6"/>
   
   <!-- Detailed 360 Degree Tick Marks -->
-  <g stroke="#d4af37" opacity="0.55">
+  <g stroke="#d4af37" opacity="0.65">
 """
     for d in range(360):
         theta = d * math.pi / 180
         if d % 10 == 0:
-            r1 = 185
-            r2 = 200
-            stroke_w = 0.8
+            r1 = 380
+            r2 = 420
+            stroke_w = 1.2
         elif d % 5 == 0:
-            r1 = 188
-            r2 = 200
-            stroke_w = 0.5
+            r1 = 388
+            r2 = 415
+            stroke_w = 0.8
         else:
-            r1 = 192
-            r2 = 200
-            stroke_w = 0.3
+            r1 = 394
+            r2 = 410
+            stroke_w = 0.4
             
-        x1 = 260 + r1 * math.cos(theta)
-        y1 = 260 + r1 * math.sin(theta)
-        x2 = 260 + r2 * math.cos(theta)
-        y2 = 260 + r2 * math.sin(theta)
+        x1 = 500 + r1 * math.cos(theta)
+        y1 = 500 + r1 * math.sin(theta)
+        x2 = 500 + r2 * math.cos(theta)
+        y2 = 500 + r2 * math.sin(theta)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="{stroke_w}"/>\n'
+        
+        # Add labels for 10 and 20 degrees within each sign segment
+        rel_deg = d % 30
+        if rel_deg in [10, 20] and d % 10 == 0:
+            lx = 500 + 363 * math.cos(theta)
+            ly = 500 + 363 * math.sin(theta) + 3.5
+            rot_deg = d + 90
+            svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffffff" font-size="9" font-family="Outfit" font-weight="600" opacity="0.75" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{rel_deg}</text>\n'
 
     svg += """  </g>
   
-  <!-- Outer Zodiac Sign Sectors -->
-  <g stroke="#d4af37" stroke-width="1" opacity="0.4">
+  <!-- Outer Zodiac Sign Sectors & Division Borders -->
+  <g stroke="#d4af37" opacity="0.5">
 """
     for i in range(12):
         angle = i * 30 * math.pi / 180
-        x1 = 260 + 200 * math.cos(angle)
-        y1 = 260 + 200 * math.sin(angle)
-        x2 = 260 + 230 * math.cos(angle)
-        y2 = 260 + 230 * math.sin(angle)
-        svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
+        x1 = 500 + 300 * math.cos(angle)
+        y1 = 500 + 300 * math.sin(angle)
+        x2 = 500 + 460 * math.cos(angle)
+        y2 = 500 + 460 * math.sin(angle)
+        svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="1.8"/>\n'
         
         lbl_angle = (i * 30 + 15) * math.pi / 180
-        lx = 260 + 215 * math.cos(lbl_angle)
-        ly = 260 + 215 * math.sin(lbl_angle) + 3
+        lx = 500 + 440 * math.cos(lbl_angle)
+        ly = 500 + 440 * math.sin(lbl_angle) + 5
         rot_deg = i * 30 + 105
-        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="8.5" font-family="Outfit" font-weight="700" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{signs[i]}</text>\n'
+        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
 
     svg += """  </g>
   
   <!-- House boundaries (12 sectors) -->
-  <g stroke="#ffffff" stroke-width="0.8" opacity="0.25" stroke-dasharray="2,3">
+  <g stroke="#ffffff" stroke-width="1.0" opacity="0.25" stroke-dasharray="3,4">
 """
     house_offset = (h[20] % 30) * math.pi / 180
     for i in range(12):
         angle = (i * 30) * math.pi / 180 + house_offset
-        x1 = 260 + 70 * math.cos(angle)
-        y1 = 260 + 70 * math.sin(angle)
-        x2 = 260 + 150 * math.cos(angle)
-        y2 = 260 + 150 * math.sin(angle)
+        x1 = 500 + 130 * math.cos(angle)
+        y1 = 500 + 130 * math.sin(angle)
+        x2 = 500 + 300 * math.cos(angle)
+        y2 = 500 + 300 * math.sin(angle)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
         
         num_angle = (i * 30 + 15) * math.pi / 180 + house_offset
-        nx = 260 + 110 * math.cos(num_angle)
-        ny = 260 + 110 * math.sin(num_angle) + 4
-        svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="8" font-family="Outfit" opacity="0.4" text-anchor="middle">{i+1}</text>\n'
+        nx = 500 + 220 * math.cos(num_angle)
+        ny = 500 + 220 * math.sin(num_angle) + 5.5
+        svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="12" font-family="Outfit" opacity="0.45" text-anchor="middle">{i+1}</text>\n'
 
     svg += """  </g>
   
-  <!-- Dynamic Aspect Lines -->
-  <g stroke-width="1.2" filter="url(#glow-light)">
+  <!-- Dynamic Aspect Lines inside the inner house circle -->
+  <g stroke-width="1.5" filter="url(#glow-light)">
 """
     aspect_lines_drawn = 0
     for i in range(len(planets)):
@@ -402,47 +415,51 @@ def get_mock_chart(dt, lat, lng):
                 
             color = None
             if abs(diff - 120) <= 6:
-                color = "#00d2ff"
+                color = "#00d2ff"  # Trine (Cyan)
             elif abs(diff - 180) <= 6:
-                color = "#ff4d4d"
+                color = "#ff4d4d"  # Opposition (Red)
             elif abs(diff - 90) <= 6:
-                color = "#ff8533"
+                color = "#ff8533"  # Square (Orange)
             elif abs(diff - 60) <= 5:
-                color = "#33ffaa"
+                color = "#33ffaa"  # Sextile (Green)
                 
-            if color and aspect_lines_drawn < 15:
+            if color and aspect_lines_drawn < 20:
                 r1 = a1 * math.pi / 180
                 r2 = a2 * math.pi / 180
-                x1 = 260 + 150 * math.cos(r1)
-                y1 = 260 + 150 * math.sin(r1)
-                x2 = 260 + 150 * math.cos(r2)
-                y2 = 260 + 150 * math.sin(r2)
-                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.6"/>\n'
+                x1 = 500 + 300 * math.cos(r1)
+                y1 = 500 + 300 * math.sin(r1)
+                x2 = 500 + 300 * math.cos(r2)
+                y2 = 500 + 300 * math.sin(r2)
+                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65"/>\n'
                 aspect_lines_drawn += 1
 
     svg += """  </g>
   
   <!-- Planet placements & glyph indicators -->
-  <g font-size="14.5" font-family="Arial" text-anchor="middle">
+  <g font-family="Arial" text-anchor="middle">
 """
     for name, symbol, angle, color in planets:
         rad = angle * math.pi / 180
-        ix1 = 260 + 150 * math.cos(rad)
-        iy1 = 260 + 150 * math.sin(rad)
-        ix2 = 260 + 178 * math.cos(rad)
-        iy2 = 260 + 178 * math.sin(rad)
-        svg += f'    <line x1="{ix1:.1f}" y1="{iy1:.1f}" x2="{ix2:.1f}" y2="{iy2:.1f}" stroke="#d4af37" stroke-width="0.6" stroke-dasharray="1.5,1.5" opacity="0.6"/>\n'
+        ix1 = 500 + 300 * math.cos(rad)
+        iy1 = 500 + 300 * math.sin(rad)
+        ix2 = 500 + 355 * math.cos(rad)
+        iy2 = 500 + 355 * math.sin(rad)
+        svg += f'    <line x1="{ix1:.1f}" y1="{iy1:.1f}" x2="{ix2:.1f}" y2="{iy2:.1f}" stroke="#d4af37" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>\n'
         
-        px = 260 + 180 * math.cos(rad)
-        py = 260 + 180 * math.sin(rad) + 4.5
+        px = 500 + 336 * math.cos(rad)
+        py = 500 + 336 * math.sin(rad) + 6.5
         
-        svg += f'    <circle cx="{px:.1f}" cy="{py-4.5:.1f}" r="10.5" fill="#06020c" stroke="{color}" stroke-width="0.8" opacity="0.9"/>\n'
-        svg += f'    <text x="{px:.1f}" y="{py:.1f}" fill="{color}">{symbol}</text>\n'
+        # Circle backing
+        svg += f'    <circle cx="{px:.1f}" cy="{py-6.5:.1f}" r="16.5" fill="#06020c" stroke="{color}" stroke-width="1.5" opacity="0.95" filter="url(#glow-light)"/>\n'
+        # Symbol
+        svg += f'    <text x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
         
-        dx = 260 + 163 * math.cos(rad)
-        dy = 260 + 163 * math.sin(rad) + 3
+        # Text degree label
+        dx = 500 + 312 * math.cos(rad)
+        dy = 500 + 312 * math.sin(rad) + 3.5
         deg_num = int(angle % 30)
-        svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="6" font-family="Outfit" opacity="0.7">{deg_num}°</text>\n'
+        minutes_num = int(round((angle % 1) * 60))
+        svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="9.5" font-family="Outfit" font-weight="700" text-anchor="middle">{deg_num}°{minutes_num:02d}\'</text>\n'
 
     asc_rad = house_offset + math.pi
     dsc_rad = house_offset
@@ -454,31 +471,31 @@ def get_mock_chart(dt, lat, lng):
   <!-- ASC, DSC, MC, IC Marker Axes -->
   <g stroke="#ffffff" stroke-width="1.2" opacity="0.5">
 """
-    ax1 = 260 + 150 * math.cos(asc_rad)
-    ay1 = 260 + 150 * math.sin(asc_rad)
-    ax2 = 260 + 150 * math.cos(dsc_rad)
-    ay2 = 260 + 150 * math.sin(dsc_rad)
-    svg += f'    <line x1="{ax1:.1f}" y1="{ay1:.1f}" x2="{ax2:.1f}" y2="{ay2:.1f}" stroke-width="1.5" stroke="#ffe600" />\n'
+    ax1 = 500 + 300 * math.cos(asc_rad)
+    ay1 = 500 + 300 * math.sin(asc_rad)
+    ax2 = 500 + 300 * math.cos(dsc_rad)
+    ay2 = 500 + 300 * math.sin(dsc_rad)
+    svg += f'    <line x1="{ax1:.1f}" y1="{ay1:.1f}" x2="{ax2:.1f}" y2="{ay2:.1f}" stroke-width="2.2" stroke="#ffe600" />\n'
     
-    mx1 = 260 + 150 * math.cos(mc_rad)
-    my1 = 260 + 150 * math.sin(mc_rad)
-    mx2 = 260 + 150 * math.cos(ic_rad)
-    my2 = 260 + 150 * math.sin(ic_rad)
-    svg += f'    <line x1="{mx1:.1f}" y1="{my1:.1f}" x2="{mx2:.1f}" y2="{my2:.1f}" />\n'
+    mx1 = 500 + 300 * math.cos(mc_rad)
+    my1 = 500 + 300 * math.sin(mc_rad)
+    mx2 = 500 + 300 * math.cos(ic_rad)
+    my2 = 500 + 300 * math.sin(ic_rad)
+    svg += f'    <line x1="{mx1:.1f}" y1="{my1:.1f}" x2="{mx2:.1f}" y2="{my2:.1f}" stroke-width="1.6" stroke="#ffffff" />\n'
     
     def draw_axis_label(rad, text, offset_dist):
-        tx = 260 + offset_dist * math.cos(rad)
-        ty = 260 + offset_dist * math.sin(rad)
+        tx = 500 + offset_dist * math.cos(rad)
+        ty = 500 + offset_dist * math.sin(rad)
         return f"""
-    <rect x="{tx-11:.1f}" y="{ty-11:.1f}" width="22" height="22" rx="4" fill="#04020f" stroke="#ffe600" stroke-width="1" />
-    <text x="{tx:.1f}" y="{ty+3.5:.1f}" fill="#ffe600" font-family="Outfit" font-size="8.5" font-weight="800" text-anchor="middle">{text}</text>
+    <rect x="{tx-16:.1f}" y="{ty-16:.1f}" width="32" height="32" rx="6" fill="#04020f" stroke="#ffe600" stroke-width="1.8" filter="url(#glow-light)" />
+    <text x="{tx:.1f}" y="{ty+5.5:.1f}" fill="#ffe600" font-family="Outfit" font-size="12" font-weight="900" text-anchor="middle">{text}</text>
 """
     
     svg += "  </g>\n  <g>"
-    svg += draw_axis_label(asc_rad, "ASC", 152)
-    svg += draw_axis_label(dsc_rad, "DSC", 152)
-    svg += draw_axis_label(mc_rad, "MC", 152)
-    svg += draw_axis_label(ic_rad, "IC", 152)
+    svg += draw_axis_label(asc_rad, "ASC", 302)
+    svg += draw_axis_label(dsc_rad, "DSC", 302)
+    svg += draw_axis_label(mc_rad, "MC", 302)
+    svg += draw_axis_label(ic_rad, "IC", 302)
 
     display_date = "July 10, 2026"
     display_time = "12:01 AM"
@@ -492,10 +509,10 @@ def get_mock_chart(dt, lat, lng):
         
     svg += f"""  </g>
   
-  <g fill="#ffffff" font-family="Outfit" font-size="8" text-anchor="middle" opacity="0.9">
-    <text x="260" y="248" fill="#ffe600" font-size="9" font-weight="800" letter-spacing="1">COSMIC ALIGNMENT</text>
-    <text x="260" y="261" font-size="7.5" fill="#ffffff" opacity="0.8">{display_date}</text>
-    <text x="260" y="272" font-size="7" fill="#ffffff" opacity="0.6">{display_time}</text>
+  <g fill="#ffffff" font-family="Outfit" font-size="11" text-anchor="middle" opacity="0.9">
+    <text x="500" y="492" fill="#ffe600" font-size="13" font-weight="900" letter-spacing="1">COSMIC ALIGNMENT</text>
+    <text x="500" y="510" font-size="10.5" fill="#ffffff" opacity="0.85">{display_date}</text>
+    <text x="500" y="525" font-size="10" fill="#ffffff" opacity="0.65">{display_time}</text>
   </g>
 </svg>
 """
