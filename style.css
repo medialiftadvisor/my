@@ -1280,3 +1280,95 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.2);
     filter: brightness(1.1);
 }
+
+/* --- Mobile Responsiveness Overrides --- */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1.25rem 1rem !important;
+    }
+    
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .main-header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .date-display {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+    }
+    
+    /* Full screen lightbox modal mobile overrides */
+    #chart-lightbox-modal .modal-content {
+        max-width: 96vw !important;
+        width: 96vw !important;
+        max-height: 94vh !important;
+        height: 94vh !important;
+        padding: 1rem !important;
+    }
+    
+    #lightbox-modal-body {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+    
+    #lightbox-wheel-container {
+        flex: none !important;
+        width: 100% !important;
+        height: 40vh !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #lightbox-magnifier-container {
+        flex: 1 !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-left: none !important;
+        border-top: 1px solid rgba(255,255,255,0.08) !important;
+        padding: 0.75rem 0.25rem 0.25rem 0.25rem !important;
+        border-radius: 0 !important;
+    }
+    
+    #lightbox-magnifier-container svg {
+        max-height: 150px !important;
+    }
+    
+    #lightbox-magnifier-container div[style*="max-height: 250px"] {
+        max-height: 120px !important;
+    }
+    
+    #lightbox-magnifier-container h3 {
+        font-size: 1.2rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 60px !important;
+    }
+    
+    .main-content {
+        margin-left: 60px !important;
+    }
+    
+    .menu-link {
+        padding: 0.8rem 0 !important;
+        justify-content: center;
+    }
+    
+    .sidebar-brand {
+        padding: 1.5rem 0 !important;
+    }
+    
+    .brand-logo {
+        font-size: 1.3rem !important;
+    }
+}
