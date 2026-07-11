@@ -51,6 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getDualPlanetName = (name) => {
+        const glyphMap = {
+            'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
+            'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
+            'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
+            'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lilith': '⚳', 'Chiron': '⚷'
+        };
         const hiMap = {
             'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 
             'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 
@@ -58,8 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
             'True North Node': 'उत्तरी ध्रुव / राहू', 'True South Node': 'दक्षिणी ध्रुव / केतु',
             'North Node': 'उत्तरी ध्रुव / राहू', 'South Node': 'दक्षिणी ध्रुव / केतु'
         };
+        const glyph = glyphMap[name] || '';
         const hiName = hiMap[name] || name;
-        return name !== hiName ? `${name} (${hiName})` : name;
+        const displayName = name !== hiName ? `${name} (${hiName})` : name;
+        return glyph ? `<span style="font-size: 1.1rem; color: #ffd700; margin-right: 0.5rem; vertical-align: middle; line-height: 1;">${glyph}</span>${displayName}` : displayName;
     };
 
     // Listen to sidebar links
