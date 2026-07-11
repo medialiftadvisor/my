@@ -25,12 +25,17 @@
         
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
-            <div class="sidebar-brand">
-                <i class="fa-solid fa-star-and-crescent brand-icon"></i>
-                <div class="brand-text">
-                    <span class="brand-title">COSMIC</span>
-                    <span class="brand-subtitle">DASHBOARD</span>
+            <div class="sidebar-brand" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-star-and-crescent brand-icon"></i>
+                    <div class="brand-text">
+                        <span class="brand-title">COSMIC</span>
+                        <span class="brand-subtitle">DASHBOARD</span>
+                    </div>
                 </div>
+                <button id="theme-toggle-btn" class="btn" title="Toggle Light/Dark Theme" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--color-gold); width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; margin-left: 0.5rem; flex-shrink: 0; transition: all 0.2s;">
+                    <i class="fa-solid fa-moon" id="theme-toggle-icon"></i>
+                </button>
             </div>
             
             <nav class="sidebar-menu">

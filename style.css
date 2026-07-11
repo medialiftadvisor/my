@@ -1471,3 +1471,98 @@ svg [class*="conjunction"] {
     stroke: #a0aec0 !important; /* Charcoal/Grey (Black/Grey equivalent) */
     stroke-opacity: 0.45 !important;
 }
+
+
+/* Light Theme Variables and Element Styling overrides */
+body.light-theme {
+    --color-bg-deep: #f5f4fa;
+    --color-bg-sidebar: #ffffff;
+    --color-bg-card: rgba(255, 255, 255, 0.75);
+    --color-text-primary: #18142c;
+    --color-text-secondary: #4a4563;
+    --color-text-muted: #8e8aa2;
+    --border-glass: rgba(106, 46, 245, 0.1);
+    --border-active: rgba(106, 46, 245, 0.35);
+}
+
+body.light-theme .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(106, 46, 245, 0.12);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+}
+
+body.light-theme .sidebar {
+    border-right: 1px solid rgba(106, 46, 245, 0.1);
+}
+
+body.light-theme .bg-1 {
+    background: radial-gradient(circle, rgba(106, 46, 245, 0.08) 0%, transparent 70%);
+}
+
+body.light-theme .bg-2 {
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
+}
+
+body.light-theme input,
+body.light-theme select {
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #18142c;
+}
+
+body.light-theme input:focus,
+body.light-theme select:focus {
+    background-color: rgba(106, 46, 245, 0.02);
+}
+
+body.light-theme .planet-table th {
+    background: rgba(106, 46, 245, 0.04);
+    color: #18142c;
+}
+
+body.light-theme .planet-table tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .planet-table td {
+    color: #18142c;
+}
+
+body.light-theme .calculator-result-container {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px dashed rgba(106, 46, 245, 0.2);
+}
+
+body.light-theme .aspect-filters {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-theme .filter-type-btn {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #4a4563 !important;
+}
+
+body.light-theme .filter-type-btn.active {
+    background: var(--color-primary) !important;
+    color: #fff !important;
+}
+
+body.light-theme #aspect-planet-filter {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    color: #18142c !important;
+}
+
+body.light-theme #theme-toggle-btn {
+    background: rgba(0,0,0,0.06) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    color: var(--color-primary) !important;
+}
+
+body.light-theme svg .pk-planet-aspect.square,
+body.light-theme svg .square,
+body.light-theme svg [class*="square"] {
+    stroke: #18142c !important; /* True black in light theme */
+    stroke-opacity: 0.65 !important;
+}
