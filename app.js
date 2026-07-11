@@ -834,14 +834,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateVal = document.getElementById('planet-pos-date').value;
             const lat = document.getElementById('planet-pos-lat').value;
             const lng = document.getElementById('planet-pos-lng').value;
+            const zodiacSys = document.getElementById('planet-pos-zodiac').value;
             const resultBox = document.getElementById('planet-position-result');
 
             showLoader('planet-position-result');
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`).then(res => res.json());
-            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`).then(res => res.json());
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
 
             Promise.all([planetPosPromise, natalChartPromise])
                 .then(([planetRes, natalRes]) => {
@@ -1092,13 +1093,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateVal = document.getElementById('natal-chart-date').value;
             const lat = document.getElementById('natal-chart-lat').value;
             const lng = document.getElementById('natal-chart-lng').value;
+            const zodiacSys = document.getElementById('natal-chart-zodiac').value;
             const resultBox = document.getElementById('natal-chart-result');
 
             showLoader('natal-chart-result');
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&la=${currentLang}`)
+            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success' && res.data && res.data.svg) {
@@ -1358,7 +1360,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // General
             'btn-hindi': 'हिन्दी',
-            'btn-english': 'English'
+            'btn-english': 'English',
+            'form-zodiac-system': 'Zodiac System',
+            'zodiac-tropical': 'Tropical (Western / Sayana)',
+            'zodiac-sidereal': 'Sidereal (Vedic / Nirayana - Lahiri)'
         },
         'hi': {
             'menu-home': 'होम',
@@ -1395,7 +1400,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // General
             'btn-hindi': 'हिन्दी',
-            'btn-english': 'English'
+            'btn-english': 'English',
+            'form-zodiac-system': 'राशि चक्र प्रणाली',
+            'zodiac-tropical': 'सायन (पश्चिमी / Tropical)',
+            'zodiac-sidereal': 'निरयण (वैदिक / Sidereal - लाहिड़ी)'
         }
     };
 

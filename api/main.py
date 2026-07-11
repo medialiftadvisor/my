@@ -216,7 +216,7 @@ def get_mock_kundli(datetime_str, lat, lng):
         }
     }
 
-def get_mock_planet_position(datetime_str, lat, lng):
+def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
     import hashlib
     seed_str = f"{datetime_str or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
     h = hashlib.sha256(seed_str.encode('utf-8')).digest()
@@ -239,6 +239,8 @@ def get_mock_planet_position(datetime_str, lat, lng):
     
     positions = []
     for name, lon, is_retro in planets_raw:
+        if ayanamsa == '1':
+            lon = (lon - 24.0) % 360
         sign_idx = int(lon // 30)
         sign_name = signs[sign_idx]
         deg = lon % 30
@@ -306,11 +308,11 @@ def calculate_aspects(planetary_positions):
                     })
     return aspects
 
-def get_mock_chart(dt, lat, lng):
+def get_mock_chart(dt, lat, lng, ayanamsa='0'):
     import math
     import hashlib
     
-    data_res = get_mock_planet_position(dt, lat, lng)
+    data_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
     positions = data_res["data"]["planetary_positions"]
     
     symbols = {
@@ -1130,17 +1132,18 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = get_param('datetime')
             lat = get_param('latitude')
             lng = get_param('longitude')
+            ayanamsa = get_param('ayanamsa', '0')
             
             if DEMO_MODE or not dt or not lat or not lng:
-                response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877")
+                response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
             else:
                 token = get_access_token()
                 if not token:
-                    response_data = get_mock_planet_position(dt, lat, lng)
+                    response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa=1&la={la}"
-                    response_data = self.fetch_prokerala_api(api_url, token, fallback_func=lambda: get_mock_planet_position(dt, lat, lng))
+                    api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&la={la}"
+                    response_data = self.fetch_prokerala_api(api_url, token, fallback_func=lambda: get_mock_planet_position(dt, lat, lng, ayanamsa))
 
             if response_data.get("status") in ["success", "ok"] and "data" in response_data:
                 data_dict = response_data["data"]
@@ -1163,16 +1166,17 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = get_param('datetime')
             lat = get_param('latitude')
             lng = get_param('longitude')
+            ayanamsa = get_param('ayanamsa', '0')
             
             if DEMO_MODE or not dt or not lat or not lng:
-                response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
+                response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
             else:
                 token = get_access_token()
                 if not token:
-                    response_data = get_mock_chart(dt, lat, lng)
+                    response_data = get_mock_chart(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa=0&house_system=0"
+                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=0"
                     
                     req = urllib.request.Request(api_url)
                     req.add_header('Authorization', f'Bearer {token}')
