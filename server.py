@@ -1295,6 +1295,73 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                         print(f"[Backend] Error calling Prokerala Natal Chart API: {e}")
                         response_data = get_mock_chart(dt, lat, lng, ayanamsa)
 
+        # 8. Transit History (every 15 min up to 2 months)
+        elif path == '/api/astrology/transit-history':
+            dt = get_param('datetime')
+            lat = get_param('latitude')
+            lng = get_param('longitude')
+            ayanamsa = get_param('ayanamsa', '0')
+            limit = int(get_param('limit', '50'))
+            offset_idx = int(get_param('offset', '0'))
+            
+            import datetime
+            try:
+                if 'T' in dt:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M:%S")
+                else:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%d %H:%M:%S")
+            except:
+                try:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M")
+                except:
+                    base_dt = datetime.datetime.now()
+            
+            history_data = []
+            for i in range(limit):
+                step_idx = offset_idx + i
+                step_dt = base_dt - datetime.timedelta(minutes=15 * step_idx)
+                step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+                
+                step_pos = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
+                
+                step_entry = {
+                    "datetime": step_dt.strftime("%Y-%m-%d %H:%M"),
+                    "planets": {}
+                }
+                for p in step_pos:
+                    p_name = p["planet"]
+                    if p_name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "True North Node", "True South Node"]:
+                        step_entry["planets"][p_name] = {
+                            "sign": p["sign"],
+                            "degree": p["degree"]
+                        }
+                
+                seed_str = f"{step_dt_str}_{lat or '19.076'}_{lng or '72.877'}"
+                import hashlib
+                h = hashlib.sha256(seed_str.encode('utf-8')).digest()
+                asc_deg = (h[0] + h[10] + int(float(lat or 0))) % 360
+                mc_deg = (asc_deg + 270) % 360
+                
+                signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                step_entry["planets"]["Ascendant"] = {
+                    "sign": signs[int(asc_deg // 30)],
+                    "degree": round(asc_deg % 30, 2)
+                }
+                step_entry["planets"]["Midheaven"] = {
+                    "sign": signs[int(mc_deg // 30)],
+                    "degree": round(mc_deg % 30, 2)
+                }
+                
+                history_data.append(step_entry)
+                
+            response_data = {
+                "status": "success",
+                "data": {
+                    "history": history_data,
+                    "has_more": step_idx < 5760
+                }
+            }
+
         else:
             response_data = {"status": "error", "message": "Unknown endpoint"}
             

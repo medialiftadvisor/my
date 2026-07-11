@@ -949,9 +949,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                 </div>
                                 
-                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; flex-wrap: wrap;">
                                     <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
                                     <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
+                                    <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">History of every 15 min</button>
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
@@ -1007,6 +1008,43 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </table>
                                     </div>
                                 </div>
+                                
+                                <div id="history-pane" class="aspects-pane-content" style="display: none;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.6rem;">
+                                        <h4 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> History of Every 15 Min (Last 2 Months)
+                                        </h4>
+                                        <span style="font-size: 0.75rem; color: var(--color-text-secondary); background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px;">4 intervals per hour going back</span>
+                                    </div>
+                                    
+                                    <div class="planet-table-wrapper" style="max-height: 480px; overflow-y: auto; width: 100%;">
+                                        <table class="planet-table" style="width: 100%; border-collapse: collapse;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Date & Time</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">ASC (Lagna)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☉ Sun (सूर्य)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☽ Moon (चंद्र)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☿ Mercury (बुध)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♀ Venus (शुक्र)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♂ Mars (मंगल)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ N.Node (राहू)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ S.Node (केतु)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="history-table-body">
+                                                <tr>
+                                                    <td colspan="9" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
+                                                        <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem; color: #ffd700;"></i> Loading transit history...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div style="display: flex; justify-content: center; margin-top: 1.2rem;">
+                                        <button id="history-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">Load More Intervals</button>
+                                    </div>
+                                </div>
                             </div>
                         `;
 
@@ -1036,6 +1074,89 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                             });
                         });
+                        
+                        // Load More History Logic
+                        let historyOffset = 0;
+                        const historyLimit = 50;
+                        const historyTbody = resultBox.querySelector('#history-table-body');
+                        const loadMoreBtn = resultBox.querySelector('#history-load-more-btn');
+                        const historyTabBtn = resultBox.querySelector('#load-history-tab-btn');
+
+                        const fetchHistoryData = () => {
+                            fetch(`${apiBase}/astrology/transit-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${historyLimit}&offset=${historyOffset}`)
+                                .then(res => res.json())
+                                .then(res => {
+                                    if (res.status === 'success' && res.data && res.data.history) {
+                                        let rowsHtml = '';
+                                        res.data.history.forEach(item => {
+                                            const p = item.planets;
+                                            
+                                            const getColHtml = (pName) => {
+                                                const pData = p[pName];
+                                                if (!pData) return '<td>N/A</td>';
+                                                
+                                                const glyphMap = {
+                                                    'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
+                                                    'Venus': '♀', 'Saturn': '♄', 'True North Node': '☊', 'True South Node': '☋',
+                                                    'Ascendant': 'ASC', 'Midheaven': 'MC'
+                                                };
+                                                const glyph = glyphMap[pName] || '';
+                                                const glyphPrefix = glyph ? `<span style="color: #ffd700; font-size: 0.95rem; margin-right: 0.35rem; vertical-align: middle;">${glyph}</span>` : '';
+                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${pData.degree.toFixed(1)}°</td>`;
+                                            };
+                                            
+                                            rowsHtml += `
+                                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                                    <td style="padding: 0.6rem 0.8rem; color: #ffd700; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.02);">${item.datetime}</td>
+                                                    ${getColHtml('Ascendant')}
+                                                    ${getColHtml('Sun')}
+                                                    ${getColHtml('Moon')}
+                                                    ${getColHtml('Mercury')}
+                                                    ${getColHtml('Venus')}
+                                                    ${getColHtml('Mars')}
+                                                    ${getColHtml('True North Node')}
+                                                    ${getColHtml('True South Node')}
+                                                </tr>
+                                            `;
+                                        });
+
+                                        if (historyOffset === 0) {
+                                            historyTbody.innerHTML = rowsHtml;
+                                        } else {
+                                            historyTbody.innerHTML += rowsHtml;
+                                        }
+
+                                        historyOffset += historyLimit;
+                                        if (res.data.has_more) {
+                                            loadMoreBtn.style.display = 'block';
+                                        } else {
+                                            loadMoreBtn.style.display = 'none';
+                                        }
+                                    } else {
+                                        if (historyOffset === 0) {
+                                            historyTbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red; padding: 1rem;">Failed to load history data.</td></tr>';
+                                        }
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error("Error loading history:", err);
+                                    if (historyOffset === 0) {
+                                        historyTbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red; padding: 1rem;">Error: ' + err.message + '</td></tr>';
+                                    }
+                                });
+                        };
+
+                        if (historyTabBtn) {
+                            historyTabBtn.addEventListener('click', () => {
+                                if (historyOffset === 0) {
+                                    fetchHistoryData();
+                                }
+                            });
+                        }
+
+                        if (loadMoreBtn) {
+                            loadMoreBtn.addEventListener('click', fetchHistoryData);
+                        }
                         
                         const typeButtons = resultBox.querySelectorAll('.filter-type-btn');
                         const planetFilterSelect = resultBox.querySelector('#aspect-planet-filter');
