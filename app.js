@@ -1254,6 +1254,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (sign && magnifierDefault && magnifierActive) {
             console.log("[Rashi Click] Rashi clicked:", sign);
+            
+            // If the lightbox modal is not yet active, open it first!
+            if (lightboxModal && !lightboxModal.classList.contains('active')) {
+                const mainWheelContainer = document.querySelector('.natal-chart-wheel-container');
+                if (mainWheelContainer && wheelContainer) {
+                    const mainSvg = mainWheelContainer.querySelector('svg');
+                    if (mainSvg) {
+                        wheelContainer.innerHTML = mainSvg.outerHTML;
+                        const modalSvg = wheelContainer.querySelector('svg');
+                        if (modalSvg) {
+                            modalSvg.style.width = '100%';
+                            modalSvg.style.height = '100%';
+                            modalSvg.style.maxWidth = '100%';
+                            modalSvg.style.maxHeight = '100%';
+                        }
+                    }
+                }
+                lightboxModal.classList.add('active');
+            }
+
             // Toggle selection state of this rashi sign
             if (selectedSigns.has(sign)) {
                 selectedSigns.delete(sign);
