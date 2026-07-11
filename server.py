@@ -484,13 +484,13 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
                 
             color = None
             if abs(diff - 120) <= 6:
-                color = "#00d2ff"  # Trine (Cyan)
+                color = "#007aff"  # Trine (Blue)
             elif abs(diff - 180) <= 6:
-                color = "#ff4d4d"  # Opposition (Red)
+                color = "#ff3b30"  # Opposition (Red)
             elif abs(diff - 90) <= 6:
-                color = "#ff8533"  # Square (Orange)
+                color = "#e2e8f0"  # Square (Black / Silver-Grey)
             elif abs(diff - 60) <= 5:
-                color = "#33ffaa"  # Sextile (Green)
+                color = "#34c759"  # Sextile (Green)
                 
             if color and aspect_lines_drawn < 20:
                 r1 = a1 * math.pi / 180

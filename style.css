@@ -1438,3 +1438,36 @@ html, body {
         white-space: nowrap;
     }
 }
+
+/* Custom overrides for Prokerala Natal Chart SVG aspect lines (Red, Green, Black/Silver, Blue) */
+svg .pk-planet-aspect.trine,
+svg .trine,
+svg [class*="trine"] {
+    stroke: #007aff !important; /* Blue */
+}
+
+svg .pk-planet-aspect.sextile,
+svg .sextile,
+svg [class*="sextile"] {
+    stroke: #34c759 !important; /* Green */
+}
+
+svg .pk-planet-aspect.square,
+svg .square,
+svg [class*="square"] {
+    stroke: #e2e8f0 !important; /* Black/Silver (charcoal white for dark backgrounds) */
+    stroke-opacity: 0.65 !important;
+}
+
+svg .pk-planet-aspect.opposition,
+svg .opposition,
+svg [class*="opposition"] {
+    stroke: #ff3b30 !important; /* Red */
+}
+
+svg .pk-planet-aspect.conjunction,
+svg .conjunction,
+svg [class*="conjunction"] {
+    stroke: #a0aec0 !important; /* Charcoal/Grey (Black/Grey equivalent) */
+    stroke-opacity: 0.45 !important;
+}
