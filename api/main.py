@@ -936,6 +936,55 @@ def map_panchang_data(panchang_raw, dt, lat, lng):
         "inauspicious_timings": inauspicious_timings
     }
 
+_timezone_cache = {}
+
+def get_timezone_offset(lat, lng):
+    if not lat or not lng:
+        return "+05:30"
+    
+    try:
+        cache_key = f"{round(float(lat), 2)}_{round(float(lng), 2)}"
+    except Exception:
+        cache_key = f"{lat}_{lng}"
+        
+    global _timezone_cache
+    if cache_key in _timezone_cache:
+        return _timezone_cache[cache_key]
+        
+    url = f"https://timeapi.io/api/TimeZone/coordinate?latitude={lat}&longitude={lng}"
+    req = urllib.request.Request(url)
+    req.add_header('Accept', 'application/json')
+    try:
+        with urllib.request.urlopen(req, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            offset = data.get("currentUtcOffset") or data.get("standardUtcOffset")
+            if offset:
+                _timezone_cache[cache_key] = offset
+                return offset
+    except Exception as e:
+        print(f"[Backend] Error fetching timezone offset from TimeAPI: {e}")
+    
+    # Fallback to geographical longitude estimation
+    try:
+        hours = float(lng) / 15.0
+        h_part = int(hours)
+        m_part = int(abs(hours - h_part) * 60)
+        sign = "+" if hours >= 0 else "-"
+        offset = f"{sign}{abs(h_part):02d}:{m_part:02d}"
+        _timezone_cache[cache_key] = offset
+        return offset
+    except Exception:
+        return "+05:30"
+
+def adjust_datetime_timezone(dt_str, lat, lng):
+    if not dt_str:
+        return dt_str
+    if len(dt_str) >= 19:
+        local_part = dt_str[:19]
+        offset = get_timezone_offset(lat, lng)
+        return f"{local_part}{offset}"
+    return dt_str
+
 class handler(http.server.BaseHTTPRequestHandler):
     
     def log_message(self, format, *args):
@@ -1028,6 +1077,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = get_param('datetime')
             lat = get_param('latitude')
             lng = get_param('longitude')
+            dt = adjust_datetime_timezone(dt, lat, lng)
             
             if DEMO_MODE or not dt or not lat or not lng:
                 response_data = get_mock_panchang(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877")
@@ -1052,6 +1102,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = get_param('datetime')
             lat = get_param('latitude')
             lng = get_param('longitude')
+            dt = adjust_datetime_timezone(dt, lat, lng)
             
             if DEMO_MODE or not dt or not lat or not lng:
                 response_data = get_mock_kundli(dt or "1995-05-15T08:30:00+05:30", lat or "19.076", lng or "72.877")
@@ -1080,6 +1131,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = get_param('datetime')
             lat = get_param('latitude')
             lng = get_param('longitude')
+            dt = adjust_datetime_timezone(dt, lat, lng)
             
             if DEMO_MODE or not dt or not lat or not lng:
                 response_data = get_mock_mangal_dosha(dt or "1995-05-15T08:30:00+05:30", lat or "19.076", lng or "72.877")
@@ -1108,6 +1160,9 @@ class handler(http.server.BaseHTTPRequestHandler):
             b_lat = get_param('boy_latitude') or get_param('boy_coordinates')
             b_lng = get_param('boy_longitude')
             
+            g_dob = adjust_datetime_timezone(g_dob, g_lat, g_lng)
+            b_dob = adjust_datetime_timezone(b_dob, b_lat, b_lng)
+            
             if DEMO_MODE or not g_dob or not b_dob or not g_lat or not b_lat:
                 response_data = get_mock_kundli_matching(g_dob or "1996-08-20T10:15:00+05:30", b_dob or "1994-12-05T14:45:00+05:30")
             else:
@@ -1133,6 +1188,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             lat = get_param('latitude')
             lng = get_param('longitude')
             ayanamsa = get_param('ayanamsa', '0')
+            dt = adjust_datetime_timezone(dt, lat, lng)
             
             if DEMO_MODE or not dt or not lat or not lng:
                 response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
@@ -1167,6 +1223,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             lat = get_param('latitude')
             lng = get_param('longitude')
             ayanamsa = get_param('ayanamsa', '0')
+            dt = adjust_datetime_timezone(dt, lat, lng)
             
             if DEMO_MODE or not dt or not lat or not lng:
                 response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
