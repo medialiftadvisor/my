@@ -1198,8 +1198,42 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/planet-position?datetime={urllib.parse.quote(dt)}&coordinates={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&la={la}"
-                    response_data = self.fetch_prokerala_api(api_url, token, fallback_func=lambda: get_mock_planet_position(dt, lat, lng, ayanamsa))
+                    api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=0"
+                    raw_res = fetch_raw_api(api_url, token)
+                    if raw_res and raw_res.get("status") == "ok":
+                        raw_data = raw_res.get("data", {})
+                        planets_list = raw_data.get("planet_positions") or []
+                        mapped_planets = []
+                        for p in planets_list:
+                            name = p.get("name") or "N/A"
+                            lon = p.get("longitude")
+                            deg = p.get("degree")
+                            is_retro = p.get("is_retrograde", False)
+                            zod = p.get("zodiac", {})
+                            
+                            mapped_planets.append({
+                                "name": name,
+                                "planet": name,
+                                "longitude": lon,
+                                "degree": deg,
+                                "is_retrograde": is_retro,
+                                "rasi": {
+                                    "name": zod.get("name") or "N/A",
+                                    "lord": {
+                                        "name": zod.get("lord", {}).get("name") or "N/A",
+                                        "vedic_name": zod.get("lord", {}).get("name") or "N/A"
+                                    }
+                                }
+                            })
+                        
+                        response_data = {
+                            "status": "success",
+                            "data": {
+                                "planetary_positions": mapped_planets
+                            }
+                        }
+                    else:
+                        response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
 
             if response_data.get("status") in ["success", "ok"] and "data" in response_data:
                 data_dict = response_data["data"]
