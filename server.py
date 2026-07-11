@@ -1194,7 +1194,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                             }
                     except Exception as e:
                         print(f"[Backend] Error calling Prokerala Natal Chart API: {e}")
-                        response_data = get_mock_chart(dt, lat, lng)
+                        response_data = get_mock_chart(dt, lat, lng, ayanamsa)
 
         else:
             response_data = {"status": "error", "message": "Unknown endpoint"}
