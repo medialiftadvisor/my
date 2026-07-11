@@ -1204,7 +1204,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=0"
+                    api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
                     raw_res = fetch_raw_api(api_url, token)
                     if raw_res and raw_res.get("status") == "ok":
                         raw_data = raw_res.get("data", {})
@@ -1273,7 +1273,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     response_data = get_mock_chart(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=0"
+                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
                     
                     req = urllib.request.Request(api_url)
                     req.add_header('Authorization', f'Bearer {token}')
