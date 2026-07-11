@@ -50,6 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo(0, 0);
     };
 
+    const getDualPlanetName = (name) => {
+        const hiMap = {
+            'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 
+            'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 
+            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'लग्न'
+        };
+        const hiName = hiMap[name] || name;
+        return name !== hiName ? `${name} (${hiName})` : name;
+    };
+
     // Listen to sidebar links
     menuLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -876,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             planetRows += `
                                 <tr>
-                                    <td><strong>${translateText(name)}</strong></td>
+                                    <td><strong>${getDualPlanetName(name)}</strong></td>
                                     <td>${translateText(sign)}</td>
                                     <td>${translateText(lordInfo)}</td>
                                     <td>${deg}</td>
@@ -914,7 +924,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="result-badge">Positions & Aspects</span>
                                 </div>
                                 
-                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 0.8rem 1.2rem; margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; font-family: Outfit; font-size: 0.85rem; color: var(--color-text-secondary);">
+                                    <div>
+                                        <i class="fa-regular fa-clock" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>Birth Time:</strong> ${dateVal.replace('T', ' ')}
+                                    </div>
+                                    <div>
+                                        <i class="fa-solid fa-earth-americas" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>Location:</strong> ${lat}°, ${lng}°
+                                    </div>
+                                    <div>
+                                        <i class="fa-solid fa-compass" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>System:</strong> ${zodiacSys === '0' ? 'Tropical (Western)' : 'Sidereal Lahiri (Vedic)'}
+                                    </div>
+                                </div>
+                                
+                                <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
                                     <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
                                     <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
                                 </div>
@@ -1029,9 +1054,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     
                                     html += `
                                         <tr>
-                                            <td><strong>${translateText(a.planet_one)}</strong></td>
+                                            <td><strong>${getDualPlanetName(a.planet_one)}</strong></td>
                                             <td style="color: #00d2ff; font-weight: 600;">${translateText(a.aspect_name)}</td>
-                                            <td><strong>${translateText(a.planet_two)}</strong></td>
+                                            <td><strong>${getDualPlanetName(a.planet_two)}</strong></td>
                                             <td>${typeBadge}</td>
                                             <td>${a.exact_diff.toFixed(1)}°</td>
                                             <td>${a.orb.toFixed(1)}°</td>
@@ -1406,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
                             <div style="display: flex; align-items: center; gap: 0.6rem;">
                                 <span style="font-size: 1.25rem; color: ${p.color}; font-weight: bold; line-height: 1;">${p.symbol}</span>
-                                <span style="font-family: Outfit; font-weight: 700; color: #fff; font-size: 0.9rem;">${translateText(p.name)}</span>
+                                <span style="font-family: Outfit; font-weight: 700; color: #fff; font-size: 0.9rem;">${getDualPlanetName(p.name)}</span>
                             </div>
                             <span style="font-family: Outfit; font-weight: 600; color: #ffd700; font-size: 0.85rem;">${degInt}° ${minInt.toString().padStart(2, '0')}' ${translateText(activeSign)}</span>
                         </div>
