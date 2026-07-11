@@ -54,7 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const hiMap = {
             'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 
             'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 
-            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'लग्न'
+            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'लग्न',
+            'True North Node': 'उत्तरी ध्रुव / राहू', 'True South Node': 'दक्षिणी ध्रुव / केतु',
+            'North Node': 'उत्तरी ध्रुव / राहू', 'South Node': 'दक्षिणी ध्रुव / केतु'
         };
         const hiName = hiMap[name] || name;
         return name !== hiName ? `${name} (${hiName})` : name;
@@ -1052,11 +1054,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                         ? '<span style="color: #ffd700; background: rgba(255,215,0,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,215,0,0.15); font-weight: 600;">Major</span>'
                                         : '<span style="color: #a0aec0; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">Minor</span>';
                                     
+                                    const p1Data = (window.currentPlanetsData || []).find(p => (p.name || p.planet) === a.planet_one);
+                                    const p2Data = (window.currentPlanetsData || []).find(p => (p.name || p.planet) === a.planet_two);
+                                    
+                                    let p1Sign = '';
+                                    if (p1Data) {
+                                        const s = p1Data.rasi?.name || p1Data.sign || '';
+                                        if (s) p1Sign = ` <span style="font-size: 0.8rem; color: var(--color-text-secondary); font-weight: 500;">(${translateText(s)})</span>`;
+                                    }
+                                    let p2Sign = '';
+                                    if (p2Data) {
+                                        const s = p2Data.rasi?.name || p2Data.sign || '';
+                                        if (s) p2Sign = ` <span style="font-size: 0.8rem; color: var(--color-text-secondary); font-weight: 500;">(${translateText(s)})</span>`;
+                                    }
+
                                     html += `
                                         <tr>
-                                            <td><strong>${getDualPlanetName(a.planet_one)}</strong></td>
+                                            <td><strong>${getDualPlanetName(a.planet_one)}</strong>${p1Sign}</td>
                                             <td style="color: #00d2ff; font-weight: 600;">${translateText(a.aspect_name)}</td>
-                                            <td><strong>${getDualPlanetName(a.planet_two)}</strong></td>
+                                            <td><strong>${getDualPlanetName(a.planet_two)}</strong>${p2Sign}</td>
                                             <td>${typeBadge}</td>
                                             <td>${a.exact_diff.toFixed(1)}°</td>
                                             <td>${a.orb.toFixed(1)}°</td>

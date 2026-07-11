@@ -234,7 +234,9 @@ def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
         ("Saturn", (h[6] + h[16]) % 360, (h[6] % 5 == 0)),
         ("Uranus", (h[7] + h[17]) % 360, False),
         ("Neptune", (h[8] + h[18]) % 360, False),
-        ("Pluto", (h[9] + h[19]) % 360, True)
+        ("Pluto", (h[9] + h[19]) % 360, True),
+        ("True North Node", (h[0] * 3) % 360, False),
+        ("True South Node", (h[0] * 3 + 180) % 360, False)
     ]
     
     positions = []
