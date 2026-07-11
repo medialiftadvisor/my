@@ -1125,25 +1125,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === 'success' && res.data && res.data.svg) {
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
+
+            Promise.all([planetPosPromise, natalChartPromise])
+                .then(([planetRes, natalRes]) => {
+                    if (planetRes.status === 'success' && planetRes.data) {
+                        window.currentPlanetsData = planetRes.data.planet_position || planetRes.data.planetary_positions || [];
+                    }
+
+                    if (natalRes.status === 'success' && natalRes.data && natalRes.data.svg) {
+                        // Generate planetary positions rows specifically for the natal wheel view
+                        let planetRows = '';
+                        if (window.currentPlanetsData) {
+                            window.currentPlanetsData.forEach(p => {
+                                const name = p.name || p.planet || 'N/A';
+                                let sign = 'N/A';
+                                const rasi = p.rasi;
+                                if (rasi && typeof rasi === 'object') {
+                                    sign = rasi.name || 'N/A';
+                                } else {
+                                    sign = p.sign || 'N/A';
+                                }
+
+                                const deg = typeof p.degree === 'number' ? `${p.degree.toFixed(1)}°` : 'N/A';
+                                const isRetro = p.is_retrograde || p.isRetrograde || false;
+                                const retroText = isRetro ? translateText('Retrograde') : translateText('Direct');
+                                const retroBadge = isRetro 
+                                    ? `<span style="color: #ff5757; font-weight: 700; background: rgba(255,87,87,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,87,87,0.2);">${retroText}</span>` 
+                                    : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
+
+                                planetRows += `
+                                    <tr>
+                                        <td style="padding: 0.6rem 0.8rem;"><strong>${getDualPlanetName(name)}</strong></td>
+                                        <td style="padding: 0.6rem 0.8rem;"><strong>${translateText(sign)}</strong></td>
+                                        <td style="padding: 0.6rem 0.8rem;">${deg}</td>
+                                        <td style="padding: 0.6rem 0.8rem;">${retroBadge}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
                         resultBox.innerHTML = `
-                            <div class="result-card" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-                                <div class="result-header" style="width: 100%;">
-                                    <div class="result-title">Western Natal Wheel</div>
+                            <div class="result-card" style="width: 100%;">
+                                <div class="result-header">
+                                    <div class="result-title">Western Natal Wheel & Placements</div>
                                     <span class="result-badge">Natal Chart</span>
                                 </div>
-                                <div class="result-content" style="width: 100%; display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
-                                    <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 480px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
-                                        ${res.data.svg}
+                                
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 0.8rem 1.2rem; margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; font-family: Outfit; font-size: 0.85rem; color: var(--color-text-secondary);">
+                                    <div>
+                                        <i class="fa-regular fa-clock" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>Birth Time:</strong> ${dateVal.replace('T', ' ')}
+                                    </div>
+                                    <div>
+                                        <i class="fa-solid fa-earth-americas" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>Location:</strong> ${lat}°, ${lng}°
+                                    </div>
+                                    <div>
+                                        <i class="fa-solid fa-compass" style="color: #ffd700; margin-right: 0.4rem;"></i>
+                                        <strong>System:</strong> ${zodiacSys === '0' ? 'Tropical (Western)' : 'Sidereal Lahiri (Vedic)'}
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-direction: row; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; width: 100%;">
+                                    <!-- Left: Wheel Chart SVG -->
+                                    <div style="flex: 1; min-width: 320px; display: flex; justify-content: center; background: rgba(0,0,0,0.15); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); align-items: center; box-sizing: border-box;">
+                                        <div class="natal-chart-wheel-container click-expand-wheel" style="width: 100%; max-width: 440px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;" title="Click to view full screen">
+                                            ${natalRes.data.svg}
+                                        </div>
+                                    </div>
+
+                                    <!-- Right: Planet placements table -->
+                                    <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; gap: 1rem; box-sizing: border-box;">
+                                        <h4 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-table-list" style="font-size: 0.95rem;"></i> Planetary Sign Placements
+                                        </h4>
+                                        <div class="planet-table-wrapper" style="max-height: 440px; overflow-y: auto; width: 100%;">
+                                            <table class="planet-table" style="width: 100%; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="text-align: left; padding: 0.6rem 0.8rem;">Planet</th>
+                                                        <th style="text-align: left; padding: 0.6rem 0.8rem;">Zodiac Sign</th>
+                                                        <th style="text-align: left; padding: 0.6rem 0.8rem;">Degree</th>
+                                                        <th style="text-align: left; padding: 0.6rem 0.8rem;">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${planetRows || '<tr><td colspan="4" style="text-align: center; opacity: 0.6; padding: 1rem;">No placements returned.</td></tr>'}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         `;
                     } else {
-                        throw new Error(res.message || "Failed retrieving natal chart SVG");
+                        throw new Error(natalRes.message || "Failed retrieving natal chart SVG");
                     }
                 })
                 .catch(err => {
