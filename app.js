@@ -657,12 +657,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         let planetRows = '';
                         planets.forEach(p => {
+                            const d = Math.floor(p.degree);
+                            const m = Math.floor((p.degree - d) * 60);
+                            const s = Math.round(((p.degree - d) * 60 - m) * 60);
+                            const formattedDeg = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
                             planetRows += `
                                 <tr>
                                     <td><strong>${p.planet}</strong></td>
                                     <td>${p.sign}</td>
                                     <td>House ${p.house}</td>
-                                    <td>${p.degree.toFixed(1)}°</td>
+                                    <td>${formattedDeg}</td>
                                 </tr>
                             `;
                         });
@@ -887,7 +891,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 sign = p.sign || 'N/A';
                             }
 
-                            const deg = typeof p.degree === 'number' ? `${p.degree.toFixed(1)}°` : 'N/A';
+                            let deg = 'N/A';
+                            if (typeof p.degree === 'number') {
+                                const d = Math.floor(p.degree);
+                                const m = Math.floor((p.degree - d) * 60);
+                                const s = Math.round(((p.degree - d) * 60 - m) * 60);
+                                deg = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
+                            }
                             const isRetro = p.is_retrograde || p.isRetrograde || false;
                             const retroText = isRetro ? translateText('Retrograde') : translateText('Direct');
                             const retroBadge = isRetro 
@@ -1102,7 +1112,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 };
                                                 const glyph = glyphMap[pName] || '';
                                                 const glyphPrefix = glyph ? `<span style="color: #ffd700; font-size: 0.95rem; margin-right: 0.35rem; vertical-align: middle;">${glyph}</span>` : '';
-                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${pData.degree.toFixed(1)}°</td>`;
+                                                const d = Math.floor(pData.degree);
+                                                const m = Math.floor((pData.degree - d) * 60);
+                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${d}° ${m.toString().padStart(2, '0')}'</td>`;
                                             };
                                             
                                             rowsHtml += `
@@ -1285,6 +1297,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (window.currentPlanetsData) {
                             window.currentPlanetsData.forEach(p => {
                                 const name = p.name || p.planet || 'N/A';
+                                let deg = 'N/A';
+                                if (typeof p.degree === 'number') {
+                                    const d = Math.floor(p.degree);
+                                    const m = Math.floor((p.degree - d) * 60);
+                                    const s = Math.round(((p.degree - d) * 60 - m) * 60);
+                                    deg = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
+                                }
                                 let sign = 'N/A';
                                 const rasi = p.rasi;
                                 if (rasi && typeof rasi === 'object') {
@@ -1293,7 +1312,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     sign = p.sign || 'N/A';
                                 }
 
-                                const deg = typeof p.degree === 'number' ? `${p.degree.toFixed(1)}°` : 'N/A';
                                 const isRetro = p.is_retrograde || p.isRetrograde || false;
                                 const retroText = isRetro ? translateText('Retrograde') : translateText('Direct');
                                 const retroBadge = isRetro 
