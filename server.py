@@ -953,8 +953,14 @@ def get_timezone_offset(lat, lng):
     try:
         with urllib.request.urlopen(req, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
-            offset = data.get("currentUtcOffset") or data.get("standardUtcOffset")
-            if offset:
+            offset_obj = data.get("currentUtcOffset") or data.get("standardUtcOffset")
+            if isinstance(offset_obj, dict):
+                total_seconds = offset_obj.get("seconds", 0)
+                sign = "+" if total_seconds >= 0 else "-"
+                abs_seconds = abs(total_seconds)
+                hours = abs_seconds // 3600
+                minutes = (abs_seconds % 3600) // 60
+                offset = f"{sign}{hours:02d}:{minutes:02d}"
                 _timezone_cache[cache_key] = offset
                 return offset
     except Exception as e:
