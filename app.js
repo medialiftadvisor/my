@@ -1690,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     name_en: "Sextile", name_hi: "षडश", 
                     desc_en: "A soft aspect indicating harmonious opportunities and mental support.", 
                     desc_hi: "सौम्य प्रभाव जो अनुकूल अवसरों और मानसिक सहयोग का संकेत देता है।",
-                    color: "#007aff"
+                    color: "#a0aec0"
                 },
                 90: { 
                     name_en: "Square", name_hi: "केंद्र / चतुर्थ भाव", 

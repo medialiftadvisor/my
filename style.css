@@ -1442,11 +1442,8 @@ html, body {
 /* Custom overrides for Prokerala Natal Chart SVG aspect lines (Red, Green, Black/Silver, Blue) */
 svg .pk-planet-aspect.trine,
 svg .trine,
-svg [class*="trine"],
-svg .pk-planet-aspect.sextile,
-svg .sextile,
-svg [class*="sextile"] {
-    stroke: #007aff !important; /* Blue (Trine and Sextile are soft aspects) */
+svg [class*="trine"] {
+    stroke: #007aff !important; /* Blue (Trine is soft/harmonious) */
 }
 
 svg .pk-planet-aspect.square,
@@ -1464,6 +1461,9 @@ svg [class*="quincunx"] {
     stroke: #34c759 !important; /* Green (Quincunx / Inconjunct) */
 }
 
+svg .pk-planet-aspect.sextile,
+svg .sextile,
+svg [class*="sextile"],
 svg .pk-planet-aspect.semisextile,
 svg .semisextile,
 svg [class*="semisextile"],
