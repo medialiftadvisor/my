@@ -473,26 +473,32 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
   <!-- Dynamic Aspect Lines inside the inner house circle -->
   <g stroke-width="1.5" filter="url(#glow-light)">
 """
+    asc_deg = (data_res["data"]["houses"][0]["start_cusp"]["longitude"])
+    mc_deg = (data_res["data"]["houses"][9]["start_cusp"]["longitude"])
+    aspect_planets = planets.copy()
+    aspect_planets.append(("Ascendant", "ASC", asc_deg, "#ffe600"))
+    aspect_planets.append(("Midheaven", "MC", mc_deg, "#ffffff"))
+
     aspect_lines_drawn = 0
-    for i in range(len(planets)):
-        for j in range(i + 1, len(planets)):
-            p1_name, _, a1, _ = planets[i]
-            p2_name, _, a2, _ = planets[j]
+    for i in range(len(aspect_planets)):
+        for j in range(i + 1, len(aspect_planets)):
+            p1_name, _, a1, _ = aspect_planets[i]
+            p2_name, _, a2, _ = aspect_planets[j]
             diff = abs(a1 - a2) % 360
             if diff > 180:
                 diff = 360 - diff
                 
             color = None
-            if abs(diff - 120) <= 6:
+            if abs(diff - 120) <= 8:
                 color = "#007aff"  # Trine (Blue)
-            elif abs(diff - 180) <= 6:
+            elif abs(diff - 180) <= 8:
                 color = "#ff3b30"  # Opposition (Red)
-            elif abs(diff - 90) <= 6:
+            elif abs(diff - 90) <= 8:
                 color = "#e2e8f0"  # Square (Black / Silver-Grey)
-            elif abs(diff - 60) <= 5:
+            elif abs(diff - 60) <= 7:
                 color = "#34c759"  # Sextile (Green)
                 
-            if color and aspect_lines_drawn < 20:
+            if color and aspect_lines_drawn < 45:
                 r1 = a1 * math.pi / 180
                 r2 = a2 * math.pi / 180
                 x1 = 500 + 300 * math.cos(r1)
