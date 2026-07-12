@@ -1672,6 +1672,98 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            // Let's calculate aspects targeting this activeSign!
+            const signsList = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+            const activeSignIndex = signsList.indexOf(activeSign);
+            
+            let aspectsHtml = '';
+            
+            // Map aspect values to English/Hindi description strings
+            const aspectDescriptions = {
+                0: { 
+                    name_en: "Conjunction", name_hi: "युति", 
+                    desc_en: "Direct presence of the planet inside this sign, merging its energy.", 
+                    desc_hi: "इस राशि में ग्रह की सीधी उपस्थिति, दोनों ऊर्जाओं का आपस में विलीनीकरण।",
+                    color: "#ffffff"
+                },
+                60: { 
+                    name_en: "Sextile", name_hi: "षडश", 
+                    desc_en: "A soft aspect indicating harmonious opportunities and mental support.", 
+                    desc_hi: "सौम्य प्रभाव जो अनुकूल अवसरों और मानसिक सहयोग का संकेत देता है।",
+                    color: "#007aff"
+                },
+                90: { 
+                    name_en: "Square", name_hi: "केंद्र / चतुर्थ भाव", 
+                    desc_en: "A challenging dynamic force, creating creative tension or conflicts.", 
+                    desc_hi: "एक चुनौतीपूर्ण ऊर्जा बल, जो रचनात्मक तनाव या संघर्ष उत्पन्न करता है।",
+                    color: "#ff3b30"
+                },
+                120: { 
+                    name_en: "Trine", name_hi: "त्रिकोण", 
+                    desc_en: "A highly harmonious aspect bringing luck, natural talent, and ease.", 
+                    desc_hi: "एक अत्यधिक अनुकूल प्रभाव जो भाग्य, जन्मजात प्रतिभा और सुगमता लाता है।",
+                    color: "#007aff"
+                },
+                150: { 
+                    name_en: "Quincunx / Inconjunct", name_hi: "षडाष्टक", 
+                    desc_en: "Requires adjustment, indicating health concerns or subtle misalignments.", 
+                    desc_hi: "समायोजन की आवश्यकता होती है, जो स्वास्थ्य चिंता या सूक्ष्म असंतुलन दर्शाता है।",
+                    color: "#34c759"
+                },
+                180: { 
+                    name_en: "Opposition", name_hi: "प्रतियुति / सप्तम दृष्टि", 
+                    desc_en: "Direct face-to-face polarity, highlighting relationships and balance.", 
+                    desc_hi: "आमने-सामने का सीधा प्रभाव, जो संबंधों और संतुलन की आवश्यकता दर्शाता है।",
+                    color: "#ff3b30"
+                }
+            };
+            
+            if (window.currentPlanetsData && activeSignIndex !== -1) {
+                window.currentPlanetsData.forEach(p => {
+                    const name = p.name || p.planet || "N/A";
+                    let planetSign = "N/A";
+                    if (p.rasi && p.rasi.name) {
+                        planetSign = p.rasi.name;
+                    } else if (p.sign) {
+                        planetSign = p.sign;
+                    }
+                    
+                    const planetSignIndex = signsList.indexOf(planetSign);
+                    if (planetSignIndex !== -1) {
+                        const diffSigns = Math.abs(activeSignIndex - planetSignIndex);
+                        const distance = diffSigns > 6 ? 12 - diffSigns : diffSigns;
+                        const angle = distance * 30;
+                        
+                        if (aspectDescriptions[angle]) {
+                            const aspect = aspectDescriptions[angle];
+                            const symbol = glyphMap[name] || "?";
+                            const pColor = colorMap[name] || "#ffffff";
+                            aspectsHtml += `
+                                <div style="display: flex; gap: 0.6rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); padding: 0.6rem; border-radius: 6px; font-family: Outfit; font-size: 0.75rem;">
+                                    <div style="font-size: 1.25rem; color: ${pColor}; font-weight: bold; line-height: 1; flex-shrink: 0; margin-top: 2px;">${symbol}</div>
+                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: left;">
+                                        <div style="display: flex; justify-content: space-between; font-weight: 800; color: #fff; font-size: 0.8rem;">
+                                            <span>${getDualPlanetName(name)}</span>
+                                            <span style="color: ${aspect.color}; font-size: 0.75rem;">${aspect.name_en} / ${aspect.name_hi} (${angle}°)</span>
+                                        </div>
+                                        <div style="color: var(--color-text-secondary); font-size: 0.7rem; line-height: 1.35; margin-top: 2px;">
+                                            <strong>EN:</strong> ${aspect.desc_en}
+                                        </div>
+                                        <div style="color: var(--color-text-muted); font-size: 0.7rem; line-height: 1.35; margin-top: 1px;">
+                                            <strong>HI:</strong> ${aspect.desc_hi}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            }
+            
+            if (!aspectsHtml) {
+                aspectsHtml = `<div style="text-align: center; font-size: 0.75rem; color: var(--color-text-muted); font-family: Outfit; padding: 0.5rem 0;">No significant aspects found for this sign. / इस राशि पर कोई विशेष प्रभाव नहीं है।</div>`;
+            }
+
             magnifierDefault.style.display = 'none';
             magnifierActive.style.display = 'flex';
             
@@ -1680,14 +1772,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '';
 
             magnifierActive.innerHTML = `
-                <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem; margin-bottom: 1rem; width: 100%; display: flex; flex-direction: column; align-items: center;">
-                    <h3 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px;">${translateText(activeSign).toUpperCase()}</h3>
-                    <span style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; font-family: Outfit; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.25rem;">${translations[currentLang]['magnifier-arc']}</span>
+                <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.6rem; margin-bottom: 0.6rem; width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                    <h3 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px;">${translateText(activeSign).toUpperCase()}</h3>
+                    <span style="font-size: 0.7rem; color: var(--color-text-secondary); text-transform: uppercase; font-family: Outfit; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.15rem;">${translations[currentLang]['magnifier-arc']}</span>
                     ${clearBtnHtml}
                 </div>
                 
-                <div style="width: 100%; display: flex; justify-content: center; margin-bottom: 1rem;">
-                    <svg viewBox="0 0 400 230" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 220px;">
+                <div style="width: 100%; display: flex; justify-content: center; margin-bottom: 0.6rem; flex-shrink: 0;">
+                    <svg viewBox="0 0 400 230" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-height: 160px;">
                         <path d="M 50 200 A 150 150 0 0 1 350 200" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" />
                         <path d="M 50 200 A 150 150 0 0 1 350 200" fill="none" stroke="#d4af37" stroke-width="1.8" opacity="0.5" />
                         ${ticksHtml}
@@ -1696,8 +1788,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                 </div>
                 
-                <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; padding-right: 0.25rem; width: 100%;">
-                    ${listHtml}
+                <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; padding-right: 0.25rem; width: 100%; box-sizing: border-box;">
+                    <!-- Section: Transiting Planets -->
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                        <h5 style="font-family: Outfit; color: #ffd700; margin: 0 0 0.3rem 0; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">Planets in Sign / राशि में स्थित ग्रह</h5>
+                        ${listHtml}
+                    </div>
+                    
+                    <!-- Section: Aspects to Sign -->
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.8rem; margin-top: 0.4rem;">
+                        <h5 style="font-family: Outfit; color: #ffd700; margin: 0 0 0.3rem 0; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">Aspects to Sign / राशि पर दृष्टि संबंध</h5>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            ${aspectsHtml}
+                        </div>
+                    </div>
                 </div>
             `;
             

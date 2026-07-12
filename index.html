@@ -619,10 +619,59 @@
                 
                 <!-- Right: Magnifier Panel -->
                 <div id="lightbox-magnifier-container" style="flex: 0.9; max-width: 440px; height: 100%; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border-left: 1px solid rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 12px; box-sizing: border-box; justify-content: center;">
-                    <div id="magnifier-default-state" style="text-align: center; opacity: 0.7;">
-                        <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 3rem; color: #ffd700; margin-bottom: 1.2rem; display: block;"></i>
-                        <h4 style="font-family: Outfit; color: #fff; margin-top: 0px; margin-bottom: 0.6rem; font-size: 1.25rem;">Zodiac Magnifier</h4>
-                        <p style="font-size: 0.85rem; line-height: 1.5; color: var(--color-text-secondary); margin: 0;">Hover & click on any outer zodiac sector (e.g., Aries, Taurus) on the wheel to magnify its 30° orbital arc and view planet details.</p>
+                    <div id="magnifier-default-state" style="display: flex; flex-direction: column; height: 100%; justify-content: flex-start; box-sizing: border-box;">
+                        <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                            <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 2.2rem; color: #ffd700; margin-bottom: 0.5rem; display: inline-block;"></i>
+                            <h4 style="font-family: Outfit; color: #fff; margin: 0; font-size: 1.2rem; font-weight: 800;">Zodiac Magnifier / राशि चक्र आवर्धक</h4>
+                            <p style="font-size: 0.75rem; line-height: 1.4; color: var(--color-text-secondary); margin-top: 0.4rem; margin-bottom: 0px;">
+                                [EN] Click on any zodiac sector on the wheel to filter aspect lines and view planet details.<br>
+                                [HI] पहलू रेखाओं को फ़िल्टर करने और ग्रहों के विवरण देखने के लिए चक्र पर किसी भी राशि क्षेत्र पर क्लिक करें।
+                            </p>
+                        </div>
+                        
+                        <div style="flex: 1; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.8rem; text-align: left;">
+                            <!-- Legend Section -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">
+                                <h5 style="font-family: Outfit; color: #ffd700; margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Aspect Lines Legend / पहलू रेखाओं का विवरण</h5>
+                                <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.75rem; font-family: Outfit;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #007aff; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Blue / नीला:</strong> Trine & Sextile (120° & 60°) <span style="opacity: 0.65;">- Positive, harmonious flow / अनुकूल और सकारात्मक प्रभाव</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #ff3b30; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Red / लाल:</strong> Opposition & Square (180° & 90°) <span style="opacity: 0.65;">- Dynamic challenge, action / चुनौतीपूर्ण प्रभाव और तनाव</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #34c759; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Green / हरा:</strong> Quincunx (150°) <span style="opacity: 0.65;">- Adjustments required / समायोजन और संतुलन की आवश्यकता</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #a0aec0; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Grey / धूसर:</strong> Minor aspects (30°, 45°, 135°) <span style="opacity: 0.65;">- Secondary influences / लघु और सूक्ष्म प्रभाव</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart Info Section -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; font-size: 0.75rem; line-height: 1.4; color: var(--color-text-secondary); font-family: Outfit;">
+                                <h5 style="font-family: Outfit; color: #ffd700; margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">About the Chart / जन्म कुंडली के बारे में</h5>
+                                <p style="margin-top: 0; margin-bottom: 0.5rem;">
+                                    <strong>[English]</strong> This natal wheel maps the positions of celestial bodies at your birth. The outer ring displays the zodiac signs, the inner divisions mark the twelve houses of life experiences, and the connecting paths represent planetary aspects—geometric relationships of energy flow between planets.
+                                </p>
+                                <p style="margin: 0;">
+                                    <strong>[हिन्दी]</strong> यह जन्म कुंडली चक्र आपके जन्म के समय आकाशीय पिंडों की स्थिति दर्शाता है। बाहरी वलय राशियों को दर्शाता है, आंतरिक विभाजन जीवन के 12 भावों को इंगित करते हैं, और मध्य रेखाएं ग्रहों की युति/दृष्टि (पहलू) संबंध दर्शाती हैं जो ऊर्जा प्रवाह को दर्शाती हैं।
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <div id="magnifier-active-state" style="display: none; flex-direction: column; height: 100%; justify-content: space-between; box-sizing: border-box;">
                         <!-- Active zoom contents loaded here -->
