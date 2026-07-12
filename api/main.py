@@ -493,18 +493,22 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
                 diff = 360 - diff
                 
             color = None
-            if abs(diff - 120) <= 8:
+            if abs(diff - 120) <= 10:
                 color = "#007aff"  # Trine (Blue)
-            elif abs(diff - 180) <= 8:
+            elif abs(diff - 180) <= 10:
                 color = "#ff3b30"  # Opposition (Red)
-            elif abs(diff - 90) <= 8:
+            elif abs(diff - 90) <= 10:
                 color = "#ff3b30"  # Square (Red)
-            elif abs(diff - 60) <= 7:
+            elif abs(diff - 60) <= 8:
                 color = "#34c759"  # Sextile (Green)
-            elif abs(diff - 150) <= 5:
+            elif abs(diff - 150) <= 6:
                 color = "#a0aec0"  # Quincunx (Charcoal / Black equivalent)
-            elif abs(diff - 30) <= 4:
+            elif abs(diff - 30) <= 5:
                 color = "#a0aec0"  # Semisextile (Charcoal / Black equivalent)
+            elif abs(diff - 135) <= 5:
+                color = "#a0aec0"  # Sesquiquadrate (Charcoal / Black equivalent)
+            elif abs(diff - 45) <= 5:
+                color = "#a0aec0"  # Semisquare (Charcoal / Black equivalent)
                 
             if color and aspect_lines_drawn < 45:
                 r1 = a1 * math.pi / 180
