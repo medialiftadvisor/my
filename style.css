@@ -1568,9 +1568,4 @@ body.light-theme #theme-toggle-btn {
     color: var(--color-primary) !important;
 }
 
-body.light-theme svg .pk-planet-aspect.square,
-body.light-theme svg .square,
-body.light-theme svg [class*="square"] {
-    stroke: #18142c !important; /* True black in light theme */
-    stroke-opacity: 0.65 !important;
-}
+
