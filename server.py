@@ -15,15 +15,17 @@ CLIENT_ID = ""
 CLIENT_SECRET = ""
 DEMO_MODE = True
 DIVINE_API_KEY = ""
+DIVINE_ACCESS_TOKEN = ""
 
 # Load .env file manually and check system environment
 def load_env():
-    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE, DIVINE_API_KEY
+    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE, DIVINE_API_KEY, DIVINE_ACCESS_TOKEN
     
     # 1. Read from system environment first (critical for Vercel!)
     CLIENT_ID = os.environ.get("PROKERALA_CLIENT_ID", "")
     CLIENT_SECRET = os.environ.get("PROKERALA_CLIENT_SECRET", "")
     DIVINE_API_KEY = os.environ.get("DIVINE_API_KEY", "")
+    DIVINE_ACCESS_TOKEN = os.environ.get("DIVINE_ACCESS_TOKEN", "")
     
     # 2. Try to load local .env file overrides
     env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -46,6 +48,8 @@ def load_env():
                         CLIENT_SECRET = val
                     elif key == "DIVINE_API_KEY" and val:
                         DIVINE_API_KEY = val
+                    elif key == "DIVINE_ACCESS_TOKEN" and val:
+                        DIVINE_ACCESS_TOKEN = val
                     elif key == "PORT":
                         try:
                             PORT = int(val)
@@ -67,9 +71,10 @@ def fetch_divine_api(url, api_key, payload):
     import urllib.request
     import json
     
+    token = DIVINE_ACCESS_TOKEN if DIVINE_ACCESS_TOKEN else api_key
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(url, data=data)
-    req.add_header('Authorization', f'Bearer {api_key}')
+    req.add_header('Authorization', f'Bearer {token}')
     req.add_header('Content-Type', 'application/json')
     req.add_header('Accept', 'application/json')
     
