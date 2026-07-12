@@ -652,10 +652,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
     import math
     import hashlib
     
+    data_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
     if custom_positions:
         positions = custom_positions
     else:
-        data_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
         positions = data_res["data"]["planetary_positions"]
     
     symbols = {
