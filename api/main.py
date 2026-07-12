@@ -14,14 +14,16 @@ HOST = "127.0.0.1"
 CLIENT_ID = ""
 CLIENT_SECRET = ""
 DEMO_MODE = True
+DIVINE_API_KEY = ""
 
 # Load .env file manually and check system environment
 def load_env():
-    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE
+    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE, DIVINE_API_KEY
     
     # 1. Read from system environment first (critical for Vercel!)
     CLIENT_ID = os.environ.get("PROKERALA_CLIENT_ID", "")
     CLIENT_SECRET = os.environ.get("PROKERALA_CLIENT_SECRET", "")
+    DIVINE_API_KEY = os.environ.get("DIVINE_API_KEY", "")
     
     # 2. Try to load local .env file overrides
     env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -46,6 +48,8 @@ def load_env():
                         CLIENT_ID = val
                     elif key == "PROKERALA_CLIENT_SECRET" and val:
                         CLIENT_SECRET = val
+                    elif key == "DIVINE_API_KEY" and val:
+                        DIVINE_API_KEY = val
                     elif key == "PORT":
                         try:
                             PORT = int(val)
@@ -61,6 +65,178 @@ def load_env():
 
 # Run load_env() immediately at the module level
 load_env()
+
+# Divine API Helper Functions
+def fetch_divine_api(url, api_key, payload):
+    import urllib.request
+    import json
+    
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=data)
+    req.add_header('Authorization', f'Bearer {api_key}')
+    req.add_header('Content-Type', 'application/json')
+    req.add_header('Accept', 'application/json')
+    
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except Exception as e:
+        print(f"[Backend] Error calling Divine API {url}: {e}")
+        if hasattr(e, 'read'):
+            try:
+                print(f"[Backend] Details: {e.read().decode('utf-8')}")
+            except Exception:
+                pass
+        return None
+
+def parse_datetime_for_divine(dt_str):
+    import datetime
+    try:
+        parts = dt_str.split('T')
+        date_parts = parts[0].split('-')
+        year = int(date_parts[0])
+        month = int(date_parts[1])
+        day = int(date_parts[2])
+        
+        time_part = parts[1]
+        tz_char = '+'
+        if '-' in time_part:
+            tz_char = '-'
+        elif 'Z' in time_part:
+            tz_char = 'Z'
+            
+        if tz_char == 'Z':
+            time_only = time_part.replace('Z', '')
+            tzone = 0.0
+        else:
+            time_only, offset = time_part.split(tz_char, 1)
+            offset_parts = offset.split(':')
+            offset_hours = int(offset_parts[0])
+            offset_mins = int(offset_parts[1]) if len(offset_parts) > 1 else 0
+            tzone = offset_hours + offset_mins / 60.0
+            if tz_char == '-':
+                tzone = -tzone
+                
+        time_subparts = time_only.split(':')
+        hour = int(time_subparts[0])
+        minute = int(time_subparts[1])
+        second = int(time_subparts[2]) if len(time_subparts) > 2 else 0
+    except Exception as e:
+        now = datetime.datetime.now()
+        year, month, day = now.year, now.month, now.day
+        hour, minute, second = now.hour, now.minute, now.second
+        tzone = 5.5
+    
+    return {
+        "year": year, "month": month, "day": day,
+        "hour": hour, "min": minute, "sec": second,
+        "tzone": tzone
+    }
+
+def get_divine_planet_position(dt, lat, lng, ayanamsa='0'):
+    dt_info = parse_datetime_for_divine(dt)
+    payload = {
+        "api_key": DIVINE_API_KEY,
+        "day": dt_info["day"],
+        "month": dt_info["month"],
+        "year": dt_info["year"],
+        "hour": dt_info["hour"],
+        "min": dt_info["min"],
+        "sec": dt_info["sec"],
+        "gender": "male",
+        "full_name": "User",
+        "place": "City",
+        "lat": float(lat),
+        "lon": float(lng),
+        "tzone": float(dt_info["tzone"]),
+        "lan": "en",
+        "house_system": "P"
+    }
+    
+    url = "https://astroapi-4.divineapi.com/western-api/v1/planetary-positions"
+    res = fetch_divine_api(url, DIVINE_API_KEY, payload)
+    
+    if res and res.get("success") == 1:
+        raw_planets = res.get("data", {}).get("planets", {})
+        mapped = []
+        for key, p_data in raw_planets.items():
+            name = p_data.get("name") or key.capitalize()
+            lon = p_data.get("position", 0.0)
+            deg = lon % 30
+            is_retro = p_data.get("is_retrograde", False)
+            sign = p_data.get("sign", "Aries")
+            lord = p_data.get("signLord", "Mars")
+            house = p_data.get("house", 1)
+            
+            mapped.append({
+                "name": name,
+                "planet": name,
+                "longitude": lon,
+                "degree": deg,
+                "is_retrograde": is_retro,
+                "rasi": {
+                    "name": sign,
+                    "lord": {
+                        "name": lord
+                    }
+                },
+                "house": house
+            })
+        return {
+            "status": "success",
+            "data": {
+                "planetary_positions": mapped
+            }
+        }
+    return None
+
+def get_divine_horoscope(sign, dt):
+    dt_info = parse_datetime_for_divine(dt)
+    payload = {
+        "api_key": DIVINE_API_KEY,
+        "sign": sign.lower(),
+        "h_day": "today",
+        "tzone": float(dt_info["tzone"]),
+        "lan": "en"
+    }
+    url = "https://astroapi-5.divineapi.com/api/v5/daily-horoscope"
+    res = fetch_divine_api(url, DIVINE_API_KEY, payload)
+    
+    if res and res.get("success") == 1:
+        pred = res.get("data", {}).get("prediction", {})
+        personal = pred.get("personal", "Focus on self-reflection and balance today.")
+        health = pred.get("health", "Take care of your health and stay active.")
+        profession = pred.get("profession", "A good day to prioritize work.")
+        emotions = pred.get("emotions", "Express yourself clearly in relationships.")
+        
+        full_pred = f"{personal} {health} {profession} {emotions}"
+        
+        return {
+            "status": "success",
+            "data": {
+                "sign": sign.capitalize(),
+                "date": time.strftime("%Y-%m-%d"),
+                "prediction": full_pred,
+                "areas": {
+                    "personal": personal,
+                    "health": health,
+                    "profession": profession,
+                    "relationship": emotions
+                }
+            }
+        }
+    return None
+
+def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
+    import math
+    import hashlib
+    
+    if custom_positions:
+        positions = custom_positions
+    else:
+        data_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
+        positions = data_res["data"]["planetary_positions"]
+
 
 # Token cache variables
 _access_token = None
@@ -1074,9 +1250,10 @@ class handler(http.server.BaseHTTPRequestHandler):
         
         if path == '/api/config':
             response_data = {
-                "configured": not DEMO_MODE,
-                "demo_mode": DEMO_MODE,
-                "client_id_configured": bool(CLIENT_ID)
+                "configured": not DEMO_MODE or bool(DIVINE_API_KEY),
+                "demo_mode": DEMO_MODE and not bool(DIVINE_API_KEY),
+                "client_id_configured": bool(CLIENT_ID),
+                "divine_api_configured": bool(DIVINE_API_KEY)
             }
             self.wfile.write(json.dumps(response_data).encode('utf-8'))
             return
@@ -1094,23 +1271,29 @@ class handler(http.server.BaseHTTPRequestHandler):
         # 1. Daily Horoscope
         if path == '/api/horoscope/daily':
             sign = get_param('sign', 'aries')
-            if DEMO_MODE:
-                response_data = get_mock_horoscope(sign)
-            else:
-                token = get_access_token()
-                if not token:
+            response_data = None
+            if DIVINE_API_KEY:
+                dt = get_param('datetime', time.strftime("%Y-%m-%dT%H:%M:%S+05:30"))
+                response_data = get_divine_horoscope(sign, dt)
+            
+            if not response_data:
+                if DEMO_MODE:
                     response_data = get_mock_horoscope(sign)
                 else:
-                    dt = get_param('datetime', time.strftime("%Y-%m-%dT%H:%M:%S+05:30"))
-                    api_url = f"https://api.prokerala.com/v2/horoscope/daily?sign={sign}&datetime={urllib.parse.quote(dt)}&la={la}"
-                    raw_res = fetch_raw_api(api_url, token)
-                    if raw_res and raw_res.get("status") == "ok":
-                        response_data = {
-                            "status": "success",
-                            "data": map_horoscope_data(raw_res.get("data", {}), sign)
-                        }
-                    else:
+                    token = get_access_token()
+                    if not token:
                         response_data = get_mock_horoscope(sign)
+                    else:
+                        dt = get_param('datetime', time.strftime("%Y-%m-%dT%H:%M:%S+05:30"))
+                        api_url = f"https://api.prokerala.com/v2/horoscope/daily?sign={sign}&datetime={urllib.parse.quote(dt)}&la={la}"
+                        raw_res = fetch_raw_api(api_url, token)
+                        if raw_res and raw_res.get("status") == "ok":
+                            response_data = {
+                                "status": "success",
+                                "data": map_horoscope_data(raw_res.get("data", {}), sign)
+                            }
+                        else:
+                            response_data = get_mock_horoscope(sign)
                     
         # 2. Panchang
         elif path == '/api/astrology/panchang':
@@ -1230,50 +1413,55 @@ class handler(http.server.BaseHTTPRequestHandler):
             ayanamsa = get_param('ayanamsa', '0')
             dt = adjust_datetime_timezone(dt, lat, lng)
             
-            if DEMO_MODE or not dt or not lat or not lng:
-                response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
-            else:
-                token = get_access_token()
-                if not token:
-                    response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
+            response_data = None
+            if DIVINE_API_KEY and dt and lat and lng:
+                response_data = get_divine_planet_position(dt, lat, lng, ayanamsa)
+                
+            if not response_data:
+                if DEMO_MODE or not dt or not lat or not lng:
+                    response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
                 else:
-                    coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
-                    raw_res = fetch_raw_api(api_url, token)
-                    if raw_res and raw_res.get("status") == "ok":
-                        raw_data = raw_res.get("data", {})
-                        planets_list = raw_data.get("planet_positions") or []
-                        mapped_planets = []
-                        for p in planets_list:
-                            name = p.get("name") or "N/A"
-                            lon = p.get("longitude")
-                            deg = p.get("degree")
-                            is_retro = p.get("is_retrograde", False)
-                            zod = p.get("zodiac", {})
-                            
-                            mapped_planets.append({
-                                "name": name,
-                                "planet": name,
-                                "longitude": lon,
-                                "degree": deg,
-                                "is_retrograde": is_retro,
-                                "rasi": {
-                                    "name": zod.get("name") or "N/A",
-                                    "lord": {
-                                        "name": zod.get("lord", {}).get("name") or "N/A",
-                                        "vedic_name": zod.get("lord", {}).get("name") or "N/A"
-                                    }
-                                }
-                            })
-                        
-                        response_data = {
-                            "status": "success",
-                            "data": {
-                                "planetary_positions": mapped_planets
-                            }
-                        }
-                    else:
+                    token = get_access_token()
+                    if not token:
                         response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
+                    else:
+                        coordinates = f"{lat},{lng}"
+                        api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
+                        raw_res = fetch_raw_api(api_url, token)
+                        if raw_res and raw_res.get("status") == "ok":
+                            raw_data = raw_res.get("data", {})
+                            planets_list = raw_data.get("planet_positions") or []
+                            mapped_planets = []
+                            for p in planets_list:
+                                name = p.get("name") or "N/A"
+                                lon = p.get("longitude")
+                                deg = p.get("degree")
+                                is_retro = p.get("is_retrograde", False)
+                                zod = p.get("zodiac", {})
+                                
+                                mapped_planets.append({
+                                    "name": name,
+                                    "planet": name,
+                                    "longitude": lon,
+                                    "degree": deg,
+                                    "is_retrograde": is_retro,
+                                    "rasi": {
+                                        "name": zod.get("name") or "N/A",
+                                        "lord": {
+                                            "name": zod.get("lord", {}).get("name") or "N/A",
+                                            "vedic_name": zod.get("lord", {}).get("name") or "N/A"
+                                        }
+                                    }
+                                })
+                            
+                            response_data = {
+                                "status": "success",
+                                "data": {
+                                    "planetary_positions": mapped_planets
+                                }
+                            }
+                        else:
+                            response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
 
             if response_data.get("status") in ["success", "ok"] and "data" in response_data:
                 data_dict = response_data["data"]
@@ -1287,7 +1475,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                             normalized_planets.append({
                                 "planet": name,
                                 "longitude": float(longitude)
-                            })
+                             })
                     aspects = calculate_aspects(normalized_planets)
                     response_data["data"]["aspects"] = aspects
 
@@ -1299,30 +1487,38 @@ class handler(http.server.BaseHTTPRequestHandler):
             ayanamsa = get_param('ayanamsa', '0')
             dt = adjust_datetime_timezone(dt, lat, lng)
             
-            if DEMO_MODE or not dt or not lat or not lng:
-                response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
-            else:
-                token = get_access_token()
-                if not token:
-                    response_data = get_mock_chart(dt, lat, lng, ayanamsa)
-                else:
-                    coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus&aspect_filter=all&orb=default"
+            response_data = None
+            if DIVINE_API_KEY and dt and lat and lng:
+                pos_res = get_divine_planet_position(dt, lat, lng, ayanamsa)
+                if pos_res and pos_res.get("status") == "success":
+                    positions = pos_res.get("data", {}).get("planetary_positions", [])
+                    response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
                     
-                    req = urllib.request.Request(api_url)
-                    req.add_header('Authorization', f'Bearer {token}')
-                    try:
-                        with urllib.request.urlopen(req, timeout=15) as response:
-                            svg_content = response.read().decode('utf-8')
-                            response_data = {
-                                "status": "success",
-                                "data": {
-                                    "svg": svg_content
-                                }
-                            }
-                    except Exception as e:
-                        print(f"[Backend] Error calling Prokerala Natal Chart API: {e}")
+            if not response_data:
+                if DEMO_MODE or not dt or not lat or not lng:
+                    response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+                else:
+                    token = get_access_token()
+                    if not token:
                         response_data = get_mock_chart(dt, lat, lng, ayanamsa)
+                    else:
+                        coordinates = f"{lat},{lng}"
+                        api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus&aspect_filter=all&orb=default"
+                        
+                        req = urllib.request.Request(api_url)
+                        req.add_header('Authorization', f'Bearer {token}')
+                        try:
+                            with urllib.request.urlopen(req, timeout=15) as response:
+                                svg_content = response.read().decode('utf-8')
+                                response_data = {
+                                    "status": "success",
+                                    "data": {
+                                        "svg": svg_content
+                                    }
+                                }
+                        except Exception as e:
+                            print(f"[Backend] Error calling Prokerala Natal Chart API: {e}")
+                            response_data = get_mock_chart(dt, lat, lng, ayanamsa)
 
         # 8. Transit History (every 15 min up to 2 months)
         elif path == '/api/astrology/transit-history':

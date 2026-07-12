@@ -113,13 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const indicator = document.getElementById('demo-indicator');
             if (indicator) {
-                if (data.demo_mode) {
+                if (data.divine_api_configured) {
+                    indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #ffd700;"></i><span>Connected to Divine API</span>';
+                    indicator.style.backgroundColor = 'rgba(255, 215, 0, 0.08)';
+                    indicator.style.borderColor = 'rgba(255, 215, 0, 0.2)';
+                    indicator.style.color = '#ffd700';
+                    indicator.style.display = 'flex';
+                } else if (data.demo_mode) {
                     indicator.style.display = 'flex';
                 } else {
                     indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #2ef56a;"></i><span>Connected to Prokerala API</span>';
                     indicator.style.backgroundColor = 'rgba(46, 245, 106, 0.08)';
                     indicator.style.borderColor = 'rgba(46, 245, 106, 0.2)';
                     indicator.style.color = '#2ef56a';
+                    indicator.style.display = 'flex';
                 }
             }
         })
