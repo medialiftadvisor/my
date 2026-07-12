@@ -1684,13 +1684,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     name_en: "Conjunction", name_hi: "युति", 
                     desc_en: "Direct presence of the planet inside this sign, merging its energy.", 
                     desc_hi: "इस राशि में ग्रह की सीधी उपस्थिति, दोनों ऊर्जाओं का आपस में विलीनीकरण।",
-                    color: "#ffffff"
+                    color: "#ff3b30"
                 },
                 60: { 
                     name_en: "Sextile", name_hi: "षडश", 
                     desc_en: "A soft aspect indicating harmonious opportunities and mental support.", 
                     desc_hi: "सौम्य प्रभाव जो अनुकूल अवसरों और मानसिक सहयोग का संकेत देता है।",
-                    color: "#a0aec0"
+                    color: "#007aff"
                 },
                 90: { 
                     name_en: "Square", name_hi: "केंद्र / चतुर्थ भाव", 
