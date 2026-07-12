@@ -506,7 +506,7 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
             elif abs(diff - 45) <= 5:
                 color = "#a0aec0"  # Semisquare (Charcoal / Black equivalent)
                 
-            if color and aspect_lines_drawn < 45:
+            if color:
                 r1 = a1 * math.pi / 180
                 r2 = a2 * math.pi / 180
                 x1 = 500 + 300 * math.cos(r1)
@@ -517,7 +517,6 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
                 sign1 = signs_list[int(a1 // 30)]
                 sign2 = signs_list[int(a2 // 30)]
                 svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65" class="pk-planet-aspect pk-zodiac-{sign1} pk-zodiac-{sign2}"/>\n'
-                aspect_lines_drawn += 1
 
     svg += """  </g>
   
