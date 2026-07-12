@@ -1466,31 +1466,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Filter aspect lines in the SVG
-        const aspectLines = svgElement.querySelectorAll('.pk-planet-aspect, line');
-        console.log("[Rashi Selector] Found aspect/line elements count:", aspectLines.length);
+        const aspectLines = svgElement.querySelectorAll('.pk-planet-aspect');
+        console.log("[Rashi Selector] Found aspect lines count:", aspectLines.length);
         aspectLines.forEach(line => {
             const classAttr = line.getAttribute('class') || '';
             const classes = classAttr.split(/\s+/);
-            const isProkeralaAspect = classes.includes('pk-planet-aspect');
-            const isMockAspect = !line.closest('.svg-planet-marker') && !line.closest('.pk-zodiac') && line.getAttribute('x1') && parseFloat(line.getAttribute('x1')) !== 500 && line.parentElement && line.parentElement.tagName === 'g' && line.getAttribute('stroke') && line.getAttribute('stroke') !== '#d4af37';
             
-            if (isProkeralaAspect || isMockAspect) {
-                if (selectedSigns.size === 0) {
+            if (selectedSigns.size === 0) {
+                line.style.display = 'block';
+                line.style.opacity = '0.65';
+            } else {
+                // Check if the aspect line has any class matching a selected sign
+                const hasMatch = classes.some(c => c.startsWith('pk-zodiac-') && selectedSigns.has(c.replace('pk-zodiac-', '').charAt(0).toUpperCase() + c.replace('pk-zodiac-', '').slice(1)));
+                if (hasMatch) {
                     line.style.display = 'block';
-                    line.style.opacity = '0.65';
+                    line.style.opacity = '1.0';
                 } else {
-                    if (isProkeralaAspect) {
-                        // Check if the aspect line has any class matching a selected sign
-                        const hasMatch = classes.some(c => c.startsWith('pk-zodiac-') && selectedSigns.has(c.replace('pk-zodiac-', '').charAt(0).toUpperCase() + c.replace('pk-zodiac-', '').slice(1)));
-                        if (hasMatch) {
-                            line.style.display = 'block';
-                            line.style.opacity = '1.0';
-                        } else {
-                            line.style.display = 'none';
-                        }
-                    } else if (isMockAspect) {
-                        line.style.display = 'block';
-                    }
+                    line.style.display = 'none';
                 }
             }
         });

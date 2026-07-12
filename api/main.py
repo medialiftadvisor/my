@@ -503,7 +503,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
                 y1 = 500 + 300 * math.sin(r1)
                 x2 = 500 + 300 * math.cos(r2)
                 y2 = 500 + 300 * math.sin(r2)
-                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65"/>\n'
+                signs_list = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
+                sign1 = signs_list[int(a1 // 30)]
+                sign2 = signs_list[int(a2 // 30)]
+                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65" class="pk-planet-aspect pk-zodiac-{sign1} pk-zodiac-{sign2}"/>\n'
                 aspect_lines_drawn += 1
 
     svg += """  </g>
