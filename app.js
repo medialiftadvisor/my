@@ -865,8 +865,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
-            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
 
             Promise.all([planetPosPromise, natalChartPromise])
                 .then(([planetRes, natalRes]) => {
@@ -1093,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const historyTabBtn = resultBox.querySelector('#load-history-tab-btn');
 
                         const fetchHistoryData = () => {
-                            fetch(`${apiBase}/astrology/transit-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${historyLimit}&offset=${historyOffset}`)
+                            fetch(`${apiBase}/astrology/transit-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${historyLimit}&offset=${historyOffset}&_t=${Date.now()}`)
                                 .then(res => res.json())
                                 .then(res => {
                                     if (res.status === 'success' && res.data && res.data.history) {
@@ -1282,8 +1282,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isoDt = `${dateVal}:00+05:30`;
 
-            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
-            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}`).then(res => res.json());
+            const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
 
             Promise.all([planetPosPromise, natalChartPromise])
                 .then(([planetRes, natalRes]) => {
