@@ -119,6 +119,41 @@ def parse_datetime_helper(dt_str):
         "tzone": tzone
     }
 
+def longitude_to_equatorial(lon_deg):
+    import math
+    # Convert ecliptic longitude to Right Ascension and Declination
+    # obliquity epsilon = 23.44 degrees
+    eps = math.radians(23.44)
+    lam = math.radians(lon_deg)
+    
+    # sin(delta) = sin(lam) * sin(eps)
+    sin_dec = math.sin(lam) * math.sin(eps)
+    dec_rad = math.asin(sin_dec)
+    dec_deg = math.degrees(dec_rad)
+    
+    # tan(alpha) = cos(eps) * tan(lam)
+    y = math.sin(lam) * math.cos(eps)
+    x = math.cos(lam)
+    ra_rad = math.atan2(y, x)
+    ra_deg = math.degrees(ra_rad) % 360
+    
+    # Format RA as hours, minutes, seconds (1 hour = 15 degrees)
+    ra_hours_total = ra_deg / 15.0
+    ra_h = int(ra_hours_total)
+    ra_m = int((ra_hours_total - ra_h) * 60)
+    ra_s = int(((ra_hours_total - ra_h) * 60 - ra_m) * 60)
+    ra_str = f"{ra_h:02d}h {ra_m:02d}m {ra_s:02d}s"
+    
+    # Format Declination as degrees, minutes, seconds
+    dec_sign = "+" if dec_deg >= 0 else "-"
+    dec_abs = abs(dec_deg)
+    dec_d = int(dec_abs)
+    dec_m = int((dec_abs - dec_d) * 60)
+    dec_s = int(((dec_abs - dec_d) * 60 - dec_m) * 60)
+    dec_str = f"{dec_sign}{dec_d:02d}° {dec_m:02d}' {dec_s:02d}\""
+    
+    return ra_str, dec_str
+
 def get_astronomy_planet_position(dt, lat, lng):
     import base64
     import urllib.request
@@ -175,6 +210,9 @@ def get_astronomy_planet_position(dt, lat, lng):
                         sign = signs_list[sign_idx]
                         lord = lord_map.get(sign, "N/A")
                         
+                        ra_str = eq.get("rightAscension", {}).get("string", "N/A")
+                        dec_str = eq.get("declination", {}).get("string", "N/A")
+                        
                         mapped.append({
                             "name": name_map[p_id],
                             "planet": name_map[p_id],
@@ -187,8 +225,44 @@ def get_astronomy_planet_position(dt, lat, lng):
                                     "name": lord
                                 }
                             },
+                            "right_ascension": ra_str,
+                            "declination": dec_str,
+                            "raw_longitude_str": f"{round(longitude, 2)}°",
                             "house": 1
                         })
+            
+            # Add Ascendant/Lagna calculation
+            sun_lon = 0.0
+            for p in mapped:
+                if p["planet"] == "Sun":
+                    sun_lon = p["longitude"]
+                    break
+            
+            time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
+            asc_longitude = (sun_lon + (time_hours - 6.0) * 15.0) % 360
+            asc_deg = asc_longitude % 30
+            asc_sign_idx = int(asc_longitude / 30) % 12
+            asc_sign = signs_list[asc_sign_idx]
+            asc_lord = lord_map.get(asc_sign, "N/A")
+            asc_ra, asc_dec = longitude_to_equatorial(asc_longitude)
+            
+            mapped.append({
+                "name": "Ascendant",
+                "planet": "Ascendant",
+                "longitude": asc_longitude,
+                "degree": asc_deg,
+                "is_retrograde": False,
+                "rasi": {
+                    "name": asc_sign,
+                    "lord": {
+                        "name": asc_lord
+                    }
+                },
+                "right_ascension": asc_ra,
+                "declination": asc_dec,
+                "raw_longitude_str": f"{round(asc_longitude, 2)}°",
+                "house": 1
+            })
             
             if mapped:
                 return {
@@ -1567,6 +1641,58 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 data_dict = response_data["data"]
                 planets = data_dict.get("planet_position") or data_dict.get("planetary_positions")
                 if planets:
+                    # Let's ensure Ascendant / Lagna exists in planets
+                    has_asc = False
+                    sun_lon = 0.0
+                    for p in planets:
+                        p_name = p.get("name") or p.get("planet") or ""
+                        if p_name.lower() in ["ascendant", "lagna"]:
+                            has_asc = True
+                        if p_name.lower() == "sun" and p.get("longitude") is not None:
+                            sun_lon = float(p["longitude"])
+                            
+                    if not has_asc and sun_lon > 0.0:
+                        dt_info = parse_datetime_helper(dt)
+                        time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
+                        asc_lon = (sun_lon + (time_hours - 6.0) * 15.0) % 360
+                        asc_deg = asc_lon % 30
+                        
+                        lord_map = {
+                            "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
+                            "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
+                            "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
+                        }
+                        signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                        asc_sign_idx = int(asc_lon / 30) % 12
+                        asc_sign = signs_list[asc_sign_idx]
+                        asc_lord = lord_map.get(asc_sign, "N/A")
+                        
+                        planets.append({
+                            "name": "Ascendant",
+                            "planet": "Ascendant",
+                            "longitude": asc_lon,
+                            "degree": asc_deg,
+                            "is_retrograde": False,
+                            "rasi": {
+                                "name": asc_sign,
+                                "lord": {
+                                    "name": asc_lord
+                                }
+                            },
+                            "house": 1
+                        })
+                        
+                    # Calculate RA, Dec, and Raw Longitude for all planets in this list
+                    for p in planets:
+                        lon = p.get("longitude")
+                        if lon is not None:
+                            lon = float(lon)
+                            p["raw_longitude_str"] = f"{round(lon, 2)}°"
+                            if not p.get("right_ascension") or not p.get("declination"):
+                                ra_str, dec_str = longitude_to_equatorial(lon)
+                                p["right_ascension"] = ra_str
+                                p["declination"] = dec_str
+                                
                     normalized_planets = []
                     for p in planets:
                         name = p.get("name") or p.get("planet") or "N/A"

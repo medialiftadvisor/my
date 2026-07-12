@@ -947,12 +947,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ? `<span style="color: #ff5757; font-weight: 700; background: rgba(255,87,87,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,87,87,0.2);">${retroText}</span>` 
                                 : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
 
+                            const ra = p.right_ascension || 'N/A';
+                            const dec = p.declination || 'N/A';
+                            const raw_lon = p.raw_longitude_str || (typeof p.longitude === 'number' ? `${p.longitude.toFixed(2)}°` : 'N/A');
+
                             planetRows += `
                                 <tr>
                                     <td><strong>${getDualPlanetName(name)}</strong></td>
                                     <td>${translateText(sign)}</td>
                                     <td>${translateText(lordInfo)}</td>
                                     <td>${deg}</td>
+                                    <td>${ra}</td>
+                                    <td>${dec}</td>
+                                    <td>${raw_lon}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
                             `;
@@ -1018,11 +1025,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <th>Zodiac Sign</th>
                                                     <th>Rasi Lord (Vedic)</th>
                                                     <th>Degree</th>
+                                                    <th>Right Ascension (RA)</th>
+                                                    <th>Declination / Kranti</th>
+                                                    <th>Raw Longitude</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${planetRows || '<tr><td colspan="5">No positions returned.</td></tr>'}
+                                                ${planetRows || '<tr><td colspan="8">No positions returned.</td></tr>'}
                                             </tbody>
                                         </table>
                                     </div>
