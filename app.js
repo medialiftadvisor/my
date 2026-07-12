@@ -79,12 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
             'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
             'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
             'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
-            'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lilith': '⚳', 'Chiron': '⚷'
+            'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC', 'Lagna / Ascendant': 'ASC', 'Lilith': '⚳', 'Chiron': '⚷'
         };
         const hiMap = {
             'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 
             'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 
-            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'लग्न',
+            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'Lagna / लग्न', 'Lagna': 'Lagna / लग्न',
+            'Lagna / Ascendant': 'Lagna / लग्न',
             'True North Node': 'उत्तरी ध्रुव / राहू', 'True South Node': 'दक्षिणी ध्रुव / केतु',
             'North Node': 'उत्तरी ध्रुव / राहू', 'South Node': 'दक्षिणी ध्रुव / केतु'
         };
