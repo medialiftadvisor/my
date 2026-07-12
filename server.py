@@ -551,19 +551,35 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
     svg += """  </g>
   
   <!-- ASC, DSC, MC, IC Marker Axes -->
-  <g stroke="#ffffff" stroke-width="1.2" opacity="0.5">
+  <g stroke="#ffffff" stroke-width="1.2" opacity="0.75">
 """
-    ax1 = 500 + 300 * math.cos(asc_rad)
-    ay1 = 500 + 300 * math.sin(asc_rad)
-    ax2 = 500 + 300 * math.cos(dsc_rad)
-    ay2 = 500 + 300 * math.sin(dsc_rad)
-    svg += f'    <line x1="{ax1:.1f}" y1="{ay1:.1f}" x2="{ax2:.1f}" y2="{ay2:.1f}" stroke-width="2.2" stroke="#ffe600" />\n'
-    
-    mx1 = 500 + 300 * math.cos(mc_rad)
-    my1 = 500 + 300 * math.sin(mc_rad)
-    mx2 = 500 + 300 * math.cos(ic_rad)
-    my2 = 500 + 300 * math.sin(ic_rad)
-    svg += f'    <line x1="{mx1:.1f}" y1="{my1:.1f}" x2="{mx2:.1f}" y2="{my2:.1f}" stroke-width="1.6" stroke="#ffffff" />\n'
+    # ASC line (300 to 380 radius)
+    asc_x1 = 500 + 300 * math.cos(asc_rad)
+    asc_y1 = 500 + 300 * math.sin(asc_rad)
+    asc_x2 = 500 + 380 * math.cos(asc_rad)
+    asc_y2 = 500 + 380 * math.sin(asc_rad)
+    svg += f'    <line x1="{asc_x1:.1f}" y1="{asc_y1:.1f}" x2="{asc_x2:.1f}" y2="{asc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
+
+    # DSC line (300 to 380 radius)
+    dsc_x1 = 500 + 300 * math.cos(dsc_rad)
+    dsc_y1 = 500 + 300 * math.sin(dsc_rad)
+    dsc_x2 = 500 + 380 * math.cos(dsc_rad)
+    dsc_y2 = 500 + 380 * math.sin(dsc_rad)
+    svg += f'    <line x1="{dsc_x1:.1f}" y1="{dsc_y1:.1f}" x2="{dsc_x2:.1f}" y2="{dsc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
+
+    # MC line (300 to 380 radius)
+    mc_x1 = 500 + 300 * math.cos(mc_rad)
+    mc_y1 = 500 + 300 * math.sin(mc_rad)
+    mc_x2 = 500 + 380 * math.cos(mc_rad)
+    mc_y2 = 500 + 380 * math.sin(mc_rad)
+    svg += f'    <line x1="{mc_x1:.1f}" y1="{mc_y1:.1f}" x2="{mc_x2:.1f}" y2="{mc_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
+
+    # IC line (300 to 380 radius)
+    ic_x1 = 500 + 300 * math.cos(ic_rad)
+    ic_y1 = 500 + 300 * math.sin(ic_rad)
+    ic_x2 = 500 + 380 * math.cos(ic_rad)
+    ic_y2 = 500 + 380 * math.sin(ic_rad)
+    svg += f'    <line x1="{ic_x1:.1f}" y1="{ic_y1:.1f}" x2="{ic_x2:.1f}" y2="{ic_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
     
     def draw_axis_label(rad, text, offset_dist):
         tx = 500 + offset_dist * math.cos(rad)
