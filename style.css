@@ -1455,21 +1455,26 @@ svg [class*="sextile"] {
 svg .pk-planet-aspect.square,
 svg .square,
 svg [class*="square"] {
-    stroke: #e2e8f0 !important; /* Black/Silver (charcoal white for dark backgrounds) */
-    stroke-opacity: 0.65 !important;
+    stroke: #ff3b30 !important; /* Red (Square is hard aspect) */
 }
 
 svg .pk-planet-aspect.opposition,
 svg .opposition,
 svg [class*="opposition"] {
-    stroke: #ff3b30 !important; /* Red */
+    stroke: #ff3b30 !important; /* Red (Opposition is hard aspect) */
 }
 
+svg .pk-planet-aspect.quincunx,
+svg .quincunx,
+svg [class*="quincunx"],
+svg .pk-planet-aspect.semisextile,
+svg .semisextile,
+svg [class*="semisextile"],
 svg .pk-planet-aspect.conjunction,
 svg .conjunction,
 svg [class*="conjunction"] {
     stroke: #a0aec0 !important; /* Charcoal/Grey (Black/Grey equivalent) */
-    stroke-opacity: 0.45 !important;
+    stroke-opacity: 0.5 !important;
 }
 
 

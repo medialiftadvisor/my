@@ -498,9 +498,13 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
             elif abs(diff - 180) <= 8:
                 color = "#ff3b30"  # Opposition (Red)
             elif abs(diff - 90) <= 8:
-                color = "#e2e8f0"  # Square (Black / Silver-Grey)
+                color = "#ff3b30"  # Square (Red)
             elif abs(diff - 60) <= 7:
                 color = "#34c759"  # Sextile (Green)
+            elif abs(diff - 150) <= 5:
+                color = "#a0aec0"  # Quincunx (Charcoal / Black equivalent)
+            elif abs(diff - 30) <= 4:
+                color = "#a0aec0"  # Semisextile (Charcoal / Black equivalent)
                 
             if color and aspect_lines_drawn < 45:
                 r1 = a1 * math.pi / 180
