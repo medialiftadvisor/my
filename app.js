@@ -873,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (planetRes.status === 'success' && planetRes.data) {
                         const data = planetRes.data;
                         const planets = data.planet_position || data.planetary_positions || [];
+                        window.currentPlanetsData = planets;
 
                         let planetRows = '';
                         planets.forEach(p => {
@@ -1672,6 +1673,100 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            // Dynamic Aspect Interpretation Engine
+            const getAspectInterpretation = (planetName, aspectName, aspectAngle) => {
+                const isSoft = [60, 120].includes(aspectAngle);
+                const isHard = [90, 180].includes(aspectAngle);
+                
+                // Fallbacks
+                let en = `Planetary energy flow via ${aspectName}. Influence on personality and lifepath.`;
+                let hi = `${aspectName} के माध्यम से ग्रहों का ऊर्जा प्रवाह। व्यक्तित्व और जीवन मार्ग पर प्रभाव।`;
+                
+                if (planetName === "Sun") {
+                    if (aspectAngle === 0) {
+                        en = "Ego reinforcement. Highlights self-identity, conscious goals, and vital energy.";
+                        hi = "अहंकार का सुदृढ़ीकरण। आत्म-पहचान, सचेत लक्ष्यों और महत्वपूर्ण ऊर्जा को उजागर करता है।";
+                    } else if (isSoft) {
+                        en = "Harmonious flow of vital force, enhancing confidence, vitality, and creative expression.";
+                        hi = "महत्वपूर्ण ऊर्जा का सामंजस्यपूर्ण प्रवाह, जो आत्मविश्वास, जीवन शक्ति और रचनात्मक अभिव्यक्ति को बढ़ाता है।";
+                    } else if (isHard) {
+                        en = "Ego challenge. Dynamic tension requiring self-realization, effort, and redirection.";
+                        hi = "अहंकार को चुनौती। आत्म-साक्षात्कार, प्रयास और पुनर्निर्देशन की आवश्यकता वाला गतिशील तनाव।";
+                    }
+                } else if (planetName === "Moon") {
+                    if (aspectAngle === 0) {
+                        en = "Emotional focus. Merges feelings with current environment, raising sensitivity.";
+                        hi = "भावनात्मक ध्यान। संवेदनशीलता को बढ़ाते हुए, वर्तमान परिवेश के साथ भावनाओं को मिलाता है।";
+                    } else if (isSoft) {
+                        en = "Emotional peace, supportive instincts, comfort, and harmonious social relations.";
+                        hi = "भावनात्मक शांति, सहायक प्रवृत्तियां, आराम और सामंजस्यपूर्ण सामाजिक संबंध।";
+                    } else if (isHard) {
+                        en = "Emotional vulnerability, mood fluctuations, and relationship friction.";
+                        hi = "भावनात्मक संवेदनशीलता, मूड में उतार-चढ़ाव और संबंधों में घर्षण।";
+                    }
+                } else if (planetName === "Mercury") {
+                    if (aspectAngle === 0) {
+                        en = "Mental activation. High stimulation of communication, intellectual ideas, and logic.";
+                        hi = "मानसिक सक्रियता। संचार, बौद्धिक विचारों और तर्क की उच्च उत्तेजना।";
+                    } else if (isSoft) {
+                        en = "Clear reasoning, smooth communications, positive learning, and rapid learning.";
+                        hi = "स्पष्ट तर्क, सुचारू संचार, सकारात्मक सीख और तीव्र गति से सीखना।";
+                    } else if (isHard) {
+                        en = "Mental restlessness, misunderstandings, overthinking, or communication blocks.";
+                        hi = "मानसिक बेचैनी, गलतफहमी, अत्यधिक सोचना, या संचार में बाधा।";
+                    }
+                } else if (planetName === "Venus") {
+                    if (aspectAngle === 0) {
+                        en = "Social harmony. Attracts love, artistic expression, value appreciation, and wealth.";
+                        hi = "सामाजिक सद्भाव। प्रेम, कलात्मक अभिव्यक्ति, मूल्यों की सराहना और धन को आकर्षित करता है।";
+                    } else if (isSoft) {
+                        en = "Peaceful interactions, romance, pleasant artistic flow, and financial ease.";
+                        hi = "शांतिपूर्ण बातचीत, रोमांस, सुखद कलात्मक प्रवाह और वित्तीय सहजता।";
+                    } else if (isHard) {
+                        en = "Emotional imbalance, relationship challenges, over-extravagance, or self-indulgence.";
+                        hi = "भावनात्मक असंतुलन, संबंधों में चुनौतियां, अत्यधिक अपव्यय, या आत्म-भोग।";
+                    }
+                } else if (planetName === "Mars") {
+                    if (aspectAngle === 0) {
+                        en = "Intense drive. Amplifies desire, action, sexual drive, and assertive actions.";
+                        hi = "तीव्र इच्छा। इच्छा, क्रिया, यौन इच्छा और आक्रामक क्रियाओं को बढ़ाता है।";
+                    } else if (isSoft) {
+                        en = "Constructive courage, effective initiative, physical vitality, and goal completion.";
+                        hi = "रचनात्मक साहस, प्रभावी पहल, शारीरिक जीवन शक्ति और लक्ष्य पूर्ण करना।";
+                    } else if (isHard) {
+                        en = "Aggression, anger, conflicts, risk of injury, or impulsive clashes.";
+                        hi = "आक्रामक साहस, क्रोध, संघर्ष, चोट का जोखिम, या आवेगी टकराव।";
+                    }
+                } else if (planetName === "Jupiter") {
+                    if (aspectAngle === 0 || isSoft) {
+                        en = "Expansion and wisdom. Brings good fortune, luck, spiritual growth, and abundance.";
+                        hi = "विस्तार और ज्ञान। सौभाग्य, भाग्य, आध्यात्मिक विकास और प्रचुरता लाता है।";
+                    } else if (isHard) {
+                        en = "Over-expansion, excess optimism, risk of waste, or exaggeration of beliefs.";
+                        hi = "अति-विस्तार, अत्यधिक आशावाद, बर्बादी का जोखिम, या विश्वासों का अतिशयोक्ति।";
+                    }
+                } else if (planetName === "Saturn") {
+                    if (aspectAngle === 0 || isHard) {
+                        en = "Karmic lessons. Brings boundaries, delays, tests of discipline, requiring steady effort.";
+                        hi = "कर्म पाठ। अनुशासन की परीक्षा, सीमाएं और देरी लाता है, जिसके लिए निरंतर प्रयास की आवश्यकता होती है।";
+                    } else if (isSoft) {
+                        en = "Solid foundation, patience, reliability, long-term growth, and practical success.";
+                        hi = "ठोस आधार, धैर्य, विश्वसनीयता, दीर्घकालिक विकास और व्यावहारिक सफलता।";
+                    }
+                } else if (planetName === "Uranus") {
+                    en = isSoft ? "Sudden insights, positive change, freedom, and innovation." : "Disruption, instability, shocking revelations, or rebellion.";
+                    hi = isSoft ? "अचानक अंतर्दृष्टि, सकारात्मक बदलाव, स्वतंत्रता और नवाचार।" : "व्यवधान, अस्थिरता, चौंकाने वाले खुलासे, या विद्रोह।";
+                } else if (planetName === "Neptune") {
+                    en = isSoft ? "High intuition, spiritual empathy, artistic dreams, and idealization." : "Confusion, illusions, escapism, deception, or lack of boundaries.";
+                    hi = isSoft ? "उच्च अंतर्दृष्टि, आध्यात्मिक सहानुभूति, कलात्मक सपने और आदर्शवाद।" : "भ्रम, पलायनवाद, धोखा, या सीमाओं की कमी।";
+                } else if (planetName === "Pluto") {
+                    en = isSoft ? "Empowerment, deep psychological transformation, and inner strength." : "Power struggles, obsession, radical endings, and major reconstruction.";
+                    hi = isSoft ? "सशक्तिकरण, गहरा मनोवैज्ञानिक परिवर्तन और आंतरिक शक्ति।" : "शक्ति संघर्ष, जुनून, आमूल-चूल अंत, और बड़ा पुनर्निर्माण।";
+                }
+                
+                return { en, hi };
+            };
+
             // Let's calculate aspects targeting this activeSign!
             const signsList = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
             const activeSignIndex = signsList.indexOf(activeSign);
@@ -1680,42 +1775,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Map aspect values to English/Hindi description strings
             const aspectDescriptions = {
-                0: { 
-                    name_en: "Conjunction", name_hi: "युति", 
-                    desc_en: "Direct presence of the planet inside this sign, merging its energy.", 
-                    desc_hi: "इस राशि में ग्रह की सीधी उपस्थिति, दोनों ऊर्जाओं का आपस में विलीनीकरण।",
-                    color: "#ff3b30"
-                },
-                60: { 
-                    name_en: "Sextile", name_hi: "षडश", 
-                    desc_en: "A soft aspect indicating harmonious opportunities and mental support.", 
-                    desc_hi: "सौम्य प्रभाव जो अनुकूल अवसरों और मानसिक सहयोग का संकेत देता है।",
-                    color: "#007aff"
-                },
-                90: { 
-                    name_en: "Square", name_hi: "केंद्र / चतुर्थ भाव", 
-                    desc_en: "A challenging dynamic force, creating creative tension or conflicts.", 
-                    desc_hi: "एक चुनौतीपूर्ण ऊर्जा बल, जो रचनात्मक तनाव या संघर्ष उत्पन्न करता है।",
-                    color: "#ff3b30"
-                },
-                120: { 
-                    name_en: "Trine", name_hi: "त्रिकोण", 
-                    desc_en: "A highly harmonious aspect bringing luck, natural talent, and ease.", 
-                    desc_hi: "एक अत्यधिक अनुकूल प्रभाव जो भाग्य, जन्मजात प्रतिभा और सुगमता लाता है।",
-                    color: "#007aff"
-                },
-                150: { 
-                    name_en: "Quincunx / Inconjunct", name_hi: "षडाष्टक", 
-                    desc_en: "Requires adjustment, indicating health concerns or subtle misalignments.", 
-                    desc_hi: "समायोजन की आवश्यकता होती है, जो स्वास्थ्य चिंता या सूक्ष्म असंतुलन दर्शाता है।",
-                    color: "#34c759"
-                },
-                180: { 
-                    name_en: "Opposition", name_hi: "प्रतियुति / सप्तम दृष्टि", 
-                    desc_en: "Direct face-to-face polarity, highlighting relationships and balance.", 
-                    desc_hi: "आमने-सामने का सीधा प्रभाव, जो संबंधों और संतुलन की आवश्यकता दर्शाता है।",
-                    color: "#ff3b30"
-                }
+                0: { name_en: "Conjunction", name_hi: "युति", color: "#ff3b30" },
+                60: { name_en: "Sextile", name_hi: "षडश", color: "#007aff" },
+                90: { name_en: "Square", name_hi: "केंद्र / चतुर्थ भाव", color: "#ff3b30" },
+                120: { name_en: "Trine", name_hi: "त्रिकोण", color: "#007aff" },
+                150: { name_en: "Quincunx / Inconjunct", name_hi: "षडाष्टक", color: "#34c759" },
+                180: { name_en: "Opposition", name_hi: "प्रतियुति / सप्तम दृष्टि", color: "#ff3b30" }
             };
             
             if (window.currentPlanetsData && activeSignIndex !== -1) {
@@ -1738,6 +1803,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             const aspect = aspectDescriptions[angle];
                             const symbol = glyphMap[name] || "?";
                             const pColor = colorMap[name] || "#ffffff";
+                            
+                            // Interpret aspects dynamically
+                            const interp = getAspectInterpretation(name, aspect.name_en, angle);
+                            
                             aspectsHtml += `
                                 <div style="display: flex; gap: 0.6rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); padding: 0.6rem; border-radius: 6px; font-family: Outfit; font-size: 0.75rem;">
                                     <div style="font-size: 1.25rem; color: ${pColor}; font-weight: bold; line-height: 1; flex-shrink: 0; margin-top: 2px;">${symbol}</div>
@@ -1747,10 +1816,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <span style="color: ${aspect.color}; font-size: 0.75rem;">${aspect.name_en} / ${aspect.name_hi} (${angle}°)</span>
                                         </div>
                                         <div style="color: var(--color-text-secondary); font-size: 0.7rem; line-height: 1.35; margin-top: 2px;">
-                                            <strong>EN:</strong> ${aspect.desc_en}
+                                            <strong>EN:</strong> ${interp.en}
                                         </div>
                                         <div style="color: var(--color-text-muted); font-size: 0.7rem; line-height: 1.35; margin-top: 1px;">
-                                            <strong>HI:</strong> ${aspect.desc_hi}
+                                            <strong>HI:</strong> ${interp.hi}
                                         </div>
                                     </div>
                                 </div>
@@ -1762,6 +1831,77 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!aspectsHtml) {
                 aspectsHtml = `<div style="text-align: center; font-size: 0.75rem; color: var(--color-text-muted); font-family: Outfit; padding: 0.5rem 0;">No significant aspects found for this sign. / इस राशि पर कोई विशेष प्रभाव नहीं है।</div>`;
+            }
+
+            // Let's calculate Future Aspects targeting this activeSign!
+            let futureAspectsHtml = '';
+            const planetSpeeds = {
+                "Moon": 13.17, "Mercury": 1.2, "Venus": 1.2, "Sun": 0.98, "Mars": 0.52
+            };
+            
+            const futureTransits = [];
+            const timeIntervals = [
+                { days: 3, label_en: "3 days", label_hi: "3 दिन" },
+                { days: 7, label_en: "7 days", label_hi: "7 दिन" },
+                { days: 15, label_en: "15 days", label_hi: "15 दिन" }
+            ];
+            
+            if (window.currentPlanetsData && activeSignIndex !== -1) {
+                timeIntervals.forEach(interval => {
+                    window.currentPlanetsData.forEach(p => {
+                        const name = p.name || p.planet || "N/A";
+                        if (planetSpeeds[name]) {
+                            let curLon = typeof p.longitude === 'number' ? p.longitude : (p.degree + signsList.indexOf(p.rasi ? p.rasi.name : p.sign) * 30);
+                            if (isNaN(curLon)) curLon = 0;
+                            const speed = planetSpeeds[name];
+                            const futLon = (curLon + speed * interval.days) % 360;
+                            const futSignIndex = Math.floor(futLon / 30);
+                            
+                            const diffSigns = Math.abs(activeSignIndex - futSignIndex);
+                            const distance = diffSigns > 6 ? 12 - diffSigns : diffSigns;
+                            const angle = distance * 30;
+                            
+                            const curSignIndex = Math.floor(curLon / 30);
+                            const curDiff = Math.abs(activeSignIndex - curSignIndex);
+                            const curDistance = curDiff > 6 ? 12 - curDiff : curDiff;
+                            const curAngle = curDistance * 30;
+                            
+                            if (angle !== curAngle && aspectDescriptions[angle]) {
+                                const aspect = aspectDescriptions[angle];
+                                const symbol = glyphMap[name] || "?";
+                                const pColor = colorMap[name] || "#ffffff";
+                                
+                                const alreadyAdded = futureTransits.some(t => t.name === name && t.angle === angle);
+                                if (!alreadyAdded) {
+                                    futureTransits.push({
+                                        name: name, symbol: symbol, color: pColor, angle: angle,
+                                        aspectNameEn: aspect.name_en, aspectNameHi: aspect.name_hi,
+                                        daysEn: interval.label_en, daysHi: interval.label_hi
+                                    });
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+            
+            futureTransits.forEach(transit => {
+                futureAspectsHtml += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 0.5rem 0.8rem; border-radius: 6px; font-family: Outfit; font-size: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.15rem; color: ${transit.color}; font-weight: bold; line-height: 1;">${transit.symbol}</span>
+                            <span style="color: #fff; font-weight: 700; font-size: 0.8rem;">${getDualPlanetName(transit.name)}</span>
+                        </div>
+                        <div style="text-align: right; line-height: 1.35;">
+                            <div style="color: #ffd700; font-weight: bold; font-size: 0.8rem;">${transit.aspectNameEn} / ${transit.aspectNameHi}</div>
+                            <div style="font-size: 0.65rem; color: var(--color-text-muted);">In ${transit.daysEn} / ${transit.daysHi} में</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (!futureAspectsHtml) {
+                futureAspectsHtml = `<div style="text-align: center; font-size: 0.75rem; color: var(--color-text-muted); font-family: Outfit; padding: 0.5rem 0;">No new aspects predicted in the next 15 days. / अगले 15 दिनों में कोई नया प्रभाव अनुमानित नहीं है।</div>`;
             }
 
             magnifierDefault.style.display = 'none';
@@ -1800,6 +1940,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h5 style="font-family: Outfit; color: #ffd700; margin: 0 0 0.3rem 0; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">Aspects to Sign / राशि पर दृष्टि संबंध</h5>
                         <div style="display: flex; flex-direction: column; gap: 0.4rem;">
                             ${aspectsHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Section: Future Aspects -->
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.8rem; margin-top: 0.4rem;">
+                        <h5 style="font-family: Outfit; color: #ffd700; margin: 0 0 0.3rem 0; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">Future Aspects / भविष्य के दृष्टि संबंध (Transits)</h5>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            ${futureAspectsHtml}
                         </div>
                     </div>
                 </div>
