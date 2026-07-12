@@ -4,6 +4,30 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Intercept window.fetch to automatically append active provider
+    const originalFetch = window.fetch;
+    window.fetch = function (input, init) {
+        if (typeof input === 'string' && (input.startsWith('/api') || input.includes('/api/'))) {
+            const provider = localStorage.getItem('api_provider') || 'prokerala';
+            if (!input.includes('/api/config')) {
+                const separator = input.includes('?') ? '&' : '?';
+                input = `${input}${separator}provider=${provider}`;
+            }
+        }
+        return originalFetch(input, init);
+    };
+
+    // Initialize API provider dropdown
+    const apiProviderSelect = document.getElementById('api-provider-select');
+    if (apiProviderSelect) {
+        const savedProvider = localStorage.getItem('api_provider') || 'prokerala';
+        apiProviderSelect.value = savedProvider;
+        apiProviderSelect.addEventListener('change', (e) => {
+            localStorage.setItem('api_provider', e.target.value);
+            window.location.reload();
+        });
+    }
+
     const apiBase = '/api';
 
     // 1. View Routing (Hash-Based)
@@ -113,19 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const indicator = document.getElementById('demo-indicator');
             if (indicator) {
-                if (data.divine_api_configured) {
-                    indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #ffd700;"></i><span>Connected to Divine API</span>';
+                const currentProvider = localStorage.getItem('api_provider') || 'prokerala';
+                if (currentProvider === 'astronomyapi' && data.astronomy_api_configured) {
+                    indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #ffd700;"></i><span>Connected to AstronomyAPI</span>';
                     indicator.style.backgroundColor = 'rgba(255, 215, 0, 0.08)';
                     indicator.style.borderColor = 'rgba(255, 215, 0, 0.2)';
                     indicator.style.color = '#ffd700';
                     indicator.style.display = 'flex';
-                } else if (data.demo_mode) {
-                    indicator.style.display = 'flex';
-                } else {
+                } else if (currentProvider === 'prokerala' && data.client_id_configured) {
                     indicator.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #2ef56a;"></i><span>Connected to Prokerala API</span>';
                     indicator.style.backgroundColor = 'rgba(46, 245, 106, 0.08)';
                     indicator.style.borderColor = 'rgba(46, 245, 106, 0.2)';
                     indicator.style.color = '#2ef56a';
+                    indicator.style.display = 'flex';
+                } else {
+                    indicator.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #ff9f0a;"></i><span>Demo Mode (Mock Data)</span>';
+                    indicator.style.backgroundColor = 'rgba(255, 159, 10, 0.08)';
+                    indicator.style.borderColor = 'rgba(255, 159, 10, 0.2)';
+                    indicator.style.color = '#ff9f0a';
                     indicator.style.display = 'flex';
                 }
             }

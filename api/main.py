@@ -14,18 +14,18 @@ HOST = "127.0.0.1"
 CLIENT_ID = ""
 CLIENT_SECRET = ""
 DEMO_MODE = True
-DIVINE_API_KEY = ""
-DIVINE_ACCESS_TOKEN = ""
+ASTRONOMY_APP_ID = ""
+ASTRONOMY_APP_SECRET = ""
 
 # Load .env file manually and check system environment
 def load_env():
-    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE, DIVINE_API_KEY, DIVINE_ACCESS_TOKEN
+    global HOST, PORT, CLIENT_ID, CLIENT_SECRET, DEMO_MODE, ASTRONOMY_APP_ID, ASTRONOMY_APP_SECRET
     
     # 1. Read from system environment first (critical for Vercel!)
     CLIENT_ID = os.environ.get("PROKERALA_CLIENT_ID", "")
     CLIENT_SECRET = os.environ.get("PROKERALA_CLIENT_SECRET", "")
-    DIVINE_API_KEY = os.environ.get("DIVINE_API_KEY", "")
-    DIVINE_ACCESS_TOKEN = os.environ.get("DIVINE_ACCESS_TOKEN", "")
+    ASTRONOMY_APP_ID = os.environ.get("ASTRONOMY_APP_ID", "")
+    ASTRONOMY_APP_SECRET = os.environ.get("ASTRONOMY_APP_SECRET", "")
     
     # 2. Try to load local .env file overrides
     env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -50,10 +50,10 @@ def load_env():
                         CLIENT_ID = val
                     elif key == "PROKERALA_CLIENT_SECRET" and val:
                         CLIENT_SECRET = val
-                    elif key == "DIVINE_API_KEY" and val:
-                        DIVINE_API_KEY = val
-                    elif key == "DIVINE_ACCESS_TOKEN" and val:
-                        DIVINE_ACCESS_TOKEN = val
+                    elif key == "ASTRONOMY_APP_ID" and val:
+                        ASTRONOMY_APP_ID = val
+                    elif key == "ASTRONOMY_APP_SECRET" and val:
+                        ASTRONOMY_APP_SECRET = val
                     elif key == "PORT":
                         try:
                             PORT = int(val)
@@ -70,31 +70,8 @@ def load_env():
 # Run load_env() immediately at the module level
 load_env()
 
-# Divine API Helper Functions
-def fetch_divine_api(url, api_key, payload):
-    import urllib.request
-    import json
-    
-    token = DIVINE_ACCESS_TOKEN if DIVINE_ACCESS_TOKEN else api_key
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(url, data=data)
-    req.add_header('Authorization', f'Bearer {token}')
-    req.add_header('Content-Type', 'application/json')
-    req.add_header('Accept', 'application/json')
-    
-    try:
-        with urllib.request.urlopen(req, timeout=15) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        print(f"[Backend] Error calling Divine API {url}: {e}")
-        if hasattr(e, 'read'):
-            try:
-                print(f"[Backend] Details: {e.read().decode('utf-8')}")
-            except Exception:
-                pass
-        return None
-
-def parse_datetime_for_divine(dt_str):
+# AstronomyAPI Helper Functions
+def parse_datetime_helper(dt_str):
     import datetime
     try:
         parts = dt_str.split('T')
@@ -138,98 +115,86 @@ def parse_datetime_for_divine(dt_str):
         "tzone": tzone
     }
 
-def get_divine_planet_position(dt, lat, lng, ayanamsa='0'):
-    dt_info = parse_datetime_for_divine(dt)
-    payload = {
-        "api_key": DIVINE_API_KEY,
-        "day": dt_info["day"],
-        "month": dt_info["month"],
-        "year": dt_info["year"],
-        "hour": dt_info["hour"],
-        "min": dt_info["min"],
-        "sec": dt_info["sec"],
-        "gender": "male",
-        "full_name": "User",
-        "place": "City",
-        "lat": float(lat),
-        "lon": float(lng),
-        "tzone": float(dt_info["tzone"]),
-        "lan": "en",
-        "house_system": "P"
-    }
+def get_astronomy_planet_position(dt, lat, lng):
+    import base64
+    import urllib.request
+    import json
     
-    url = "https://astroapi-4.divineapi.com/western-api/v1/planetary-positions"
-    res = fetch_divine_api(url, DIVINE_API_KEY, payload)
+    if not ASTRONOMY_APP_ID or not ASTRONOMY_APP_SECRET:
+        return None
+        
+    dt_info = parse_datetime_helper(dt)
+    from_date = f"{dt_info['year']:04d}-{dt_info['month']:02d}-{dt_info['day']:02d}"
+    time_str = f"{dt_info['hour']:02d}:{dt_info['min']:02d}:{dt_info['sec']:02d}"
     
-    if res and res.get("success") == 1:
-        raw_planets = res.get("data", {}).get("planets", {})
-        mapped = []
-        for key, p_data in raw_planets.items():
-            name = p_data.get("name") or key.capitalize()
-            lon = p_data.get("position", 0.0)
-            deg = lon % 30
-            is_retro = p_data.get("is_retrograde", False)
-            sign = p_data.get("sign", "Aries")
-            lord = p_data.get("signLord", "Mars")
-            house = p_data.get("house", 1)
+    auth_str = f"{ASTRONOMY_APP_ID}:{ASTRONOMY_APP_SECRET}"
+    auth_b64 = base64.b64encode(auth_str.encode('utf-8')).decode('utf-8')
+    
+    url = f"https://api.astronomyapi.com/api/v2/bodies/positions?latitude={lat}&longitude={lng}&elevation=0&from_date={from_date}&to_date={from_date}&time={time_str}"
+    req = urllib.request.Request(url)
+    req.add_header('Authorization', f'Basic {auth_b64}')
+    req.add_header('Accept', 'application/json')
+    
+    try:
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res = json.loads(response.read().decode('utf-8'))
+            rows = res.get("data", {}).get("table", {}).get("rows", [])
+            mapped = []
             
-            mapped.append({
-                "name": name,
-                "planet": name,
-                "longitude": lon,
-                "degree": deg,
-                "is_retrograde": is_retro,
-                "rasi": {
-                    "name": sign,
-                    "lord": {
-                        "name": lord
+            name_map = {
+                "sun": "Sun", "moon": "Moon", "mercury": "Mercury", "venus": "Venus",
+                "mars": "Mars", "jupiter": "Jupiter", "saturn": "Saturn", "uranus": "Uranus",
+                "neptune": "Neptune", "pluto": "Pluto"
+            }
+            lord_map = {
+                "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
+                "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
+                "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
+            }
+            signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+            
+            for row in rows:
+                entry = row.get("entry", {})
+                p_id = entry.get("id", "")
+                if p_id in name_map:
+                    cells = row.get("cells", [])
+                    if cells:
+                        cell = cells[0]
+                        pos = cell.get("position", {})
+                        eq = pos.get("equatorial", {})
+                        ra = eq.get("rightAscension", {})
+                        ra_hours = float(ra.get("hours", 0.0))
+                        
+                        longitude = (ra_hours * 15.0) % 360
+                        deg = longitude % 30
+                        sign_idx = int(longitude / 30) % 12
+                        sign = signs_list[sign_idx]
+                        lord = lord_map.get(sign, "N/A")
+                        
+                        mapped.append({
+                            "name": name_map[p_id],
+                            "planet": name_map[p_id],
+                            "longitude": longitude,
+                            "degree": deg,
+                            "is_retrograde": False,
+                            "rasi": {
+                                "name": sign,
+                                "lord": {
+                                    "name": lord
+                                }
+                            },
+                            "house": 1
+                        })
+            
+            if mapped:
+                return {
+                    "status": "success",
+                    "data": {
+                        "planetary_positions": mapped
                     }
-                },
-                "house": house
-            })
-        return {
-            "status": "success",
-            "data": {
-                "planetary_positions": mapped
-            }
-        }
-    return None
-
-def get_divine_horoscope(sign, dt):
-    dt_info = parse_datetime_for_divine(dt)
-    payload = {
-        "api_key": DIVINE_API_KEY,
-        "sign": sign.lower(),
-        "h_day": "today",
-        "tzone": float(dt_info["tzone"]),
-        "lan": "en"
-    }
-    url = "https://astroapi-5.divineapi.com/api/v5/daily-horoscope"
-    res = fetch_divine_api(url, DIVINE_API_KEY, payload)
-    
-    if res and res.get("success") == 1:
-        pred = res.get("data", {}).get("prediction", {})
-        personal = pred.get("personal", "Focus on self-reflection and balance today.")
-        health = pred.get("health", "Take care of your health and stay active.")
-        profession = pred.get("profession", "A good day to prioritize work.")
-        emotions = pred.get("emotions", "Express yourself clearly in relationships.")
-        
-        full_pred = f"{personal} {health} {profession} {emotions}"
-        
-        return {
-            "status": "success",
-            "data": {
-                "sign": sign.capitalize(),
-                "date": time.strftime("%Y-%m-%d"),
-                "prediction": full_pred,
-                "areas": {
-                    "personal": personal,
-                    "health": health,
-                    "profession": profession,
-                    "relationship": emotions
                 }
-            }
-        }
+    except Exception as e:
+        print(f"[Backend] Error calling AstronomyAPI: {e}")
     return None
 
 def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
@@ -1255,10 +1220,10 @@ class handler(http.server.BaseHTTPRequestHandler):
         
         if path == '/api/config':
             response_data = {
-                "configured": not DEMO_MODE or bool(DIVINE_API_KEY),
-                "demo_mode": DEMO_MODE and not bool(DIVINE_API_KEY),
+                "configured": not DEMO_MODE or bool(ASTRONOMY_APP_ID),
+                "demo_mode": DEMO_MODE and not bool(ASTRONOMY_APP_ID),
                 "client_id_configured": bool(CLIENT_ID),
-                "divine_api_configured": bool(DIVINE_API_KEY)
+                "astronomy_api_configured": bool(ASTRONOMY_APP_ID)
             }
             self.wfile.write(json.dumps(response_data).encode('utf-8'))
             return
@@ -1272,16 +1237,17 @@ class handler(http.server.BaseHTTPRequestHandler):
             return default
 
         la = get_param('la', 'en')
+        provider = get_param('provider', 'prokerala')
 
         # 1. Daily Horoscope
         if path == '/api/horoscope/daily':
             sign = get_param('sign', 'aries')
-            response_data = None
-            if DIVINE_API_KEY:
-                dt = get_param('datetime', time.strftime("%Y-%m-%dT%H:%M:%S+05:30"))
-                response_data = get_divine_horoscope(sign, dt)
-            
-            if not response_data:
+            if provider == 'astronomyapi':
+                response_data = get_mock_horoscope(sign)
+                if response_data and "data" in response_data:
+                    old_pred = response_data["data"].get("prediction", "")
+                    response_data["data"]["prediction"] = f"[AstronomyAPI Mode - Showing Estimated Forecast / AstronomyAPI मोड - अनुमानित फलादेश] {old_pred}"
+            else:
                 if DEMO_MODE:
                     response_data = get_mock_horoscope(sign)
                 else:
@@ -1419,8 +1385,8 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = adjust_datetime_timezone(dt, lat, lng)
             
             response_data = None
-            if DIVINE_API_KEY and dt and lat and lng:
-                response_data = get_divine_planet_position(dt, lat, lng, ayanamsa)
+            if provider == 'astronomyapi' and dt and lat and lng:
+                response_data = get_astronomy_planet_position(dt, lat, lng)
                 
             if not response_data:
                 if DEMO_MODE or not dt or not lat or not lng:
@@ -1493,8 +1459,8 @@ class handler(http.server.BaseHTTPRequestHandler):
             dt = adjust_datetime_timezone(dt, lat, lng)
             
             response_data = None
-            if DIVINE_API_KEY and dt and lat and lng:
-                pos_res = get_divine_planet_position(dt, lat, lng, ayanamsa)
+            if provider == 'astronomyapi' and dt and lat and lng:
+                pos_res = get_astronomy_planet_position(dt, lat, lng)
                 if pos_res and pos_res.get("status") == "success":
                     positions = pos_res.get("data", {}).get("planetary_positions", [])
                     response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
