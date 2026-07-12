@@ -1442,34 +1442,37 @@ html, body {
 /* Custom overrides for Prokerala Natal Chart SVG aspect lines (Red, Green, Black/Silver, Blue) */
 svg .pk-planet-aspect.trine,
 svg .trine,
-svg [class*="trine"] {
-    stroke: #007aff !important; /* Blue */
-}
-
+svg [class*="trine"],
 svg .pk-planet-aspect.sextile,
 svg .sextile,
 svg [class*="sextile"] {
-    stroke: #34c759 !important; /* Green */
+    stroke: #007aff !important; /* Blue (Trine and Sextile are soft aspects) */
 }
 
 svg .pk-planet-aspect.square,
 svg .square,
-svg [class*="square"] {
-    stroke: #ff3b30 !important; /* Red (Square is hard aspect) */
-}
-
+svg [class*="square"],
 svg .pk-planet-aspect.opposition,
 svg .opposition,
 svg [class*="opposition"] {
-    stroke: #ff3b30 !important; /* Red (Opposition is hard aspect) */
+    stroke: #ff3b30 !important; /* Red (Square and Opposition are hard aspects) */
 }
 
 svg .pk-planet-aspect.quincunx,
 svg .quincunx,
-svg [class*="quincunx"],
+svg [class*="quincunx"] {
+    stroke: #34c759 !important; /* Green (Quincunx / Inconjunct) */
+}
+
 svg .pk-planet-aspect.semisextile,
 svg .semisextile,
 svg [class*="semisextile"],
+svg .pk-planet-aspect.semisquare,
+svg .semisquare,
+svg [class*="semisquare"],
+svg .pk-planet-aspect.sesquiquadrate,
+svg .sesquiquadrate,
+svg [class*="sesquiquadrate"],
 svg .pk-planet-aspect.conjunction,
 svg .conjunction,
 svg [class*="conjunction"] {

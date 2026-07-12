@@ -496,9 +496,9 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0'):
             elif abs(diff - 90) <= 10:
                 color = "#ff3b30"  # Square (Red)
             elif abs(diff - 60) <= 8:
-                color = "#34c759"  # Sextile (Green)
+                color = "#007aff"  # Sextile (Blue)
             elif abs(diff - 150) <= 6:
-                color = "#a0aec0"  # Quincunx (Charcoal / Black equivalent)
+                color = "#34c759"  # Quincunx (Green)
             elif abs(diff - 30) <= 5:
                 color = "#a0aec0"  # Semisextile (Charcoal / Black equivalent)
             elif abs(diff - 135) <= 5:
@@ -1310,7 +1310,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     response_data = get_mock_chart(dt, lat, lng, ayanamsa)
                 else:
                     coordinates = f"{lat},{lng}"
-                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
+                    api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus&aspect_filter=all&orb=default"
                     
                     req = urllib.request.Request(api_url)
                     req.add_header('Authorization', f'Bearer {token}')
