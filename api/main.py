@@ -818,8 +818,25 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
   <!-- Dynamic Aspect Lines inside the inner house circle -->
   <g stroke-width="1.5" filter="url(#glow-light)">
 """
-    asc_deg = (data_res["data"]["houses"][0]["start_cusp"]["longitude"])
-    mc_deg = (data_res["data"]["houses"][9]["start_cusp"]["longitude"])
+    asc_deg = 0.0
+    for p_item in positions:
+        p_name = p_item.get("planet") or p_item.get("name") or ""
+        if p_name.lower() in ["ascendant", "lagna"]:
+            asc_deg = float(p_item.get("longitude", 0.0))
+            break
+            
+    if asc_deg == 0.0:
+        sun_lon = 0.0
+        for p_item in positions:
+            p_name = p_item.get("planet") or p_item.get("name") or ""
+            if p_name.lower() == "sun" and p_item.get("longitude") is not None:
+                sun_lon = float(p_item["longitude"])
+                break
+        dt_info = parse_datetime_helper(dt)
+        time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
+        asc_deg = (sun_lon + (time_hours - 6.0) * 15.0) % 360
+        
+    mc_deg = (asc_deg - 90.0) % 360
     aspect_planets = planets.copy()
     aspect_planets.append(("Ascendant", "ASC", asc_deg, "#ffe600"))
     aspect_planets.append(("Midheaven", "MC", mc_deg, "#ffffff"))
