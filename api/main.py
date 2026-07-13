@@ -1960,20 +1960,28 @@ class handler(http.server.BaseHTTPRequestHandler):
                 pos_res = get_astronomy_planet_position(dt, lat, lng)
                 if pos_res and pos_res.get("status") == "success":
                     positions = pos_res.get("data", {}).get("planetary_positions", [])
+                    positions = normalize_positions_helper(positions, provider, ayanamsa, dt, lat, lng)
                     response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
             elif provider == 'divineapi' and DIVINE_API_KEY and dt and lat and lng:
                 pos_res = get_divine_planet_position(dt, lat, lng, ayanamsa)
                 if pos_res and pos_res.get("status") == "success":
                     positions = pos_res.get("data", {}).get("planetary_positions", [])
+                    positions = normalize_positions_helper(positions, provider, ayanamsa, dt, lat, lng)
                     response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
                     
             if not response_data:
                 if DEMO_MODE or not dt or not lat or not lng:
-                    response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+                    mock_pos_res = get_mock_planet_position(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+                    positions = mock_pos_res.get("data", {}).get("planetary_positions", [])
+                    positions = normalize_positions_helper(positions, 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
+                    response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions)
                 else:
                     token = get_access_token()
                     if not token:
-                        response_data = get_mock_chart(dt, lat, lng, ayanamsa)
+                        mock_pos_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
+                        positions = mock_pos_res.get("data", {}).get("planetary_positions", [])
+                        positions = normalize_positions_helper(positions, 'mock', ayanamsa, dt, lat, lng)
+                        response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
                     else:
                         coordinates = f"{lat},{lng}"
                         api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus&aspect_filter=all&orb=default"
