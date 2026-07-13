@@ -123,6 +123,22 @@ def parse_datetime_helper(dt_str):
         "tzone": tzone
     }
 
+def equatorial_to_longitude(ra_deg, dec_deg):
+    import math
+    eps = math.radians(23.44)
+    alpha = math.radians(ra_deg)
+    delta = math.radians(dec_deg)
+    
+    # sin(beta) = sin(delta)*cos(eps) - cos(delta)*sin(eps)*sin(alpha)
+    # cos(lambda)*cos(beta) = cos(delta)*cos(alpha)
+    # sin(lambda)*cos(beta) = sin(delta)*sin(eps) + cos(delta)*cos(eps)*sin(alpha)
+    y = math.sin(delta) * math.sin(eps) + math.cos(delta) * math.cos(eps) * math.sin(alpha)
+    x = math.cos(delta) * math.cos(alpha)
+    
+    lam_rad = math.atan2(y, x)
+    lam_deg = math.degrees(lam_rad) % 360
+    return lam_deg
+
 def longitude_to_equatorial(lon_deg):
     import math
     # Convert ecliptic longitude to Right Ascension and Declination
@@ -203,16 +219,19 @@ def get_astronomy_planet_position(dt, lat, lng):
                         eq = pos.get("equatorial", {})
                         ra = eq.get("rightAscension", {})
                         ra_hours = float(ra.get("hours", 0.0))
-                        
-                        longitude = (ra_hours * 15.0) % 360
+                        ra_deg = (ra_hours * 15.0) % 360
+                         
+                        dec = eq.get("declination", {})
+                        dec_degrees = float(dec.get("degrees", 0.0))
+                        dec_str = dec.get("string", "N/A")
+                         
+                        longitude = equatorial_to_longitude(ra_deg, dec_degrees)
                         deg = longitude % 30
                         sign_idx = int(longitude / 30) % 12
                         sign = signs_list[sign_idx]
                         lord = lord_map.get(sign, "N/A")
-                        
-                        ra_deg = (ra_hours * 15.0) % 360
+                         
                         ra_str = f"{round(ra_deg, 2)}°"
-                        dec_str = eq.get("declination", {}).get("string", "N/A")
                         
                         mapped.append({
                             "name": name_map[p_id],
