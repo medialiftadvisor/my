@@ -952,15 +952,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             const dec = p.declination || 'N/A';
                             const raw_lon = p.raw_longitude_str || (typeof p.longitude === 'number' ? `${p.longitude.toFixed(2)}°` : 'N/A');
 
+                            const nak = p.nakshatra || 'N/A';
+                            const pad = p.padam || 'N/A';
+                            const nakSubLord = `${p.nakshatra_lord || 'N/A'} / ${p.sub_lord || 'N/A'}`;
+                            const lat = p.latitude || '00° 00\' 00"';
+                            const speed = p.speed_deg_day || 'N/A';
+
                             planetRows += `
                                 <tr>
                                     <td><strong>${getDualPlanetName(name)}</strong></td>
-                                    <td>${translateText(sign)}</td>
-                                    <td>${translateText(lordInfo)}</td>
-                                    <td>${deg}</td>
+                                    <td>${translateText(sign)} ${deg} (${translateText(lordInfo)})</td>
+                                    <td>${translateText(nak)}</td>
+                                    <td>${pad}</td>
+                                    <td>${translateText(nakSubLord)}</td>
+                                    <td>${raw_lon}</td>
+                                    <td>${lat}</td>
+                                    <td>${speed}</td>
                                     <td>${ra}</td>
                                     <td>${dec}</td>
-                                    <td>${raw_lon}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
                             `;
@@ -1023,17 +1032,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <thead>
                                                 <tr>
                                                     <th>Body / Planet</th>
-                                                    <th>Zodiac Sign</th>
-                                                    <th>Rasi Lord (Vedic)</th>
-                                                    <th>Degree</th>
+                                                    <th>Longitude</th>
+                                                    <th>Nakshatra</th>
+                                                    <th>Padam</th>
+                                                    <th>Nakshatra Lord / Sub Lord</th>
+                                                    <th>Full Degree</th>
+                                                    <th>Latitude / Shara</th>
+                                                    <th>Speed Deg/Day</th>
                                                     <th>Right Ascension (RA)</th>
                                                     <th>Declination / Kranti</th>
-                                                    <th>Raw Longitude</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${planetRows || '<tr><td colspan="8">No positions returned.</td></tr>'}
+                                                ${planetRows || '<tr><td colspan="11">No positions returned.</td></tr>'}
                                             </tbody>
                                         </table>
                                     </div>

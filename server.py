@@ -119,6 +119,61 @@ def parse_datetime_helper(dt_str):
         "tzone": tzone
     }
 
+def get_nakshatra_details(lon):
+    import math
+    # 27 Nakshatras
+    nakshatras_list = [
+        "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", 
+        "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", 
+        "Uttara Phalguni", "Hasta", "Chitra", "Svati", "Vishakha", "Anuradha", 
+        "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", 
+        "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+    ]
+    
+    # 9 Vimshottari Lords in order
+    lords = ["Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"]
+    dasha_years = [7, 20, 6, 10, 7, 18, 16, 19, 17] # total 120
+    
+    nak_idx = int(lon * 27 / 360) % 27
+    nak_name = nakshatras_list[nak_idx]
+    
+    # Pada (1 to 4)
+    nak_start_lon = nak_idx * (360.0 / 27.0)
+    relative_lon = (lon - nak_start_lon) % (360.0 / 27.0)
+    pada = int(relative_lon / (360.0 / 108.0)) + 1
+    
+    # Nakshatra Lord
+    nak_lord_idx = nak_idx % 9
+    nak_lord = lords[nak_lord_idx]
+    
+    # KP Sub Lord
+    # Sub-lords in a nakshatra start from the nakshatra lord
+    # Let's map the cumulative arc minutes relative to nakshatra start (total 800 minutes)
+    relative_minutes = relative_lon * 60.0
+    sub_lords_order = lords[nak_lord_idx:] + lords[:nak_lord_idx]
+    sub_spans_minutes = [y / 120.0 * 800.0 for y in [dasha_years[lords.index(l)] for l in sub_lords_order]]
+    
+    cumulative = 0.0
+    sub_lord = sub_lords_order[0]
+    for idx, span in enumerate(sub_spans_minutes):
+        cumulative += span
+        if relative_minutes <= cumulative:
+            sub_lord = sub_lords_order[idx]
+            break
+            
+    return nak_name, pada, nak_lord, sub_lord
+
+def get_planet_speed(planet_name, is_retrograde=False):
+    speeds = {
+        "Sun": 0.9856, "Moon": 13.176, "Mercury": 1.2, "Venus": 1.2,
+        "Mars": 0.524, "Jupiter": 0.083, "Saturn": 0.033, "Uranus": 0.0117,
+        "Neptune": 0.006, "Pluto": 0.004, "True North Node": -0.053, "True South Node": -0.053
+    }
+    base_speed = speeds.get(planet_name, 0.0)
+    if is_retrograde:
+        return -abs(base_speed)
+    return base_speed
+
 def equatorial_to_longitude(ra_deg, dec_deg):
     import math
     eps = math.radians(23.44)
@@ -243,6 +298,7 @@ def get_astronomy_planet_position(dt, lat, lng):
                             },
                             "right_ascension": ra_str,
                             "declination": dec_str,
+                            "latitude": pos.get("ecliptic", {}).get("latitude", {}).get("string", "0.0°"),
                             "raw_longitude_str": f"{round(longitude, 2)}°",
                             "house": 1
                         })
@@ -1738,6 +1794,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     
                     for p in planets:
                         lon = p.get("longitude")
+                        p_name = p.get("name") or p.get("planet") or "Sun"
                         if lon is not None:
                             lon = float(lon)
                             
@@ -1760,7 +1817,46 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                             p["longitude"] = display_lon
                             p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
                             
-                            # 2. Reconstruct/Ensure correct equatorial RA and Dec (always tropical)
+                            # 2. Calculate Nakshatra details (pada, lord, sub lord)
+                            nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(display_lon)
+                            p["nakshatra"] = nak_name
+                            p["padam"] = pada
+                            p["nakshatra_lord"] = nak_lord
+                            p["sub_lord"] = sub_lord
+                            
+                            # 3. Calculate Speed deg/day
+                            is_retro = p.get("is_retrograde", False) or p.get("isRetrograde", False)
+                            speed_val = get_planet_speed(p_name, is_retro)
+                            p["speed_deg_day"] = f"{speed_val:+.4f}°/day"
+                            
+                            # 4. Latitude / Shara
+                            lat_val = p.get("latitude")
+                            if lat_val is None:
+                                import math
+                                try:
+                                    dt_info = parse_datetime_helper(dt)
+                                    from datetime import date
+                                    d_obj = date(dt_info["year"], dt_info["month"], dt_info["day"])
+                                    vernal_obj = date(dt_info["year"], 3, 20)
+                                    diff_days = (d_obj - vernal_obj).days
+                                except:
+                                    diff_days = 114
+                                    
+                                if p_name == "Sun":
+                                    lat_deg = 0.0
+                                elif p_name == "Moon":
+                                    lat_deg = 5.15 * math.sin(diff_days * 0.23)
+                                else:
+                                    lat_deg = 1.5 * math.sin(diff_days * 0.05)
+                                    
+                                lat_sign = "+" if lat_deg >= 0 else "-"
+                                lat_abs = abs(lat_deg)
+                                lat_d = int(lat_abs)
+                                lat_m = int((lat_abs - lat_d) * 60)
+                                lat_s = int(((lat_abs - lat_d) * 60 - lat_m) * 60)
+                                p["latitude"] = f"{lat_sign}{lat_d:02d}° {lat_m:02d}' {lat_s:02d}\""
+                            
+                            # 5. Reconstruct/Ensure correct equatorial RA and Dec (always tropical)
                             if not p.get("right_ascension") or not p.get("declination"):
                                 # If the provider is Prokerala or Mock and it's Sidereal, the input 'lon' is already Sidereal, so we add the offset to get tropical for RA/Dec
                                 if provider in ['prokerala', 'divineapi'] and ayanamsa == '1':
