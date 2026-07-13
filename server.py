@@ -1729,14 +1729,45 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                         })
                         
                     # Calculate RA, Dec, and Raw Longitude for all planets in this list
+                    signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                    lord_map = {
+                        "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
+                        "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
+                        "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
+                    }
+                    
                     for p in planets:
                         lon = p.get("longitude")
                         if lon is not None:
                             lon = float(lon)
-                            p["raw_longitude_str"] = f"{round(lon, 2)}°"
+                            
+                            # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
+                            # AstronomyAPI is always tropical. So if ayanamsa is sidereal ('1'), shift display longitude to sidereal
+                            if provider == 'astronomyapi' and ayanamsa == '1':
+                                display_lon = (lon - 24.23) % 360
+                                # Update rasi details to Sidereal
+                                sign_idx = int(display_lon / 30) % 12
+                                p["rasi"] = {
+                                    "name": signs_list[sign_idx],
+                                    "lord": {
+                                        "name": lord_map[signs_list[sign_idx]]
+                                    }
+                                }
+                                p["degree"] = display_lon % 30
+                            else:
+                                display_lon = lon
+                                
+                            p["longitude"] = display_lon
+                            p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
+                            
+                            # 2. Reconstruct/Ensure correct equatorial RA and Dec (always tropical)
                             if not p.get("right_ascension") or not p.get("declination"):
-                                # If ayanamsa is active ('1'), restore the Tropical longitude for RA/Dec calculation by adding 24.23 degrees (Lahiri ayanamsa offset)
-                                tropical_lon = (lon + 24.23) % 360 if ayanamsa == '1' else lon
+                                # If the provider is Prokerala or Mock and it's Sidereal, the input 'lon' is already Sidereal, so we add the offset to get tropical for RA/Dec
+                                if provider in ['prokerala', 'divineapi'] and ayanamsa == '1':
+                                    tropical_lon = (lon + 24.23) % 360
+                                else:
+                                    tropical_lon = lon
+                                    
                                 ra_str, dec_str = longitude_to_equatorial(tropical_lon)
                                 p["right_ascension"] = ra_str
                                 p["declination"] = dec_str
