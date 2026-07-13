@@ -79,20 +79,39 @@ document.addEventListener('DOMContentLoaded', () => {
             'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
             'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
             'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
-            'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC', 'Lagna / Ascendant': 'ASC', 'Lilith': '⚳', 'Chiron': '⚷'
+            'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC', 'Lagna / Ascendant': 'ASC',
+            'Spashth Rahu': '☊', 'Spashth Ketu': '☋', 'Yam': '♇', 'Arun': '♅', 'Varun': '♆'
         };
-        const hiMap = {
-            'Sun': 'सूर्य', 'Moon': 'चंद्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'बृहस्पति (गुरु)', 
-            'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु', 'Uranus': 'अरुण (यूरेनस)', 
-            'Neptune': 'वरुण (नेप्च्यून)', 'Pluto': 'यम (प्लूटो)', 'Ascendant': 'Lagna / लग्न', 'Lagna': 'Lagna / लग्न',
-            'Lagna / Ascendant': 'Lagna / लग्न',
-            'True North Node': 'उत्तरी ध्रुव / राहू', 'True South Node': 'दक्षिणी ध्रुव / केतु',
-            'North Node': 'उत्तरी ध्रुव / राहू', 'South Node': 'दक्षिणी ध्रुव / केतु'
+        const planetDisplayNameMap = {
+            'Ascendant': 'Lagna',
+            'Lagna': 'Lagna',
+            'Lagna / Ascendant': 'Lagna',
+            'Sun': 'Surya',
+            'Moon': 'Chandra',
+            'Mars': 'Mangal',
+            'Mercury': 'Budha',
+            'Jupiter': 'Guru',
+            'Venus': 'Shukra',
+            'Saturn': 'Shani',
+            'Uranus': 'Arun',
+            'Neptune': 'Varun',
+            'Pluto': 'Yam / Pluto',
+            'North Node': 'Rahu',
+            'Rahu': 'Rahu',
+            'South Node': 'Ketu',
+            'Ketu': 'Ketu',
+            'True North Node': 'Spashth Rahu',
+            'True South Node': 'Spashth Ketu',
+            'Spashth Rahu': 'Spashth Rahu',
+            'Spashth Ketu': 'Spashth Ketu',
+            'Yam': 'Yam',
+            'Arun': 'Arun',
+            'Varun': 'Varun'
         };
-        const glyph = glyphMap[name] || '';
-        const hiName = hiMap[name] || name;
-        const displayName = name !== hiName ? `${name} (${hiName})` : name;
-        return glyph ? `<span style="font-size: 1.1rem; color: #ffd700; margin-right: 0.5rem; vertical-align: middle; line-height: 1;">${glyph}</span>${displayName}` : displayName;
+        const cleanName = name ? name.trim() : '';
+        const baseName = planetDisplayNameMap[cleanName] || cleanName || 'N/A';
+        const glyph = glyphMap[cleanName] || glyphMap[baseName] || '';
+        return glyph ? `<span style="font-size: 1.1rem; color: #ffd700; margin-right: 0.5rem; vertical-align: middle; line-height: 1;">${glyph}</span>${baseName}` : baseName;
     };
 
     // Listen to sidebar links

@@ -840,8 +840,12 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             p["longitude"] = display_lon
             p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
             
-            # 2. Calculate Nakshatra details (pada, lord, sub lord)
-            nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(display_lon)
+            # 2. Calculate Nakshatra details (pada, lord, sub lord) from Sidereal longitude
+            if ayanamsa == '1':
+                sidereal_lon = display_lon
+            else:
+                sidereal_lon = (display_lon - 24.23) % 360
+            nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(sidereal_lon)
             p["nakshatra"] = nak_name
             p["padam"] = pada
             p["nakshatra_lord"] = nak_lord
