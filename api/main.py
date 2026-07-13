@@ -141,12 +141,8 @@ def longitude_to_equatorial(lon_deg):
     ra_rad = math.atan2(y, x)
     ra_deg = math.degrees(ra_rad) % 360
     
-    # Format RA as hours, minutes, seconds (1 hour = 15 degrees)
-    ra_hours_total = ra_deg / 15.0
-    ra_h = int(ra_hours_total)
-    ra_m = int((ra_hours_total - ra_h) * 60)
-    ra_s = int(((ra_hours_total - ra_h) * 60 - ra_m) * 60)
-    ra_str = f"{ra_h:02d}h {ra_m:02d}m {ra_s:02d}s"
+    # Format RA as degrees/points (e.g. 111.23°)
+    ra_str = f"{round(ra_deg, 2)}°"
     
     # Format Declination as degrees, minutes, seconds
     dec_sign = "+" if dec_deg >= 0 else "-"
@@ -214,7 +210,8 @@ def get_astronomy_planet_position(dt, lat, lng):
                         sign = signs_list[sign_idx]
                         lord = lord_map.get(sign, "N/A")
                         
-                        ra_str = eq.get("rightAscension", {}).get("string", "N/A")
+                        ra_deg = (ra_hours * 15.0) % 360
+                        ra_str = f"{round(ra_deg, 2)}°"
                         dec_str = eq.get("declination", {}).get("string", "N/A")
                         
                         mapped.append({
