@@ -918,6 +918,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         const planets = data.planet_position || data.planetary_positions || [];
                         window.currentPlanetsData = planets;
 
+                        function formatZodiacSign(signName) {
+                            if (!signName) return 'N/A';
+                            const zodiacMap = {
+                                'Aries': 'Aries ♈︎: Mesha',
+                                'Taurus': 'Taurus ♉︎: Vrishabha',
+                                'Gemini': 'Gemini ♊︎: Mithuna',
+                                'Cancer': 'Cancer ♋︎: Karkata',
+                                'Leo': 'Leo ♌︎: Simha',
+                                'Virgo': 'Virgo ♍︎: Kanya',
+                                'Libra': 'Libra ♎︎: Tula',
+                                'Scorpio': 'Scorpio ♏︎: Vrishchika',
+                                'Sagittarius': 'Sagittarius ♐︎: Dhanu',
+                                'Capricorn': 'Capricorn ♑︎: Makara',
+                                'Aquarius': 'Aquarius ♒︎: Kumbha',
+                                'Pisces': 'Pisces ♓︎: Meena'
+                            };
+                            const cleanSign = signName.trim();
+                            for (const key in zodiacMap) {
+                                if (cleanSign.toLowerCase() === key.toLowerCase() || cleanSign.toLowerCase().includes(key.toLowerCase())) {
+                                    return zodiacMap[key];
+                                }
+                            }
+                            return signName;
+                        }
+
                         let planetRows = '';
                         planets.forEach(p => {
                             const name = p.name || p.planet || 'N/A';
@@ -927,12 +952,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             let lordInfo = 'N/A';
                             const rasi = p.rasi;
                             if (rasi && typeof rasi === 'object') {
-                                sign = rasi.name || 'N/A';
+                                sign = formatZodiacSign(rasi.name || 'N/A');
                                 const lordName = rasi.lord?.name || 'N/A';
                                 const lordVedic = rasi.lord?.vedic_name || rasi.lord?.vedicName || 'N/A';
                                 lordInfo = `${lordName} (${lordVedic})`;
                             } else {
-                                sign = p.sign || 'N/A';
+                                sign = formatZodiacSign(p.sign || 'N/A');
                             }
 
                             let deg = 'N/A';
