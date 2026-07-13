@@ -571,27 +571,40 @@ def get_mock_kundli(datetime_str, lat, lng):
     }
 
 def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
-    import hashlib
-    seed_str = f"{datetime_str or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
-    h = hashlib.sha256(seed_str.encode('utf-8')).digest()
+    import math
+    from datetime import date
+    
+    dt_info = parse_datetime_helper(datetime_str)
+    
+    # Calculate days since Vernal Equinox (approx March 20, 2000) for position simulation
+    try:
+        d = date(dt_info["year"], dt_info["month"], dt_info["day"])
+        vernal = date(dt_info["year"], 3, 20)
+        diff_days = (d - vernal).days
+    except:
+        diff_days = 114 # fallback default
+        
+    # Sun's tropical longitude is highly accurate using (days * 360/365.25)
+    sun_lon = (diff_days * 0.9856) % 360
+    
+    # Simulate planetary longitudes using real solar period approximations
+    planets_raw = [
+        ("Sun", sun_lon, False),
+        ("Moon", (sun_lon + diff_days * 13.176) % 360, False),
+        ("Mars", (diff_days * 0.524) % 360, (diff_days % 730 > 700)),
+        ("Mercury", (sun_lon + 15.0 * math.sin(diff_days * 0.071)) % 360, (diff_days % 116 > 100)),
+        ("Jupiter", (54.0 + diff_days * 0.083) % 360, False),
+        ("Venus", (sun_lon + 40.0 * math.cos(diff_days * 0.011)) % 360, (diff_days % 584 > 570)),
+        ("Saturn", (10.0 + diff_days * 0.033) % 360, False),
+        ("Uranus", (45.0 + diff_days * 0.0117) % 360, False),
+        ("Neptune", (3.0 + diff_days * 0.006) % 360, False),
+        ("Pluto", (298.0 + diff_days * 0.004) % 360, False),
+        ("True North Node", (335.0 - diff_days * 0.053) % 360, True),
+        ("True South Node", (155.0 - diff_days * 0.053) % 360, True)
+    ]
     
     signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
     nakshatras = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Svati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"]
-    
-    planets_raw = [
-        ("Sun", (h[0] + h[10]) % 360, False),
-        ("Moon", (h[1] + h[11]) % 360, False),
-        ("Mars", (h[2] + h[12]) % 360, (h[2] % 5 == 0)),
-        ("Mercury", (h[3] + h[13]) % 360, (h[3] % 4 == 0)),
-        ("Jupiter", (h[4] + h[14]) % 360, (h[4] % 7 == 0)),
-        ("Venus", (h[5] + h[15]) % 360, (h[5] % 6 == 0)),
-        ("Saturn", (h[6] + h[16]) % 360, (h[6] % 5 == 0)),
-        ("Uranus", (h[7] + h[17]) % 360, False),
-        ("Neptune", (h[8] + h[18]) % 360, False),
-        ("Pluto", (h[9] + h[19]) % 360, True),
-        ("True North Node", (h[0] * 3) % 360, False),
-        ("True South Node", (h[0] * 3 + 180) % 360, False)
-    ]
     
     positions = []
     for name, lon, is_retro in planets_raw:
@@ -1720,7 +1733,9 @@ class handler(http.server.BaseHTTPRequestHandler):
                             lon = float(lon)
                             p["raw_longitude_str"] = f"{round(lon, 2)}°"
                             if not p.get("right_ascension") or not p.get("declination"):
-                                ra_str, dec_str = longitude_to_equatorial(lon)
+                                # If ayanamsa is active ('1'), restore the Tropical longitude for RA/Dec calculation by adding 24.23 degrees (Lahiri ayanamsa offset)
+                                tropical_lon = (lon + 24.23) % 360 if ayanamsa == '1' else lon
+                                ra_str, dec_str = longitude_to_equatorial(tropical_lon)
                                 p["right_ascension"] = ra_str
                                 p["declination"] = dec_str
                                 
