@@ -1051,7 +1051,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
         asc_deg = (sun_lon + (time_hours - 6.0) * 15.0) % 360
         
-    rotation_offset = 180.0 - asc_deg
+    if style == 'sky':
+        rotation_offset = 0.0
+    else:
+        rotation_offset = 180.0 - asc_deg
     
     def get_rotated_rad(angle_deg):
         return math.radians((angle_deg + rotation_offset) % 360)
@@ -1114,7 +1117,31 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
   <circle cx="500" cy="500" r="420" stroke="#d4af37" stroke-width="2.5" fill="none" opacity="0.75"/>
   <circle cx="500" cy="500" r="380" stroke="#d4af37" stroke-width="1.8" fill="none" opacity="0.5"/>
   <circle cx="500" cy="500" r="300" stroke="#d4af37" stroke-width="1.5" fill="url(#centerGrad)" opacity="0.65"/>
-  <circle cx="500" cy="500" r="130" stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.3" stroke-dasharray="6,6"/>
+"""
+    if style == 'sky':
+        svg += """
+  <!-- Stylized Earth Globe at center -->
+  <g filter="url(#glow-light)">
+    <circle cx="500" cy="500" r="85" fill="#0d184a" stroke="#007aff" stroke-width="2" opacity="0.95"/>
+    <ellipse cx="500" cy="500" rx="85" ry="30" fill="none" stroke="#007aff" stroke-width="1.0" opacity="0.4"/>
+    <ellipse cx="500" cy="500" rx="85" ry="60" fill="none" stroke="#007aff" stroke-width="1.0" opacity="0.4"/>
+    <ellipse cx="500" cy="500" rx="30" ry="85" fill="none" stroke="#007aff" stroke-width="1.0" opacity="0.4"/>
+    <ellipse cx="500" cy="500" rx="60" ry="85" fill="none" stroke="#007aff" stroke-width="1.0" opacity="0.4"/>
+    <line x1="415" y1="500" x2="585" y2="500" stroke="#007aff" stroke-width="1.5" opacity="0.6"/>
+    <line x1="500" y1="415" x2="500" y2="585" stroke="#007aff" stroke-width="1.5" opacity="0.6"/>
+    <!-- Asia/Europe -->
+    <path d="M 470 435 Q 490 425 510 445 Q 520 435 530 455 Q 520 475 500 465 Z" fill="#ffe600" opacity="0.25"/>
+    <!-- Africa -->
+    <path d="M 490 480 Q 510 465 525 475 Q 520 515 505 525 Q 480 505 490 480 Z" fill="#ffe600" opacity="0.25"/>
+    <!-- Americas -->
+    <path d="M 435 455 Q 455 475 445 505 Q 435 535 450 555 Q 435 545 425 495 Z" fill="#ffe600" opacity="0.25"/>
+    <circle cx="500" cy="500" r="85" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.8"/>
+  </g>
+"""
+    else:
+        svg += '  <circle cx="500" cy="500" r="130" stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.3" stroke-dasharray="6,6"/>\n'
+    
+    svg += """
   
   <!-- Detailed 360 Degree Tick Marks -->
   <g stroke="#d4af37" opacity="0.65">
