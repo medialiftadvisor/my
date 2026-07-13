@@ -1414,7 +1414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isoDt = `${dateVal}:00+05:30`;
 
             const planetPosPromise = fetch(`${apiBase}/astrology/planet-position?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
-            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&_t=${Date.now()}`).then(res => res.json());
+            const natalChartPromise = fetch(`${apiBase}/astrology/natal-chart?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&la=${currentLang}&style=sky&_t=${Date.now()}`).then(res => res.json());
 
             Promise.all([planetPosPromise, natalChartPromise])
                 .then(([planetRes, natalRes]) => {

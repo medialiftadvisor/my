@@ -1008,7 +1008,7 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             
     return planets_sorted
 
-def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
+def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='default'):
     import math
     import hashlib
     
@@ -1066,10 +1066,13 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
     
     svg = f"""<svg viewBox="0 0 1000 1000" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <!-- Premium cosmic glow filters -->
     <filter id="glow-light" x="-10%" y="-10%" width="120%" height="120%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
+    
+    <!-- Gradients -->
     <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#1b124a"/>
       <stop offset="60%" stop-color="#0a0521"/>
@@ -1086,11 +1089,30 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
       <stop offset="100%" stop-color="#aa7c11"/>
     </linearGradient>
   </defs>
+  
+  <!-- Outer bounds and dark background -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" rx="24"/>
+  
+  <!-- Star background dots -->
+  <g fill="#ffffff" opacity="0.35">
+    <circle cx="120" cy="150" r="1.5"/>
+    <circle cx="840" cy="180" r="2"/>
+    <circle cx="210" cy="780" r="1.2"/>
+    <circle cx="780" cy="840" r="1.5"/>
+    <circle cx="100" cy="540" r="2.2" opacity="0.5"/>
+    <circle cx="900" cy="420" r="1.2"/>
+    <circle cx="380" cy="110" r="1.5"/>
+    <circle cx="620" cy="890" r="1.8"/>
+  </g>
+  
+  <!-- Main outer wheel borders -->
   <circle cx="500" cy="500" r="460" stroke="url(#goldGrad)" stroke-width="4.5" fill="none" filter="url(#glow-light)"/>
   <circle cx="500" cy="500" r="420" stroke="#d4af37" stroke-width="2.5" fill="none" opacity="0.75"/>
   <circle cx="500" cy="500" r="380" stroke="#d4af37" stroke-width="1.8" fill="none" opacity="0.5"/>
   <circle cx="500" cy="500" r="300" stroke="#d4af37" stroke-width="1.5" fill="url(#centerGrad)" opacity="0.65"/>
+  <circle cx="500" cy="500" r="130" stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.3" stroke-dasharray="6,6"/>
+  
+  <!-- Detailed 360 Degree Tick Marks -->
   <g stroke="#d4af37" opacity="0.65">
 """
     for d in range(360):
@@ -1114,6 +1136,7 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         y2 = 500 + r2 * math.sin(theta)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="{stroke_w}"/>\n'
         
+        # Add labels for 10 and 20 degrees within each sign segment
         rel_deg = d % 30
         if rel_deg in [10, 20] and d % 10 == 0:
             lx = 500 + 363 * math.cos(theta)
@@ -1122,6 +1145,8 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
             svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffffff" font-size="9" font-family="Outfit" font-weight="600" opacity="0.75" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{rel_deg}</text>\n'
 
     svg += """  </g>
+  
+  <!-- Outer Zodiac Sign Sectors & Division Borders -->
   <g stroke="#d4af37" opacity="0.5">
 """
     for i in range(12):
@@ -1138,6 +1163,7 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         rot_deg = (i * 30 + 15 + rotation_offset + 90) % 360
         svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
 
+        # Clickable sector path button for magnifying
         a1 = get_rotated_rad(i * 30)
         a2 = get_rotated_rad((i + 1) * 30)
         x1_in = 500 + 300 * math.cos(a1)
@@ -1151,71 +1177,75 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         path_d = f"M {x1_in:.1f} {y1_in:.1f} L {x1_out:.1f} {y1_out:.1f} A 460 460 0 0 1 {x2_out:.1f} {y2_out:.1f} L {x2_in:.1f} {y2_in:.1f} A 300 300 0 0 0 {x1_in:.1f} {y1_in:.1f} Z"
         svg += f'    <path class="zodiac-sector-btn" data-sign="{signs[i]}" d="{path_d}" fill="transparent" stroke="none" style="cursor: pointer; transition: fill 0.2s;" onmouseover="this.setAttribute(\'fill\', \'rgba(255,215,0,0.06)\')" onmouseout="this.setAttribute(\'fill\', \'transparent\')"/>\n'
 
-    svg += """  </g>
-  <g stroke="#ffffff" stroke-width="1.0" opacity="0.25" stroke-dasharray="3,4">
-"""
-    for i in range(12):
-        angle_deg = 180 + i * 30
-        angle = math.radians(angle_deg)
-        x1 = 500 + 130 * math.cos(angle)
-        y1 = 500 + 130 * math.sin(angle)
-        x2 = 500 + 300 * math.cos(angle)
-        y2 = 500 + 300 * math.sin(angle)
-        svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
-        
-        num_angle = math.radians(angle_deg + 15)
-        nx = 500 + 220 * math.cos(num_angle)
-        ny = 500 + 220 * math.sin(num_angle) + 5.5
-        svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="12" font-family="Outfit" opacity="0.45" text-anchor="middle">{i+1}</text>\n'
+    svg += "  </g>\n"
+    
+    # House boundaries (12 sectors) - skipped if style == 'sky'
+    if style != 'sky':
+        svg += '  <!-- House boundaries (12 sectors) -->\n  <g stroke="#ffffff" stroke-width="1.0" opacity="0.25" stroke-dasharray="3,4">\n'
+        for i in range(12):
+            angle_deg = 180 + i * 30
+            angle = math.radians(angle_deg)
+            x1 = 500 + 130 * math.cos(angle)
+            y1 = 500 + 130 * math.sin(angle)
+            x2 = 500 + 300 * math.cos(angle)
+            y2 = 500 + 300 * math.sin(angle)
+            svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
+            
+            num_angle = math.radians(angle_deg + 15)
+            nx = 500 + 220 * math.cos(num_angle)
+            ny = 500 + 220 * math.sin(num_angle) + 5.5
+            svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="12" font-family="Outfit" opacity="0.45" text-anchor="middle">{i+1}</text>\n'
+        svg += '  </g>\n'
 
-    svg += """  </g>
-  <g stroke-width="1.5" filter="url(#glow-light)">
-"""
-    mc_deg = (asc_deg - 90.0) % 360
-    aspect_planets = planets.copy()
-    aspect_planets.append(("Ascendant", "ASC", asc_deg, "#ffe600"))
-    aspect_planets.append(("Midheaven", "MC", mc_deg, "#ffffff"))
+    # Dynamic Aspect Lines inside the inner house circle - skipped if style == 'sky'
+    if style != 'sky':
+        svg += '  <!-- Dynamic Aspect Lines inside the inner house circle -->\n  <g stroke-width="1.5" filter="url(#glow-light)">\n'
+        mc_deg = (asc_deg - 90.0) % 360
+        aspect_planets = planets.copy()
+        aspect_planets.append(("Ascendant", "ASC", asc_deg, "#ffe600"))
+        aspect_planets.append(("Midheaven", "MC", mc_deg, "#ffffff"))
 
-    for i in range(len(aspect_planets)):
-        for j in range(i + 1, len(aspect_planets)):
-            p1_name, _, a1, _ = aspect_planets[i]
-            p2_name, _, a2, _ = aspect_planets[j]
-            diff = abs(a1 - a2) % 360
-            if diff > 180:
-                diff = 360 - diff
-                
-            color = None
-            if abs(diff - 120) <= 10:
-                color = "#007aff"
-            elif abs(diff - 180) <= 10:
-                color = "#ff3b30"
-            elif abs(diff - 90) <= 10:
-                color = "#ff3b30"
-            elif abs(diff - 60) <= 8:
-                color = "#007aff"
-            elif abs(diff - 150) <= 6:
-                color = "#34c759"
-            elif abs(diff - 30) <= 5:
-                color = "#a0aec0"
-            elif abs(diff - 135) <= 5:
-                color = "#a0aec0"
-            elif abs(diff - 45) <= 5:
-                color = "#a0aec0"
-                
-            if color:
-                r1 = get_rotated_rad(a1)
-                r2 = get_rotated_rad(a2)
-                x1 = 500 + 300 * math.cos(r1)
-                y1 = 500 + 300 * math.sin(r1)
-                x2 = 500 + 300 * math.cos(r2)
-                y2 = 500 + 300 * math.sin(r2)
-                signs_list = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
-                sign1 = signs_list[int(a1 // 30) % 12]
-                sign2 = signs_list[int(a2 // 30) % 12]
-                svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65" class="pk-planet-aspect pk-zodiac-{sign1} pk-zodiac-{sign2}"/>\n'
+        for i in range(len(aspect_planets)):
+            for j in range(i + 1, len(aspect_planets)):
+                p1_name, _, a1, _ = aspect_planets[i]
+                p2_name, _, a2, _ = aspect_planets[j]
+                diff = abs(a1 - a2) % 360
+                if diff > 180:
+                    diff = 360 - diff
+                    
+                color = None
+                if abs(diff - 120) <= 10:
+                    color = "#007aff"  # Trine (Blue)
+                elif abs(diff - 180) <= 10:
+                    color = "#ff3b30"  # Opposition (Red)
+                elif abs(diff - 90) <= 10:
+                    color = "#ff3b30"  # Square (Red)
+                elif abs(diff - 60) <= 8:
+                    color = "#007aff"  # Sextile (Blue)
+                elif abs(diff - 150) <= 6:
+                    color = "#34c759"  # Quincunx (Green)
+                elif abs(diff - 30) <= 5:
+                    color = "#a0aec0"  # Semisextile (Charcoal / Black equivalent)
+                elif abs(diff - 135) <= 5:
+                    color = "#a0aec0"  # Sesquiquadrate (Charcoal / Black equivalent)
+                elif abs(diff - 45) <= 5:
+                    color = "#a0aec0"  # Semisquare (Charcoal / Black equivalent)
+                    
+                if color:
+                    r1 = get_rotated_rad(a1)
+                    r2 = get_rotated_rad(a2)
+                    x1 = 500 + 300 * math.cos(r1)
+                    y1 = 500 + 300 * math.sin(r1)
+                    x2 = 500 + 300 * math.cos(r2)
+                    y2 = 500 + 300 * math.sin(r2)
+                    signs_list = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
+                    sign1 = signs_list[int(a1 // 30) % 12]
+                    sign2 = signs_list[int(a2 // 30) % 12]
+                    svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65" class="pk-planet-aspect pk-zodiac-{sign1} pk-zodiac-{sign2}"/>\n'
+        svg += '  </g>\n'
 
-    svg += """  </g>
-  <g font-family="Arial" text-anchor="middle">
+    svg += """  <!-- Planet placements & glyph indicators -->
+  <g font-family="Outfit" text-anchor="middle">
 """
     for name, symbol, angle, color in planets:
         rad = get_rotated_rad(angle)
@@ -1227,60 +1257,89 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         
         px = 500 + 336 * math.cos(rad)
         py = 500 + 336 * math.sin(rad) + 6.5
+        
+        # Circle backing
         svg += f'    <circle cx="{px:.1f}" cy="{py-6.5:.1f}" r="16.5" fill="#06020c" stroke="{color}" stroke-width="1.5" opacity="0.95" filter="url(#glow-light)"/>\n'
+        # Symbol
         svg += f'    <text class="svg-planet-marker" data-name="{name}" data-symbol="{symbol}" data-longitude="{angle}" data-color="{color}" x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
         
+        # Text degree label - Sign-relative or Full Degree depending on style
         dx = 500 + 312 * math.cos(rad)
         dy = 500 + 312 * math.sin(rad) + 3.5
-        deg_num = int(angle % 30)
+        if style == 'sky':
+            deg_num = int(angle)
+        else:
+            deg_num = int(angle % 30)
         minutes_num = int(round((angle % 1) * 60))
         svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="9.5" font-family="Outfit" font-weight="700" text-anchor="middle">{deg_num}°{minutes_num:02d}\'</text>\n'
 
+    # Fixed ASC, DSC, MC, IC Marker Axes
     asc_rad_val = math.pi
     dsc_rad_val = 0.0
     mc_rad_val = -math.pi/2
     ic_rad_val = math.pi/2
     
-    svg += """  </g>
-  <g stroke="#ffffff" stroke-width="1.2" opacity="0.75">
-"""
-    asc_x1 = 500 + 300 * math.cos(asc_rad_val)
-    asc_y1 = 500 + 300 * math.sin(asc_rad_val)
-    asc_x2 = 500 + 380 * math.cos(asc_rad_val)
-    asc_y2 = 500 + 380 * math.sin(asc_rad_val)
-    svg += f'    <line x1="{asc_x1:.1f}" y1="{asc_y1:.1f}" x2="{asc_x2:.1f}" y2="{asc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
-
-    dsc_x1 = 500 + 300 * math.cos(dsc_rad_val)
-    dsc_y1 = 500 + 300 * math.sin(dsc_rad_val)
-    dsc_x2 = 500 + 380 * math.cos(dsc_rad_val)
-    dsc_y2 = 500 + 380 * math.sin(dsc_rad_val)
-    svg += f'    <line x1="{dsc_x1:.1f}" y1="{dsc_y1:.1f}" x2="{dsc_x2:.1f}" y2="{dsc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
-
-    mc_x1 = 500 + 300 * math.cos(mc_rad_val)
-    mc_y1 = 500 + 300 * math.sin(mc_rad_val)
-    mc_x2 = 500 + 380 * math.cos(mc_rad_val)
-    mc_y2 = 500 + 380 * math.sin(mc_rad_val)
-    svg += f'    <line x1="{mc_x1:.1f}" y1="{mc_y1:.1f}" x2="{mc_x2:.1f}" y2="{mc_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
-
-    ic_x1 = 500 + 300 * math.cos(ic_rad_val)
-    ic_y1 = 500 + 300 * math.sin(ic_rad_val)
-    ic_x2 = 500 + 380 * math.cos(ic_rad_val)
-    ic_y2 = 500 + 380 * math.sin(ic_rad_val)
-    svg += f'    <line x1="{ic_x1:.1f}" y1="{ic_y1:.1f}" x2="{ic_x2:.1f}" y2="{ic_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
+    svg += "  </g>\n"
     
-    def draw_axis_label(rad, text, offset_dist):
-        tx = 500 + offset_dist * math.cos(rad)
-        ty = 500 + offset_dist * math.sin(rad)
-        return f"""
+    # ASC, DSC, MC, IC Marker Axes - skipped if style == 'sky'
+    if style != 'sky':
+        svg += '  <!-- ASC, DSC, MC, IC Marker Axes -->\n  <g stroke="#ffffff" stroke-width="1.2" opacity="0.75">\n'
+        # ASC line (300 to 380 radius)
+        asc_x1 = 500 + 300 * math.cos(asc_rad_val)
+        asc_y1 = 500 + 300 * math.sin(asc_rad_val)
+        asc_x2 = 500 + 380 * math.cos(asc_rad_val)
+        asc_y2 = 500 + 380 * math.sin(asc_rad_val)
+        svg += f'    <line x1="{asc_x1:.1f}" y1="{asc_y1:.1f}" x2="{asc_x2:.1f}" y2="{asc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
+
+        # DSC line (300 to 380 radius)
+        dsc_x1 = 500 + 300 * math.cos(dsc_rad_val)
+        dsc_y1 = 500 + 300 * math.sin(dsc_rad_val)
+        dsc_x2 = 500 + 380 * math.cos(dsc_rad_val)
+        dsc_y2 = 500 + 380 * math.sin(dsc_rad_val)
+        svg += f'    <line x1="{dsc_x1:.1f}" y1="{dsc_y1:.1f}" x2="{dsc_x2:.1f}" y2="{dsc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
+
+        # MC line (300 to 380 radius)
+        mc_x1 = 500 + 300 * math.cos(mc_rad_val)
+        mc_y1 = 500 + 300 * math.sin(mc_rad_val)
+        mc_x2 = 500 + 380 * math.cos(mc_rad_val)
+        mc_y2 = 500 + 380 * math.sin(mc_rad_val)
+        svg += f'    <line x1="{mc_x1:.1f}" y1="{mc_y1:.1f}" x2="{mc_x2:.1f}" y2="{mc_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
+
+        # IC line (300 to 380 radius)
+        ic_x1 = 500 + 300 * math.cos(ic_rad_val)
+        ic_y1 = 500 + 300 * math.sin(ic_rad_val)
+        ic_x2 = 500 + 380 * math.cos(ic_rad_val)
+        ic_y2 = 500 + 380 * math.sin(ic_rad_val)
+        svg += f'    <line x1="{ic_x1:.1f}" y1="{ic_y1:.1f}" x2="{ic_x2:.1f}" y2="{ic_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
+        svg += '  </g>\n'
+
+    # Direction Labels or Axis Labels depending on style
+    svg += '  <g>'
+    if style == 'sky':
+        def draw_direction_label(rad, eng_text, vedic_text, offset_dist):
+            tx = 500 + offset_dist * math.cos(rad)
+            ty = 500 + offset_dist * math.sin(rad)
+            return f"""
+    <rect x="{tx-40:.1f}" y="{ty-18:.1f}" width="80" height="36" rx="8" fill="#04020f" stroke="#ffe600" stroke-width="1.8" filter="url(#glow-light)" />
+    <text x="{tx:.1f}" y="{ty-2:.1f}" fill="#ffe600" font-family="Outfit" font-size="10" font-weight="900" text-anchor="middle">{eng_text}</text>
+    <text x="{tx:.1f}" y="{ty+11:.1f}" fill="#ffffff" font-family="Outfit" font-size="9" font-weight="600" opacity="0.85" text-anchor="middle">{vedic_text}</text>
+"""
+        svg += draw_direction_label(asc_rad_val, "EAST", "पूर्व", 310)
+        svg += draw_direction_label(dsc_rad_val, "WEST", "पश्चिम", 310)
+        svg += draw_direction_label(mc_rad_val, "SOUTH", "दक्षिण", 310)
+        svg += draw_direction_label(ic_rad_val, "NORTH", "उत्तर", 310)
+    else:
+        def draw_axis_label(rad, text, offset_dist):
+            tx = 500 + offset_dist * math.cos(rad)
+            ty = 500 + offset_dist * math.sin(rad)
+            return f"""
     <rect x="{tx-16:.1f}" y="{ty-16:.1f}" width="32" height="32" rx="6" fill="#04020f" stroke="#ffe600" stroke-width="1.8" filter="url(#glow-light)" />
     <text x="{tx:.1f}" y="{ty+5.5:.1f}" fill="#ffe600" font-family="Outfit" font-size="12" font-weight="900" text-anchor="middle">{text}</text>
 """
-    
-    svg += "  </g>\n  <g>"
-    svg += draw_axis_label(asc_rad_val, "ASC", 302)
-    svg += draw_axis_label(dsc_rad_val, "DSC", 302)
-    svg += draw_axis_label(mc_rad_val, "MC", 302)
-    svg += draw_axis_label(ic_rad_val, "IC", 302)
+        svg += draw_axis_label(asc_rad_val, "ASC", 302)
+        svg += draw_axis_label(dsc_rad_val, "DSC", 302)
+        svg += draw_axis_label(mc_rad_val, "MC", 302)
+        svg += draw_axis_label(ic_rad_val, "IC", 302)
 
     display_date = "July 10, 2026"
     display_time = "12:01 AM"
@@ -1296,11 +1355,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
   
   <g fill="#ffffff" font-family="Outfit" font-size="11" text-anchor="middle" opacity="0.9">
     <text x="500" y="492" fill="#ffe600" font-size="13" font-weight="900" letter-spacing="1">COSMIC ALIGNMENT</text>
-    <text x="500" y="510" font-size="10.5" fill="#ffffff" opacity="0.85">{display_date}</text>
-    <text x="500" y="525" font-size="10" fill="#ffffff" opacity="0.65">{display_time}</text>
+    <text x="500" y="512" font-weight="600">{display_date}  {display_time}</text>
+    <text x="500" y="527" font-size="9.5" opacity="0.6">LAT: {lat}  LNG: {lng}</text>
   </g>
-</svg>
-"""
+</svg>"""
     return {
         "status": "success",
         "data": {
@@ -2009,39 +2067,65 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
             lat = get_param('latitude')
             lng = get_param('longitude')
             ayanamsa = get_param('ayanamsa', '0')
+            style = get_param('style', 'default')
             dt = adjust_datetime_timezone(dt, lat, lng)
             
             response_data = None
-            if provider == 'astronomyapi' and dt and lat and lng:
-                pos_res = get_astronomy_planet_position(dt, lat, lng)
-                if pos_res and pos_res.get("status") == "success":
-                    positions = pos_res.get("data", {}).get("planetary_positions", [])
-                    positions = normalize_positions_helper(positions, provider, ayanamsa, dt, lat, lng)
-                    response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
-            elif provider == 'divineapi' and DIVINE_API_KEY and dt and lat and lng:
-                pos_res = get_divine_planet_position(dt, lat, lng, ayanamsa)
-                if pos_res and pos_res.get("status") == "success":
-                    positions = pos_res.get("data", {}).get("planetary_positions", [])
-                    positions = normalize_positions_helper(positions, provider, ayanamsa, dt, lat, lng)
-                    response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
-                    
-            if not response_data:
-                if DEMO_MODE or not dt or not lat or not lng:
+            positions = None
+            
+            if dt and lat and lng:
+                if provider == 'astronomyapi':
+                    pos_res = get_astronomy_planet_position(dt, lat, lng)
+                    if pos_res and pos_res.get("status") == "success":
+                        positions = pos_res.get("data", {}).get("planetary_positions", [])
+                elif provider == 'divineapi' and DIVINE_API_KEY:
+                    pos_res = get_divine_planet_position(dt, lat, lng, ayanamsa)
+                    if pos_res and pos_res.get("status") == "success":
+                        positions = pos_res.get("data", {}).get("planetary_positions", [])
+                elif provider == 'prokerala' and CLIENT_ID:
+                    token = get_access_token()
+                    if token:
+                        coordinates = f"{lat},{lng}"
+                        api_url = f"https://api.prokerala.com/v2/astrology/natal-planet-position?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus"
+                        raw_res = fetch_raw_api(api_url, token)
+                        if raw_res and raw_res.get("status") == "ok":
+                            raw_data = raw_res.get("data", {})
+                            planets_list = raw_data.get("planet_position") or raw_data.get("planet_positions") or []
+                            mapped_planets = []
+                            for p in planets_list:
+                                name = p.get("name") or "N/A"
+                                lon = p.get("longitude")
+                                deg = p.get("degree")
+                                is_retro = p.get("is_retrograde", False)
+                                zod = p.get("zodiac", {})
+                                mapped_planets.append({
+                                    "name": name,
+                                    "planet": name,
+                                    "longitude": lon,
+                                    "degree": deg,
+                                    "is_retrograde": is_retro,
+                                    "rasi": {
+                                        "name": zod.get("name") or "N/A",
+                                        "lord": {
+                                            "name": zod.get("lord", {}).get("name") or "N/A",
+                                            "vedic_name": zod.get("lord", {}).get("name") or "N/A"
+                                        }
+                                    }
+                                })
+                            positions = mapped_planets
+
+            if style == 'sky':
+                if not positions:
                     mock_pos_res = get_mock_planet_position(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
                     positions = mock_pos_res.get("data", {}).get("planetary_positions", [])
-                    positions = normalize_positions_helper(positions, 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
-                    response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions)
-                else:
+                positions = normalize_positions_helper(positions, provider if provider != 'prokerala' else 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
+                response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions, style='sky')
+            else:
+                if provider == 'prokerala' and CLIENT_ID and dt and lat and lng:
                     token = get_access_token()
-                    if not token:
-                        mock_pos_res = get_mock_planet_position(dt, lat, lng, ayanamsa)
-                        positions = mock_pos_res.get("data", {}).get("planetary_positions", [])
-                        positions = normalize_positions_helper(positions, 'mock', ayanamsa, dt, lat, lng)
-                        response_data = get_mock_chart(dt, lat, lng, ayanamsa, custom_positions=positions)
-                    else:
+                    if token:
                         coordinates = f"{lat},{lng}"
                         api_url = f"https://api.prokerala.com/v2/astrology/natal-chart?profile[datetime]={urllib.parse.quote(dt)}&profile[coordinates]={urllib.parse.quote(coordinates)}&ayanamsa={ayanamsa}&house_system=placidus&aspect_filter=all&orb=default"
-                        
                         req = urllib.request.Request(api_url)
                         req.add_header('Authorization', f'Bearer {token}')
                         try:
@@ -2055,7 +2139,13 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                                 }
                         except Exception as e:
                             print(f"[Backend] Error calling Prokerala Natal Chart API: {e}")
-                            response_data = get_mock_chart(dt, lat, lng, ayanamsa)
+                            
+                if not response_data:
+                    if not positions:
+                        mock_pos_res = get_mock_planet_position(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+                        positions = mock_pos_res.get("data", {}).get("planetary_positions", [])
+                    positions = normalize_positions_helper(positions, provider if provider != 'prokerala' else 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
+                    response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions, style=style)
 
         # 8. Transit History (every 15 min up to 2 months)
         elif path == '/api/astrology/transit-history':
