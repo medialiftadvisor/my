@@ -1324,14 +1324,14 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
             tx = 500 + offset_dist * math.cos(rad)
             ty = 500 + offset_dist * math.sin(rad)
             return f"""
-    <rect x="{tx-40:.1f}" y="{ty-18:.1f}" width="80" height="36" rx="8" fill="#04020f" stroke="#ffe600" stroke-width="1.8" filter="url(#glow-light)" />
-    <text x="{tx:.1f}" y="{ty-2:.1f}" fill="#ffe600" font-family="Outfit" font-size="10" font-weight="900" text-anchor="middle">{eng_text}</text>
-    <text x="{tx:.1f}" y="{ty+11:.1f}" fill="#ffffff" font-family="Outfit" font-size="9" font-weight="600" opacity="0.85" text-anchor="middle">{vedic_text}</text>
+    <circle cx="{tx:.1f}" cy="{ty:.1f}" r="22" fill="#04020f" stroke="#ffe600" stroke-width="1.8" filter="url(#glow-light)" />
+    <text x="{tx:.1f}" y="{ty-3.5:.1f}" fill="#ffe600" font-family="Outfit" font-size="9" font-weight="900" text-anchor="middle">{eng_text}</text>
+    <text x="{tx:.1f}" y="{ty+9:.1f}" fill="#ffffff" font-family="Outfit" font-size="9" font-weight="600" opacity="0.85" text-anchor="middle">{vedic_text}</text>
 """
-        svg += draw_direction_label(asc_rad_val, "EAST", "पूर्व", 310)
-        svg += draw_direction_label(dsc_rad_val, "WEST", "पश्चिम", 310)
-        svg += draw_direction_label(mc_rad_val, "SOUTH", "दक्षिण", 310)
-        svg += draw_direction_label(ic_rad_val, "NORTH", "उत्तर", 310)
+        svg += draw_direction_label(asc_rad_val, "EAST", "पूर्व", 478)
+        svg += draw_direction_label(dsc_rad_val, "WEST", "पश्चिम", 478)
+        svg += draw_direction_label(mc_rad_val, "SOUTH", "दक्षिण", 478)
+        svg += draw_direction_label(ic_rad_val, "NORTH", "उत्तर", 478)
     else:
         def draw_axis_label(rad, text, offset_dist):
             tx = 500 + offset_dist * math.cos(rad)
