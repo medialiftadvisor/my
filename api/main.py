@@ -178,6 +178,50 @@ def get_planet_speed(planet_name, is_retrograde=False):
         return -abs(base_speed)
     return base_speed
 
+def calculate_true_ascendant(dt_str, lat, lng):
+    import math
+    from datetime import datetime
+    
+    # Parse datetime
+    dt_info = parse_datetime_helper(dt_str)
+    
+    # Calculate Julian Date (JD)
+    y, m, d = dt_info["year"], dt_info["month"], dt_info["day"]
+    h, mn, s = dt_info["hour"], dt_info["min"], dt_info["sec"]
+    tz = dt_info["tzone"]
+    
+    # Convert local time to UTC decimal hours
+    utc_hours = h + mn/60.0 + s/3600.0 - tz
+    
+    # Julian Date calculation
+    if m <= 2:
+        y -= 1
+        m += 12
+    A = int(y / 100)
+    B = 2 - A + int(A / 4)
+    jd = int(365.25 * (y + 4716)) + int(30.6001 * (m + 1)) + d + B - 1524.5 + (utc_hours / 24.0)
+    
+    # Greenwich Sidereal Time (GST) in degrees
+    d_jd = jd - 2451545.0
+    mst = (280.46061837 + 360.98564736629 * d_jd) % 360
+    
+    # Local Sidereal Time (LST) in degrees
+    lst = (mst + float(lng)) % 360
+    
+    # Obliquity eps = 23.44 degrees
+    eps = math.radians(23.44)
+    lst_rad = math.radians(lst)
+    lat_rad = math.radians(float(lat))
+    
+    # Ascendant formula
+    # tan(asc) = -cos(lst) / (sin(lst)*cos(eps) + tan(lat)*sin(eps))
+    num = -math.cos(lst_rad)
+    den = math.sin(lst_rad) * math.cos(eps) + math.tan(lat_rad) * math.sin(eps)
+    
+    asc_rad = math.atan2(num, den)
+    asc_deg = math.degrees(asc_rad) % 360
+    return asc_deg
+
 def equatorial_to_longitude(ra_deg, dec_deg):
     import math
     eps = math.radians(23.44)
@@ -1704,7 +1748,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                         raw_res = fetch_raw_api(api_url, token)
                         if raw_res and raw_res.get("status") == "ok":
                             raw_data = raw_res.get("data", {})
-                            planets_list = raw_data.get("planet_positions") or []
+                            planets_list = raw_data.get("planet_position") or raw_data.get("planet_positions") or []
                             mapped_planets = []
                             for p in planets_list:
                                 name = p.get("name") or "N/A"
@@ -1751,10 +1795,8 @@ class handler(http.server.BaseHTTPRequestHandler):
                         if p_name.lower() == "sun" and p.get("longitude") is not None:
                             sun_lon = float(p["longitude"])
                             
-                    if not has_asc and sun_lon > 0.0:
-                        dt_info = parse_datetime_helper(dt)
-                        time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
-                        asc_lon = (sun_lon + (time_hours - 6.0) * 15.0) % 360
+                    if not has_asc:
+                        asc_lon = calculate_true_ascendant(dt, lat, lng)
                         asc_deg = asc_lon % 30
                         
                         lord_map = {
@@ -1866,6 +1908,26 @@ class handler(http.server.BaseHTTPRequestHandler):
                                 p["right_ascension"] = ra_str
                                 p["declination"] = dec_str
                                 
+                    # Reorder so Ascendant (Lagna) is always first
+                    planets_sorted = []
+                    asc_planet = None
+                    for p in planets:
+                        p_name = p.get("name") or p.get("planet") or ""
+                        if p_name.lower() in ["ascendant", "lagna"]:
+                            asc_planet = p
+                            break
+                    if asc_planet:
+                        planets_sorted.append(asc_planet)
+                    for p in planets:
+                        p_name = p.get("name") or p.get("planet") or ""
+                        if p_name.lower() not in ["ascendant", "lagna"]:
+                            planets_sorted.append(p)
+                    
+                    if "planet_position" in data_dict:
+                        data_dict["planet_position"] = planets_sorted
+                    if "planetary_positions" in data_dict:
+                        data_dict["planetary_positions"] = planets_sorted
+                    
                     normalized_planets = []
                     for p in planets:
                         name = p.get("name") or p.get("planet") or "N/A"
