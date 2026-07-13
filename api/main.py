@@ -825,7 +825,7 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             lon = float(lon)
             
             # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
-            if provider == 'astronomyapi' and ayanamsa == '1':
+            if provider in ['astronomyapi', 'divineapi', 'mock'] and ayanamsa == '1':
                 display_lon = (lon - 24.23) % 360
                 sign_idx = int(display_lon / 30) % 12
                 p["rasi"] = {
