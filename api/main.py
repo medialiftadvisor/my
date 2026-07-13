@@ -1166,13 +1166,15 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         x2 = 500 + r2 * math.cos(theta)
         y2 = 500 + r2 * math.sin(theta)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="{stroke_w}"/>\n'
-        
-        # Add labels for 10 and 20 degrees within each sign segment
         rel_deg = d % 30
         if rel_deg in [10, 20] and d % 10 == 0:
             lx = 500 + 363 * math.cos(theta)
             ly = 500 + 363 * math.sin(theta) + 3.5
-            rot_deg = (d + rotation_offset + 90) % 360
+            if style == 'sky':
+                screen_d = (360 - d) % 360
+                rot_deg = (screen_d + 90) % 360
+            else:
+                rot_deg = (d + rotation_offset + 90) % 360
             svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffffff" font-size="9" font-family="Outfit" font-weight="600" opacity="0.75" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{rel_deg}</text>\n'
 
     svg += """  </g>
@@ -1191,7 +1193,11 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         lbl_angle = get_rotated_rad(i * 30 + 15)
         lx = 500 + 440 * math.cos(lbl_angle)
         ly = 500 + 440 * math.sin(lbl_angle) + 5
-        rot_deg = (i * 30 + 15 + rotation_offset + 90) % 360
+        if style == 'sky':
+            screen_deg = (360 - (i * 30 + 15)) % 360
+            rot_deg = (screen_deg + 90) % 360
+        else:
+            rot_deg = (i * 30 + 15 + rotation_offset + 90) % 360
         svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
 
         # Clickable sector path button for magnifying
@@ -1205,7 +1211,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         y1_out = 500 + 460 * math.sin(a1)
         x2_out = 500 + 460 * math.cos(a2)
         y2_out = 500 + 460 * math.sin(a2)
-        path_d = f"M {x1_in:.1f} {y1_in:.1f} L {x1_out:.1f} {y1_out:.1f} A 460 460 0 0 1 {x2_out:.1f} {y2_out:.1f} L {x2_in:.1f} {y2_in:.1f} A 300 300 0 0 0 {x1_in:.1f} {y1_in:.1f} Z"
+        if style == 'sky':
+            path_d = f"M {x1_in:.1f} {y1_in:.1f} L {x1_out:.1f} {y1_out:.1f} A 460 460 0 0 0 {x2_out:.1f} {y2_out:.1f} L {x2_in:.1f} {y2_in:.1f} A 300 300 0 0 1 {x1_in:.1f} {y1_in:.1f} Z"
+        else:
+            path_d = f"M {x1_in:.1f} {y1_in:.1f} L {x1_out:.1f} {y1_out:.1f} A 460 460 0 0 1 {x2_out:.1f} {y2_out:.1f} L {x2_in:.1f} {y2_in:.1f} A 300 300 0 0 0 {x1_in:.1f} {y1_in:.1f} Z"
         svg += f'    <path class="zodiac-sector-btn" data-sign="{signs[i]}" d="{path_d}" fill="transparent" stroke="none" style="cursor: pointer; transition: fill 0.2s;" onmouseover="this.setAttribute(\'fill\', \'rgba(255,215,0,0.06)\')" onmouseout="this.setAttribute(\'fill\', \'transparent\')"/>\n'
 
     svg += "  </g>\n"
