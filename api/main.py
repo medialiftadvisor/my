@@ -2124,35 +2124,21 @@ class handler(http.server.BaseHTTPRequestHandler):
                 step_dt = base_dt - datetime.timedelta(minutes=15 * step_idx)
                 step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
                 
-                step_pos = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
+                step_pos_raw = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
+                step_pos = normalize_positions_helper(step_pos_raw, 'mock', ayanamsa, step_dt_str, lat, lng)
                 
                 step_entry = {
                     "datetime": step_dt.strftime("%Y-%m-%d %H:%M"),
                     "planets": {}
                 }
                 for p in step_pos:
-                    p_name = p["planet"]
-                    if p_name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "True North Node", "True South Node"]:
-                        step_entry["planets"][p_name] = {
-                            "sign": p["sign"],
-                            "degree": p["degree"]
-                        }
-                
-                seed_str = f"{step_dt_str}_{lat or '19.076'}_{lng or '72.877'}"
-                import hashlib
-                h = hashlib.sha256(seed_str.encode('utf-8')).digest()
-                asc_deg = (h[0] + h[10] + int(float(lat or 0))) % 360
-                mc_deg = (asc_deg + 270) % 360
-                
-                signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
-                step_entry["planets"]["Ascendant"] = {
-                    "sign": signs[int(asc_deg // 30)],
-                    "degree": round(asc_deg % 30, 2)
-                }
-                step_entry["planets"]["Midheaven"] = {
-                    "sign": signs[int(mc_deg // 30)],
-                    "degree": round(mc_deg % 30, 2)
-                }
+                    p_name = p.get("name") or p.get("planet") or ""
+                    sign_name = p.get("rasi", {}).get("name") or "Aries"
+                    deg_val = p.get("degree", 0.0)
+                    step_entry["planets"][p_name] = {
+                        "sign": sign_name,
+                        "degree": deg_val
+                    }
                 
                 history_data.append(step_entry)
                 

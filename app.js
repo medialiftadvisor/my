@@ -1147,19 +1147,26 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <thead>
                                                 <tr>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">Date & Time</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">ASC (Lagna)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☉ Sun (सूर्य)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☽ Moon (चंद्र)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☿ Mercury (बुध)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♀ Venus (शुक्र)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♂ Mars (मंगल)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ N.Node (राहू)</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ S.Node (केतु)</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Lagna</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☉ Surya</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☽ Chandra</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♂ Mangal</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☿ Budha</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♃ Guru</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♀ Shukra</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♄ Shani</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♅ Arun</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♆ Varun</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♇ Yam / Pluto</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ Rahu</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Ketu</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ Spashth Rahu</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Spashth Ketu</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="history-table-body">
                                                 <tr>
-                                                    <td colspan="9" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
+                                                    <td colspan="16" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
                                                         <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem; color: #ffd700;"></i> Loading transit history...
                                                     </td>
                                                 </tr>
@@ -1222,8 +1229,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 
                                                 const glyphMap = {
                                                     'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
-                                                    'Venus': '♀', 'Saturn': '♄', 'True North Node': '☊', 'True South Node': '☋',
-                                                    'Ascendant': 'ASC', 'Midheaven': 'MC'
+                                                    'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
+                                                    'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
+                                                    'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC',
+                                                    'Spashth Rahu': '☊', 'Spashth Ketu': '☋', 'Yam': '♇', 'Arun': '♅', 'Varun': '♆'
                                                 };
                                                 const glyph = glyphMap[pName] || '';
                                                 const glyphPrefix = glyph ? `<span style="color: #ffd700; font-size: 0.95rem; margin-right: 0.35rem; vertical-align: middle;">${glyph}</span>` : '';
@@ -1238,9 +1247,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     ${getColHtml('Ascendant')}
                                                     ${getColHtml('Sun')}
                                                     ${getColHtml('Moon')}
-                                                    ${getColHtml('Mercury')}
-                                                    ${getColHtml('Venus')}
                                                     ${getColHtml('Mars')}
+                                                    ${getColHtml('Mercury')}
+                                                    ${getColHtml('Jupiter')}
+                                                    ${getColHtml('Venus')}
+                                                    ${getColHtml('Saturn')}
+                                                    ${getColHtml('Uranus')}
+                                                    ${getColHtml('Neptune')}
+                                                    ${getColHtml('Pluto')}
+                                                    ${getColHtml('North Node')}
+                                                    ${getColHtml('South Node')}
                                                     ${getColHtml('True North Node')}
                                                     ${getColHtml('True South Node')}
                                                 </tr>
@@ -1261,14 +1277,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     } else {
                                         if (historyOffset === 0) {
-                                            historyTbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red; padding: 1rem;">Failed to load history data.</td></tr>';
+                                            historyTbody.innerHTML = '<tr><td colspan="16" style="text-align: center; color: red; padding: 1rem;">Failed to load history data.</td></tr>';
                                         }
                                     }
                                 })
                                 .catch(err => {
                                     console.error("Error loading history:", err);
                                     if (historyOffset === 0) {
-                                        historyTbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red; padding: 1rem;">Error: ' + err.message + '</td></tr>';
+                                        historyTbody.innerHTML = '<tr><td colspan="16" style="text-align: center; color: red; padding: 1rem;">Error: ' + err.message + '</td></tr>';
                                     }
                                 });
                         };
