@@ -994,6 +994,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const ra = p.right_ascension || 'N/A';
                             const dec = p.declination || 'N/A';
+                            const alt = p.altitude || 'N/A';
+                            const az = p.azimuth || 'N/A';
+                            const horiz = `${alt} / ${az}`;
                             const raw_lon = p.raw_longitude_str || (typeof p.longitude === 'number' ? `${p.longitude.toFixed(2)}°` : 'N/A');
 
                             const nak = p.nakshatra || 'N/A';
@@ -1014,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <td>${speed}</td>
                                     <td>${ra}</td>
                                     <td>${dec}</td>
+                                    <td>${horiz}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
                             `;
@@ -1085,11 +1089,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <th>Speed Deg/Day</th>
                                                     <th>Right Ascension (RA)</th>
                                                     <th>Declination / Kranti</th>
+                                                    <th>Horizon (ALT / AZ)</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${planetRows || '<tr><td colspan="11">No positions returned.</td></tr>'}
+                                                ${planetRows || '<tr><td colspan="12">No positions returned.</td></tr>'}
                                             </tbody>
                                         </table>
                                     </div>

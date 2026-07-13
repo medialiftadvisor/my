@@ -222,6 +222,75 @@ def calculate_true_ascendant(dt_str, lat, lng):
     asc_deg = math.degrees(asc_rad) % 360
     return asc_deg
 
+def calculate_horizontal_coords(ecl_lon, ecl_lat, dt_str, obs_lat, obs_lng):
+    import math
+    
+    # Parse datetime
+    dt_info = parse_datetime_helper(dt_str)
+    
+    # Julian Date (JD)
+    y, m, d = dt_info["year"], dt_info["month"], dt_info["day"]
+    h, mn, s = dt_info["hour"], dt_info["min"], dt_info["sec"]
+    tz = dt_info["tzone"]
+    
+    utc_hours = h + mn/60.0 + s/3600.0 - tz
+    if m <= 2:
+        y -= 1
+        m += 12
+    A = int(y / 100)
+    B = 2 - A + int(A / 4)
+    jd = int(365.25 * (y + 4716)) + int(30.6001 * (m + 1)) + d + B - 1524.5 + (utc_hours / 24.0)
+    
+    # LST in degrees
+    d_jd = jd - 2451545.0
+    mst = (280.46061837 + 360.98564736629 * d_jd) % 360
+    lst = (mst + float(obs_lng)) % 360
+    
+    # Ecliptic to Equatorial conversion
+    # Obliquity eps = 23.44 degrees
+    eps = math.radians(23.44)
+    lam = math.radians(ecl_lon)
+    beta = math.radians(ecl_lat)
+    
+    sin_delta = math.sin(beta)*math.cos(eps) + math.cos(beta)*math.sin(eps)*math.sin(lam)
+    delta = math.asin(sin_delta)
+    
+    y_eq = -math.sin(beta)*math.sin(eps) + math.cos(beta)*math.cos(eps)*math.sin(lam)
+    x_eq = math.cos(beta)*math.cos(lam)
+    alpha = math.atan2(y_eq, x_eq) # in radians
+    
+    # Hour angle H = LST - alpha
+    lst_rad = math.radians(lst)
+    H = lst_rad - alpha
+    
+    # Equatorial to Horizontal conversion
+    obs_lat_rad = math.radians(float(obs_lat))
+    
+    sin_alt = math.sin(delta)*math.sin(obs_lat_rad) + math.cos(delta)*math.cos(obs_lat_rad)*math.cos(H)
+    sin_alt = max(-1.0, min(1.0, sin_alt))
+    alt_rad = math.asin(sin_alt)
+    alt_deg = math.degrees(alt_rad)
+    
+    y_az = -math.sin(H)*math.cos(delta)
+    x_az = math.sin(delta)*math.cos(obs_lat_rad) - math.sin(alt_rad)*math.sin(obs_lat_rad)
+    az_rad = math.atan2(y_az, x_az)
+    az_deg = math.degrees(az_rad) % 360
+    
+    # Format Altitude and Azimuth
+    alt_sign = "+" if alt_deg >= 0 else "-"
+    alt_abs = abs(alt_deg)
+    alt_d = int(alt_abs)
+    alt_m = int((alt_abs - alt_d) * 60)
+    alt_s = int(((alt_abs - alt_d) * 60 - alt_m) * 60)
+    alt_str = f"{alt_sign}{alt_d:02d}° {alt_m:02d}' {alt_s:02d}\""
+    
+    az_d = int(az_deg)
+    az_m = int((az_deg - az_d) * 60)
+    az_s = int(((az_deg - az_d) * 60 - az_m) * 60)
+    az_str = f"{az_d:02d}° {az_m:02d}' {az_s:02d}\""
+    
+    return alt_str, az_str
+
 def equatorial_to_longitude(ra_deg, dec_deg):
     import math
     eps = math.radians(23.44)
@@ -898,6 +967,33 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
                 ra_str, dec_str = longitude_to_equatorial(tropical_lon)
                 p["right_ascension"] = ra_str
                 p["declination"] = dec_str
+                
+            # 6. Calculate Horizontal Coordinates (Altitude / Azimuth)
+            lat_val = p.get("latitude")
+            ecl_lat_val = 0.0
+            if lat_val:
+                if isinstance(lat_val, (int, float)):
+                    ecl_lat_val = float(lat_val)
+                elif isinstance(lat_val, str):
+                    try:
+                        clean_lat = lat_val.replace('"', '').replace("'", '').replace('°', '')
+                        parts = clean_lat.split()
+                        sign = -1.0 if '-' in parts[0] else 1.0
+                        d_val = abs(float(parts[0]))
+                        m_val = float(parts[1]) if len(parts) > 1 else 0.0
+                        s_val = float(parts[2]) if len(parts) > 2 else 0.0
+                        ecl_lat_val = sign * (d_val + m_val/60.0 + s_val/3600.0)
+                    except:
+                        ecl_lat_val = 0.0
+                        
+            if provider in ['prokerala', 'divineapi'] and ayanamsa == '1':
+                tropical_lon = (lon + 24.23) % 360
+            else:
+                tropical_lon = lon
+                
+            alt_str, az_str = calculate_horizontal_coords(tropical_lon, ecl_lat_val, dt, lat, lng)
+            p["altitude"] = alt_str
+            p["azimuth"] = az_str
                 
     # Reorder so Ascendant (Lagna) is always first
     planets_sorted = []
