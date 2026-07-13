@@ -1053,7 +1053,12 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         rotation_offset = 180.0 - asc_deg
     
     def get_rotated_rad(angle_deg):
-        return math.radians((angle_deg + rotation_offset) % 360)
+        if style == 'sky':
+            # East is 0, North is 90 (Top), West is 180 (Left), South is 270 (Bottom)
+            # This is standard cartesian coordinate mapping (anticlockwise rotation)
+            return math.radians((360 - angle_deg) % 360)
+        else:
+            return math.radians((angle_deg + rotation_offset) % 360)
         
     planets = []
     for p in positions:
