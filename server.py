@@ -772,6 +772,141 @@ def calculate_aspects(planetary_positions):
                     })
     return aspects
 
+def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
+    signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    lord_map = {
+        "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
+        "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
+        "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
+    }
+    
+    # Let's ensure Ascendant / Lagna exists in planets
+    has_asc = False
+    sun_lon = 0.0
+    for p in planets:
+        p_name = p.get("name") or p.get("planet") or ""
+        if p_name.lower() in ["ascendant", "lagna"]:
+            has_asc = True
+        if p_name.lower() == "sun" and p.get("longitude") is not None:
+            sun_lon = float(p["longitude"])
+            
+    if not has_asc:
+        asc_lon = calculate_true_ascendant(dt, lat, lng)
+        asc_deg = asc_lon % 30
+        
+        asc_sign_idx = int(asc_lon / 30) % 12
+        asc_sign = signs_list[asc_sign_idx]
+        asc_lord = lord_map.get(asc_sign, "N/A")
+        
+        planets.append({
+            "name": "Ascendant",
+            "planet": "Ascendant",
+            "longitude": asc_lon,
+            "degree": asc_deg,
+            "is_retrograde": False,
+            "rasi": {
+                "name": asc_sign,
+                "lord": {
+                    "name": asc_lord
+                }
+            },
+            "house": 1
+        })
+        
+    for p in planets:
+        lon = p.get("longitude")
+        p_name = p.get("name") or p.get("planet") or "Sun"
+        if lon is not None:
+            lon = float(lon)
+            
+            # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
+            if provider == 'astronomyapi' and ayanamsa == '1':
+                display_lon = (lon - 24.23) % 360
+                sign_idx = int(display_lon / 30) % 12
+                p["rasi"] = {
+                    "name": signs_list[sign_idx],
+                    "lord": {
+                        "name": lord_map[signs_list[sign_idx]],
+                        "vedic_name": {"Sun": "Surya", "Moon": "Chandra", "Mars": "Mangala", "Mercury": "Budha", "Jupiter": "Guru", "Venus": "Shukra", "Saturn": "Shani"}.get(lord_map[signs_list[sign_idx]], "N/A")
+                    }
+                }
+                p["degree"] = display_lon % 30
+            else:
+                display_lon = lon
+                if p.get("rasi") and p["rasi"].get("lord") and not p["rasi"]["lord"].get("vedic_name"):
+                    l_name = p["rasi"]["lord"].get("name")
+                    p["rasi"]["lord"]["vedic_name"] = {"Sun": "Surya", "Moon": "Chandra", "Mars": "Mangala", "Mercury": "Budha", "Jupiter": "Guru", "Venus": "Shukra", "Saturn": "Shani"}.get(l_name, "N/A")
+                
+            p["longitude"] = display_lon
+            p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
+            
+            # 2. Calculate Nakshatra details (pada, lord, sub lord)
+            nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(display_lon)
+            p["nakshatra"] = nak_name
+            p["padam"] = pada
+            p["nakshatra_lord"] = nak_lord
+            p["sub_lord"] = sub_lord
+            
+            # 3. Calculate Speed deg/day
+            is_retro = p.get("is_retrograde", False) or p.get("isRetrograde", False)
+            speed_val = get_planet_speed(p_name, is_retro)
+            p["speed_deg_day"] = f"{speed_val:+.4f}°/day"
+            
+            # 4. Latitude / Shara
+            lat_val = p.get("latitude")
+            if lat_val is None:
+                import math
+                try:
+                    dt_info = parse_datetime_helper(dt)
+                    from datetime import date
+                    d_obj = date(dt_info["year"], dt_info["month"], dt_info["day"])
+                    vernal_obj = date(dt_info["year"], 3, 20)
+                    diff_days = (d_obj - vernal_obj).days
+                except:
+                    diff_days = 114
+                    
+                if p_name == "Sun":
+                    lat_deg = 0.0
+                elif p_name == "Moon":
+                    lat_deg = 5.15 * math.sin(diff_days * 0.23)
+                else:
+                    lat_deg = 1.5 * math.sin(diff_days * 0.05)
+                    
+                lat_sign = "+" if lat_deg >= 0 else "-"
+                lat_abs = abs(lat_deg)
+                lat_d = int(lat_abs)
+                lat_m = int((lat_abs - lat_d) * 60)
+                lat_s = int(((lat_abs - lat_d) * 60 - lat_m) * 60)
+                p["latitude"] = f"{lat_sign}{lat_d:02d}° {lat_m:02d}' {lat_s:02d}\""
+            
+            # 5. Reconstruct/Ensure correct equatorial RA and Dec (always tropical)
+            if not p.get("right_ascension") or not p.get("declination"):
+                if provider in ['prokerala', 'divineapi'] and ayanamsa == '1':
+                    tropical_lon = (lon + 24.23) % 360
+                else:
+                    tropical_lon = lon
+                    
+                ra_str, dec_str = longitude_to_equatorial(tropical_lon)
+                p["right_ascension"] = ra_str
+                p["declination"] = dec_str
+                
+    # Reorder so Ascendant (Lagna) is always first
+    planets_sorted = []
+    asc_planet = None
+    for p in planets:
+        p_name = p.get("name") or p.get("planet") or ""
+        if p_name.lower() in ["ascendant", "lagna"]:
+            asc_planet = p
+            break
+    if asc_planet:
+        planets_sorted.append(asc_planet)
+    for p in planets:
+        p_name = p.get("name") or p.get("planet") or ""
+        if p_name.lower() not in ["ascendant", "lagna"]:
+            planets_sorted.append(p)
+            
+    return planets_sorted
+
 def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
     import math
     import hashlib
@@ -781,7 +916,7 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         positions = custom_positions
     else:
         positions = data_res["data"]["planetary_positions"]
-    
+        
     symbols = {
         "Sun": "☉", "Moon": "☽", "Mars": "♂", "Mercury": "☿",
         "Jupiter": "♃", "Venus": "♀", "Saturn": "♄", "Uranus": "♅",
@@ -793,6 +928,29 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         "Neptune": "#3357ff", "Pluto": "#999999"
     }
     
+    asc_deg = 0.0
+    for p_item in positions:
+        p_name = p_item.get("planet") or p_item.get("name") or ""
+        if p_name.lower() in ["ascendant", "lagna"]:
+            asc_deg = float(p_item.get("longitude", 0.0))
+            break
+            
+    if asc_deg == 0.0:
+        sun_lon = 0.0
+        for p_item in positions:
+            p_name = p_item.get("planet") or p_item.get("name") or ""
+            if p_name.lower() == "sun" and p_item.get("longitude") is not None:
+                sun_lon = float(p_item["longitude"])
+                break
+        dt_info = parse_datetime_helper(dt)
+        time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
+        asc_deg = (sun_lon + (time_hours - 6.0) * 15.0) % 360
+        
+    rotation_offset = 180.0 - asc_deg
+    
+    def get_rotated_rad(angle_deg):
+        return math.radians((angle_deg + rotation_offset) % 360)
+        
     planets = []
     for p in positions:
         name = p["planet"]
@@ -807,13 +965,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
     
     svg = f"""<svg viewBox="0 0 1000 1000" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Premium cosmic glow filters -->
     <filter id="glow-light" x="-10%" y="-10%" width="120%" height="120%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
-    
-    <!-- Gradients -->
     <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#1b124a"/>
       <stop offset="60%" stop-color="#0a0521"/>
@@ -830,34 +985,15 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
       <stop offset="100%" stop-color="#aa7c11"/>
     </linearGradient>
   </defs>
-  
-  <!-- Outer bounds and dark background -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" rx="24"/>
-  
-  <!-- Star background dots -->
-  <g fill="#ffffff" opacity="0.35">
-    <circle cx="120" cy="150" r="1.5"/>
-    <circle cx="840" cy="180" r="2"/>
-    <circle cx="210" cy="780" r="1.2"/>
-    <circle cx="780" cy="840" r="1.5"/>
-    <circle cx="100" cy="540" r="2.2" opacity="0.5"/>
-    <circle cx="900" cy="420" r="1.2"/>
-    <circle cx="380" cy="110" r="1.5"/>
-    <circle cx="620" cy="890" r="1.8"/>
-  </g>
-  
-  <!-- Main outer wheel borders -->
   <circle cx="500" cy="500" r="460" stroke="url(#goldGrad)" stroke-width="4.5" fill="none" filter="url(#glow-light)"/>
   <circle cx="500" cy="500" r="420" stroke="#d4af37" stroke-width="2.5" fill="none" opacity="0.75"/>
   <circle cx="500" cy="500" r="380" stroke="#d4af37" stroke-width="1.8" fill="none" opacity="0.5"/>
   <circle cx="500" cy="500" r="300" stroke="#d4af37" stroke-width="1.5" fill="url(#centerGrad)" opacity="0.65"/>
-  <circle cx="500" cy="500" r="130" stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.3" stroke-dasharray="6,6"/>
-  
-  <!-- Detailed 360 Degree Tick Marks -->
   <g stroke="#d4af37" opacity="0.65">
 """
     for d in range(360):
-        theta = d * math.pi / 180
+        theta = get_rotated_rad(d)
         if d % 10 == 0:
             r1 = 380
             r2 = 420
@@ -877,36 +1013,32 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         y2 = 500 + r2 * math.sin(theta)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="{stroke_w}"/>\n'
         
-        # Add labels for 10 and 20 degrees within each sign segment
         rel_deg = d % 30
         if rel_deg in [10, 20] and d % 10 == 0:
             lx = 500 + 363 * math.cos(theta)
             ly = 500 + 363 * math.sin(theta) + 3.5
-            rot_deg = d + 90
-            svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffffff" font-size="9" font-family="Outfit" font-weight="600" opacity="0.75" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{rel_deg}</text>\n'
+            rot_deg = (d + rotation_offset + 90) % 360
+            svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffffff" font-size="9" font-family="Outfit" font-weight="600" opacity="0.75" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{rel_deg}</text>\n'
 
     svg += """  </g>
-  
-  <!-- Outer Zodiac Sign Sectors & Division Borders -->
   <g stroke="#d4af37" opacity="0.5">
 """
     for i in range(12):
-        angle = i * 30 * math.pi / 180
+        angle = get_rotated_rad(i * 30)
         x1 = 500 + 300 * math.cos(angle)
         y1 = 500 + 300 * math.sin(angle)
         x2 = 500 + 460 * math.cos(angle)
         y2 = 500 + 460 * math.sin(angle)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke-width="1.8"/>\n'
         
-        lbl_angle = (i * 30 + 15) * math.pi / 180
+        lbl_angle = get_rotated_rad(i * 30 + 15)
         lx = 500 + 440 * math.cos(lbl_angle)
         ly = 500 + 440 * math.sin(lbl_angle) + 5
-        rot_deg = i * 30 + 105
-        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
+        rot_deg = (i * 30 + 15 + rotation_offset + 90) % 360
+        svg += f'    <text x="{lx:.1f}" y="{ly:.1f}" fill="#ffe600" font-size="13.5" font-family="Outfit" font-weight="900" letter-spacing="0.5" text-anchor="middle" transform="rotate({rot_deg:.1f}, {lx:.1f}, {ly:.1f})">{signs[i].upper()}</text>\n'
 
-        # Clickable sector path button for magnifying
-        a1 = i * 30 * math.pi / 180
-        a2 = (i + 1) * 30 * math.pi / 180
+        a1 = get_rotated_rad(i * 30)
+        a2 = get_rotated_rad((i + 1) * 30)
         x1_in = 500 + 300 * math.cos(a1)
         y1_in = 500 + 300 * math.sin(a1)
         x2_in = 500 + 300 * math.cos(a2)
@@ -919,53 +1051,30 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         svg += f'    <path class="zodiac-sector-btn" data-sign="{signs[i]}" d="{path_d}" fill="transparent" stroke="none" style="cursor: pointer; transition: fill 0.2s;" onmouseover="this.setAttribute(\'fill\', \'rgba(255,215,0,0.06)\')" onmouseout="this.setAttribute(\'fill\', \'transparent\')"/>\n'
 
     svg += """  </g>
-  
-  <!-- House boundaries (12 sectors) -->
   <g stroke="#ffffff" stroke-width="1.0" opacity="0.25" stroke-dasharray="3,4">
 """
-    house_offset = (h[20] % 30) * math.pi / 180
     for i in range(12):
-        angle = (i * 30) * math.pi / 180 + house_offset
+        angle_deg = 180 + i * 30
+        angle = math.radians(angle_deg)
         x1 = 500 + 130 * math.cos(angle)
         y1 = 500 + 130 * math.sin(angle)
         x2 = 500 + 300 * math.cos(angle)
         y2 = 500 + 300 * math.sin(angle)
         svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" />\n'
         
-        num_angle = (i * 30 + 15) * math.pi / 180 + house_offset
+        num_angle = math.radians(angle_deg + 15)
         nx = 500 + 220 * math.cos(num_angle)
         ny = 500 + 220 * math.sin(num_angle) + 5.5
         svg += f'    <text x="{nx:.1f}" y="{ny:.1f}" fill="#ffffff" font-size="12" font-family="Outfit" opacity="0.45" text-anchor="middle">{i+1}</text>\n'
 
     svg += """  </g>
-  
-  <!-- Dynamic Aspect Lines inside the inner house circle -->
   <g stroke-width="1.5" filter="url(#glow-light)">
 """
-    asc_deg = 0.0
-    for p_item in positions:
-        p_name = p_item.get("planet") or p_item.get("name") or ""
-        if p_name.lower() in ["ascendant", "lagna"]:
-            asc_deg = float(p_item.get("longitude", 0.0))
-            break
-            
-    if asc_deg == 0.0:
-        sun_lon = 0.0
-        for p_item in positions:
-            p_name = p_item.get("planet") or p_item.get("name") or ""
-            if p_name.lower() == "sun" and p_item.get("longitude") is not None:
-                sun_lon = float(p_item["longitude"])
-                break
-        dt_info = parse_datetime_helper(dt)
-        time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
-        asc_deg = (sun_lon + (time_hours - 6.0) * 15.0) % 360
-        
     mc_deg = (asc_deg - 90.0) % 360
     aspect_planets = planets.copy()
     aspect_planets.append(("Ascendant", "ASC", asc_deg, "#ffe600"))
     aspect_planets.append(("Midheaven", "MC", mc_deg, "#ffffff"))
 
-    aspect_lines_drawn = 0
     for i in range(len(aspect_planets)):
         for j in range(i + 1, len(aspect_planets)):
             p1_name, _, a1, _ = aspect_planets[i]
@@ -976,41 +1085,39 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
                 
             color = None
             if abs(diff - 120) <= 10:
-                color = "#007aff"  # Trine (Blue)
+                color = "#007aff"
             elif abs(diff - 180) <= 10:
-                color = "#ff3b30"  # Opposition (Red)
+                color = "#ff3b30"
             elif abs(diff - 90) <= 10:
-                color = "#ff3b30"  # Square (Red)
+                color = "#ff3b30"
             elif abs(diff - 60) <= 8:
-                color = "#007aff"  # Sextile (Blue)
+                color = "#007aff"
             elif abs(diff - 150) <= 6:
-                color = "#34c759"  # Quincunx (Green)
+                color = "#34c759"
             elif abs(diff - 30) <= 5:
-                color = "#a0aec0"  # Semisextile (Charcoal / Black equivalent)
+                color = "#a0aec0"
             elif abs(diff - 135) <= 5:
-                color = "#a0aec0"  # Sesquiquadrate (Charcoal / Black equivalent)
+                color = "#a0aec0"
             elif abs(diff - 45) <= 5:
-                color = "#a0aec0"  # Semisquare (Charcoal / Black equivalent)
+                color = "#a0aec0"
                 
             if color:
-                r1 = a1 * math.pi / 180
-                r2 = a2 * math.pi / 180
+                r1 = get_rotated_rad(a1)
+                r2 = get_rotated_rad(a2)
                 x1 = 500 + 300 * math.cos(r1)
                 y1 = 500 + 300 * math.sin(r1)
                 x2 = 500 + 300 * math.cos(r2)
                 y2 = 500 + 300 * math.sin(r2)
                 signs_list = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
-                sign1 = signs_list[int(a1 // 30)]
-                sign2 = signs_list[int(a2 // 30)]
+                sign1 = signs_list[int(a1 // 30) % 12]
+                sign2 = signs_list[int(a2 // 30) % 12]
                 svg += f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" opacity="0.65" class="pk-planet-aspect pk-zodiac-{sign1} pk-zodiac-{sign2}"/>\n'
 
     svg += """  </g>
-  
-  <!-- Planet placements & glyph indicators -->
   <g font-family="Arial" text-anchor="middle">
 """
     for name, symbol, angle, color in planets:
-        rad = angle * math.pi / 180
+        rad = get_rotated_rad(angle)
         ix1 = 500 + 300 * math.cos(rad)
         iy1 = 500 + 300 * math.sin(rad)
         ix2 = 500 + 355 * math.cos(rad)
@@ -1019,55 +1126,45 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
         
         px = 500 + 336 * math.cos(rad)
         py = 500 + 336 * math.sin(rad) + 6.5
-        
-        # Circle backing
         svg += f'    <circle cx="{px:.1f}" cy="{py-6.5:.1f}" r="16.5" fill="#06020c" stroke="{color}" stroke-width="1.5" opacity="0.95" filter="url(#glow-light)"/>\n'
-        # Symbol
         svg += f'    <text class="svg-planet-marker" data-name="{name}" data-symbol="{symbol}" data-longitude="{angle}" data-color="{color}" x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
         
-        # Text degree label
         dx = 500 + 312 * math.cos(rad)
         dy = 500 + 312 * math.sin(rad) + 3.5
         deg_num = int(angle % 30)
         minutes_num = int(round((angle % 1) * 60))
         svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="9.5" font-family="Outfit" font-weight="700" text-anchor="middle">{deg_num}°{minutes_num:02d}\'</text>\n'
 
-    asc_rad = house_offset + math.pi
-    dsc_rad = house_offset
-    mc_rad = house_offset - math.pi/2
-    ic_rad = house_offset + math.pi/2
+    asc_rad_val = math.pi
+    dsc_rad_val = 0.0
+    mc_rad_val = -math.pi/2
+    ic_rad_val = math.pi/2
     
     svg += """  </g>
-  
-  <!-- ASC, DSC, MC, IC Marker Axes -->
   <g stroke="#ffffff" stroke-width="1.2" opacity="0.75">
 """
-    # ASC line (300 to 380 radius)
-    asc_x1 = 500 + 300 * math.cos(asc_rad)
-    asc_y1 = 500 + 300 * math.sin(asc_rad)
-    asc_x2 = 500 + 380 * math.cos(asc_rad)
-    asc_y2 = 500 + 380 * math.sin(asc_rad)
+    asc_x1 = 500 + 300 * math.cos(asc_rad_val)
+    asc_y1 = 500 + 300 * math.sin(asc_rad_val)
+    asc_x2 = 500 + 380 * math.cos(asc_rad_val)
+    asc_y2 = 500 + 380 * math.sin(asc_rad_val)
     svg += f'    <line x1="{asc_x1:.1f}" y1="{asc_y1:.1f}" x2="{asc_x2:.1f}" y2="{asc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
 
-    # DSC line (300 to 380 radius)
-    dsc_x1 = 500 + 300 * math.cos(dsc_rad)
-    dsc_y1 = 500 + 300 * math.sin(dsc_rad)
-    dsc_x2 = 500 + 380 * math.cos(dsc_rad)
-    dsc_y2 = 500 + 380 * math.sin(dsc_rad)
+    dsc_x1 = 500 + 300 * math.cos(dsc_rad_val)
+    dsc_y1 = 500 + 300 * math.sin(dsc_rad_val)
+    dsc_x2 = 500 + 380 * math.cos(dsc_rad_val)
+    dsc_y2 = 500 + 380 * math.sin(dsc_rad_val)
     svg += f'    <line x1="{dsc_x1:.1f}" y1="{dsc_y1:.1f}" x2="{dsc_x2:.1f}" y2="{dsc_y2:.1f}" stroke-width="2.5" stroke="#ffe600" />\n'
 
-    # MC line (300 to 380 radius)
-    mc_x1 = 500 + 300 * math.cos(mc_rad)
-    mc_y1 = 500 + 300 * math.sin(mc_rad)
-    mc_x2 = 500 + 380 * math.cos(mc_rad)
-    mc_y2 = 500 + 380 * math.sin(mc_rad)
+    mc_x1 = 500 + 300 * math.cos(mc_rad_val)
+    mc_y1 = 500 + 300 * math.sin(mc_rad_val)
+    mc_x2 = 500 + 380 * math.cos(mc_rad_val)
+    mc_y2 = 500 + 380 * math.sin(mc_rad_val)
     svg += f'    <line x1="{mc_x1:.1f}" y1="{mc_y1:.1f}" x2="{mc_x2:.1f}" y2="{mc_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
 
-    # IC line (300 to 380 radius)
-    ic_x1 = 500 + 300 * math.cos(ic_rad)
-    ic_y1 = 500 + 300 * math.sin(ic_rad)
-    ic_x2 = 500 + 380 * math.cos(ic_rad)
-    ic_y2 = 500 + 380 * math.sin(ic_rad)
+    ic_x1 = 500 + 300 * math.cos(ic_rad_val)
+    ic_y1 = 500 + 300 * math.sin(ic_rad_val)
+    ic_x2 = 500 + 380 * math.cos(ic_rad_val)
+    ic_y2 = 500 + 380 * math.sin(ic_rad_val)
     svg += f'    <line x1="{ic_x1:.1f}" y1="{ic_y1:.1f}" x2="{ic_x2:.1f}" y2="{ic_y2:.1f}" stroke-width="2.0" stroke="#ffffff" />\n'
     
     def draw_axis_label(rad, text, offset_dist):
@@ -1079,10 +1176,10 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None):
 """
     
     svg += "  </g>\n  <g>"
-    svg += draw_axis_label(asc_rad, "ASC", 302)
-    svg += draw_axis_label(dsc_rad, "DSC", 302)
-    svg += draw_axis_label(mc_rad, "MC", 302)
-    svg += draw_axis_label(ic_rad, "IC", 302)
+    svg += draw_axis_label(asc_rad_val, "ASC", 302)
+    svg += draw_axis_label(dsc_rad_val, "DSC", 302)
+    svg += draw_axis_label(mc_rad_val, "MC", 302)
+    svg += draw_axis_label(ic_rad_val, "IC", 302)
 
     display_date = "July 10, 2026"
     display_time = "12:01 AM"
@@ -1787,144 +1884,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 data_dict = response_data["data"]
                 planets = data_dict.get("planet_position") or data_dict.get("planetary_positions")
                 if planets:
-                    # Let's ensure Ascendant / Lagna exists in planets
-                    has_asc = False
-                    sun_lon = 0.0
-                    for p in planets:
-                        p_name = p.get("name") or p.get("planet") or ""
-                        if p_name.lower() in ["ascendant", "lagna"]:
-                            has_asc = True
-                        if p_name.lower() == "sun" and p.get("longitude") is not None:
-                            sun_lon = float(p["longitude"])
-                            
-                    if not has_asc:
-                        asc_lon = calculate_true_ascendant(dt, lat, lng)
-                        asc_deg = asc_lon % 30
-                        
-                        lord_map = {
-                            "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
-                            "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
-                            "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
-                        }
-                        signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
-                        asc_sign_idx = int(asc_lon / 30) % 12
-                        asc_sign = signs_list[asc_sign_idx]
-                        asc_lord = lord_map.get(asc_sign, "N/A")
-                        
-                        planets.append({
-                            "name": "Ascendant",
-                            "planet": "Ascendant",
-                            "longitude": asc_lon,
-                            "degree": asc_deg,
-                            "is_retrograde": False,
-                            "rasi": {
-                                "name": asc_sign,
-                                "lord": {
-                                    "name": asc_lord
-                                }
-                            },
-                            "house": 1
-                        })
-                        
-                    # Calculate RA, Dec, and Raw Longitude for all planets in this list
-                    signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
-                    lord_map = {
-                        "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
-                        "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
-                        "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
-                    }
-                    
-                    for p in planets:
-                        lon = p.get("longitude")
-                        p_name = p.get("name") or p.get("planet") or "Sun"
-                        if lon is not None:
-                            lon = float(lon)
-                            
-                            # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
-                            # AstronomyAPI is always tropical. So if ayanamsa is sidereal ('1'), shift display longitude to sidereal
-                            if provider == 'astronomyapi' and ayanamsa == '1':
-                                display_lon = (lon - 24.23) % 360
-                                # Update rasi details to Sidereal
-                                sign_idx = int(display_lon / 30) % 12
-                                p["rasi"] = {
-                                    "name": signs_list[sign_idx],
-                                    "lord": {
-                                        "name": lord_map[signs_list[sign_idx]]
-                                    }
-                                }
-                                p["degree"] = display_lon % 30
-                            else:
-                                display_lon = lon
-                                
-                            p["longitude"] = display_lon
-                            p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
-                            
-                            # 2. Calculate Nakshatra details (pada, lord, sub lord)
-                            nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(display_lon)
-                            p["nakshatra"] = nak_name
-                            p["padam"] = pada
-                            p["nakshatra_lord"] = nak_lord
-                            p["sub_lord"] = sub_lord
-                            
-                            # 3. Calculate Speed deg/day
-                            is_retro = p.get("is_retrograde", False) or p.get("isRetrograde", False)
-                            speed_val = get_planet_speed(p_name, is_retro)
-                            p["speed_deg_day"] = f"{speed_val:+.4f}°/day"
-                            
-                            # 4. Latitude / Shara
-                            lat_val = p.get("latitude")
-                            if lat_val is None:
-                                import math
-                                try:
-                                    dt_info = parse_datetime_helper(dt)
-                                    from datetime import date
-                                    d_obj = date(dt_info["year"], dt_info["month"], dt_info["day"])
-                                    vernal_obj = date(dt_info["year"], 3, 20)
-                                    diff_days = (d_obj - vernal_obj).days
-                                except:
-                                    diff_days = 114
-                                    
-                                if p_name == "Sun":
-                                    lat_deg = 0.0
-                                elif p_name == "Moon":
-                                    lat_deg = 5.15 * math.sin(diff_days * 0.23)
-                                else:
-                                    lat_deg = 1.5 * math.sin(diff_days * 0.05)
-                                    
-                                lat_sign = "+" if lat_deg >= 0 else "-"
-                                lat_abs = abs(lat_deg)
-                                lat_d = int(lat_abs)
-                                lat_m = int((lat_abs - lat_d) * 60)
-                                lat_s = int(((lat_abs - lat_d) * 60 - lat_m) * 60)
-                                p["latitude"] = f"{lat_sign}{lat_d:02d}° {lat_m:02d}' {lat_s:02d}\""
-                            
-                            # 5. Reconstruct/Ensure correct equatorial RA and Dec (always tropical)
-                            if not p.get("right_ascension") or not p.get("declination"):
-                                # If the provider is Prokerala or Mock and it's Sidereal, the input 'lon' is already Sidereal, so we add the offset to get tropical for RA/Dec
-                                if provider in ['prokerala', 'divineapi'] and ayanamsa == '1':
-                                    tropical_lon = (lon + 24.23) % 360
-                                else:
-                                    tropical_lon = lon
-                                    
-                                ra_str, dec_str = longitude_to_equatorial(tropical_lon)
-                                p["right_ascension"] = ra_str
-                                p["declination"] = dec_str
-                                
-                    # Reorder so Ascendant (Lagna) is always first
-                    planets_sorted = []
-                    asc_planet = None
-                    for p in planets:
-                        p_name = p.get("name") or p.get("planet") or ""
-                        if p_name.lower() in ["ascendant", "lagna"]:
-                            asc_planet = p
-                            break
-                    if asc_planet:
-                        planets_sorted.append(asc_planet)
-                    for p in planets:
-                        p_name = p.get("name") or p.get("planet") or ""
-                        if p_name.lower() not in ["ascendant", "lagna"]:
-                            planets_sorted.append(p)
-                    
+                    planets_sorted = normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng)
                     if "planet_position" in data_dict:
                         data_dict["planet_position"] = planets_sorted
                     if "planetary_positions" in data_dict:
