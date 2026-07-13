@@ -993,11 +993,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
 
                             const ra = p.right_ascension || 'N/A';
-                            const dec = p.declination || 'N/A';
                             const alt = p.altitude || 'N/A';
                             const az = p.azimuth || 'N/A';
                             const horiz = `${alt} / ${az}`;
-                            const raw_lon = p.raw_longitude_str || (typeof p.longitude === 'number' ? `${p.longitude.toFixed(2)}°` : 'N/A');
+                            let raw_lon = 'N/A';
+                            if (typeof p.longitude === 'number') {
+                                const d = Math.floor(p.longitude);
+                                const m = Math.floor((p.longitude - d) * 60);
+                                const s = Math.round(((p.longitude - d) * 60 - m) * 60);
+                                raw_lon = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
+                            }
+                            const dec = p.declination || 'N/A';
 
                             const nak = p.nakshatra || 'N/A';
                             const pad = p.padam || 'N/A';
@@ -1429,10 +1435,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.currentPlanetsData.forEach(p => {
                                 const name = p.name || p.planet || 'N/A';
                                 let deg = 'N/A';
-                                if (typeof p.degree === 'number') {
-                                    const d = Math.floor(p.degree);
-                                    const m = Math.floor((p.degree - d) * 60);
-                                    const s = Math.round(((p.degree - d) * 60 - m) * 60);
+                                if (typeof p.longitude === 'number') {
+                                    const d = Math.floor(p.longitude);
+                                    const m = Math.floor((p.longitude - d) * 60);
+                                    const s = Math.round(((p.longitude - d) * 60 - m) * 60);
                                     deg = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
                                 }
                                 let sign = 'N/A';
