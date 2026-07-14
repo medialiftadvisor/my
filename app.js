@@ -1008,8 +1008,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             const nak = p.nakshatra || 'N/A';
                             const pad = p.padam || 'N/A';
                             const nakSubLord = `${p.nakshatra_lord || 'N/A'} / ${p.sub_lord || 'N/A'}`;
-                            const lat = p.latitude || '00° 00\' 00"';
-                            const speed = p.speed_deg_day || 'N/A';
+                            const alt = p.altitude || 'N/A';
+                            const az = p.azimuth || 'N/A';
 
                             planetRows += `
                                 <tr>
@@ -1019,11 +1019,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <td>${pad}</td>
                                     <td>${translateText(nakSubLord)}</td>
                                     <td>${raw_lon}</td>
-                                    <td>${lat}</td>
-                                    <td>${speed}</td>
                                     <td>${ra}</td>
                                     <td>${dec}</td>
-                                    <td>${horiz}</td>
+                                    <td>${alt}</td>
+                                    <td>${az}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
                             `;
@@ -1091,16 +1090,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <th>Padam</th>
                                                     <th>Nakshatra Lord / Sub Lord</th>
                                                     <th>Full Degree</th>
-                                                    <th>Latitude / Shara</th>
-                                                    <th>Speed Deg/Day</th>
                                                     <th>Right Ascension (RA)</th>
                                                     <th>Declination / Kranti</th>
-                                                    <th>Horizon (ALT / AZ)</th>
+                                                    <th>Altitude (ALT)</th>
+                                                    <th>Azimuth (AZ)</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${planetRows || '<tr><td colspan="12">No positions returned.</td></tr>'}
+                                                ${planetRows || '<tr><td colspan="11">No positions returned.</td></tr>'}
                                             </tbody>
                                         </table>
                                     </div>

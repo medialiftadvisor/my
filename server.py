@@ -397,6 +397,29 @@ def get_astronomy_planet_position(dt, lat, lng):
                          
                         ra_str = f"{round(ra_deg, 2)}°"
                         
+                        horiz = pos.get("horizontal", {})
+                        alt_raw = horiz.get("altitude", {})
+                        az_raw = horiz.get("azimuth", {})
+                        alt_deg_val = alt_raw.get("degrees", "")
+                        az_deg_val = az_raw.get("degrees", "")
+                        # Format as ±DD° MM' SS" for altitude, DDD° MM' SS" for azimuth
+                        def fmt_dms(deg_str, signed=True):
+                            try:
+                                d = float(deg_str)
+                                sign = "-" if d < 0 else ("+" if signed else "")
+                                d_abs = abs(d)
+                                d_int = int(d_abs)
+                                m_int = int((d_abs - d_int) * 60)
+                                s_int = round(((d_abs - d_int) * 60 - m_int) * 60)
+                                if s_int == 60:
+                                    m_int += 1
+                                    s_int = 0
+                                return f"{sign}{d_int:02d}° {m_int:02d}' {s_int:02d}\""
+                            except:
+                                return deg_str or "N/A"
+                        alt_str = fmt_dms(alt_deg_val, signed=True)
+                        az_str = fmt_dms(az_deg_val, signed=False)
+
                         mapped.append({
                             "name": name_map[p_id],
                             "planet": name_map[p_id],
@@ -413,6 +436,8 @@ def get_astronomy_planet_position(dt, lat, lng):
                             "declination": dec_str,
                             "latitude": pos.get("ecliptic", {}).get("latitude", {}).get("string", "0.0°"),
                             "raw_longitude_str": f"{round(longitude, 2)}°",
+                            "altitude": alt_str,
+                            "azimuth": az_str,
                             "house": 1
                         })
             
