@@ -2264,9 +2264,12 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     p_name = p.get("name") or p.get("planet") or ""
                     sign_name = p.get("rasi", {}).get("name") or "Aries"
                     deg_val = p.get("degree", 0.0)
+                    # Use tropical_longitude for full 0-360 degree display
+                    lon_val = p.get("tropical_longitude") or p.get("longitude") or 0.0
                     step_entry["planets"][p_name] = {
                         "sign": sign_name,
-                        "degree": deg_val
+                        "degree": deg_val,
+                        "longitude": float(lon_val)
                     }
                 
                 history_data.append(step_entry)

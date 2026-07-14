@@ -1227,7 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             
                                             const getColHtml = (pName) => {
                                                 const pData = p[pName];
-                                                if (!pData) return '<td>N/A</td>';
+                                                if (!pData) return '<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">N/A</td>';
                                                 
                                                 const glyphMap = {
                                                     'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
@@ -1238,9 +1238,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 };
                                                 const glyph = glyphMap[pName] || '';
                                                 const glyphPrefix = glyph ? `<span style="color: #ffd700; font-size: 0.95rem; margin-right: 0.35rem; vertical-align: middle;">${glyph}</span>` : '';
+                                                // Sign-relative degree (0-30°)
                                                 const d = Math.floor(pData.degree);
                                                 const m = Math.floor((pData.degree - d) * 60);
-                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${d}° ${m.toString().padStart(2, '0')}'</td>`;
+                                                const signDegStr = `${d}\u00b0 ${m.toString().padStart(2, '0')}'`;
+                                                // Full tropical degree (0-360°)
+                                                let fullDegStr = '';
+                                                if (typeof pData.longitude === 'number') {
+                                                    const fd = Math.floor(pData.longitude);
+                                                    const fm = Math.floor((pData.longitude - fd) * 60);
+                                                    fullDegStr = `<div style="font-size:0.75rem; color: #ffe600; opacity: 0.75; margin-top:0.15rem; font-weight:600;">${fd}\u00b0${fm.toString().padStart(2,'0')}'</div>`;
+                                                }
+                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${signDegStr}${fullDegStr}</td>`;
                                             };
                                             
                                             rowsHtml += `
