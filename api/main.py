@@ -2229,6 +2229,10 @@ class handler(http.server.BaseHTTPRequestHandler):
             ayanamsa = get_param('ayanamsa', '0')
             limit = int(get_param('limit', '50'))
             offset_idx = int(get_param('offset', '0'))
+            interval_min = int(get_param('interval', '15'))
+            if interval_min not in [1, 5, 10, 15, 30, 60]:
+                interval_min = 15
+            limit = min(limit, 200)
             
             import datetime
             try:
@@ -2242,10 +2246,14 @@ class handler(http.server.BaseHTTPRequestHandler):
                 except:
                     base_dt = datetime.datetime.now()
             
+            max_steps = int(87840 / interval_min)
+            
             history_data = []
             for i in range(limit):
                 step_idx = offset_idx + i
-                step_dt = base_dt - datetime.timedelta(minutes=15 * step_idx)
+                if step_idx >= max_steps:
+                    break
+                step_dt = base_dt - datetime.timedelta(minutes=interval_min * step_idx)
                 step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
                 
                 step_pos_raw = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
@@ -2259,7 +2267,6 @@ class handler(http.server.BaseHTTPRequestHandler):
                     p_name = p.get("name") or p.get("planet") or ""
                     sign_name = p.get("rasi", {}).get("name") or "Aries"
                     deg_val = p.get("degree", 0.0)
-                    # Use tropical_longitude for full 0-360 degree display
                     lon_val = p.get("tropical_longitude") or p.get("longitude") or 0.0
                     step_entry["planets"][p_name] = {
                         "sign": sign_name,
@@ -2273,7 +2280,9 @@ class handler(http.server.BaseHTTPRequestHandler):
                 "status": "success",
                 "data": {
                     "history": history_data,
-                    "has_more": step_idx < 5760
+                    "has_more": (offset_idx + limit) < max_steps,
+                    "interval_min": interval_min,
+                    "max_steps": max_steps
                 }
             }
 

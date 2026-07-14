@@ -2226,7 +2226,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     positions = normalize_positions_helper(positions, provider if provider != 'prokerala' else 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
                     response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions, style=style)
 
-        # 8. Transit History (every 15 min up to 2 months)
+        # 8. Transit History (configurable interval up to 2 months)
         elif path == '/api/astrology/transit-history':
             dt = get_param('datetime')
             lat = get_param('latitude')
@@ -2234,6 +2234,12 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
             ayanamsa = get_param('ayanamsa', '0')
             limit = int(get_param('limit', '50'))
             offset_idx = int(get_param('offset', '0'))
+            interval_min = int(get_param('interval', '15'))  # minutes: 1,5,10,15,30,60
+            # Validate interval
+            if interval_min not in [1, 5, 10, 15, 30, 60]:
+                interval_min = 15
+            # Max steps: 2 months = ~87840 min / interval_min; cap limit to 200 per request
+            limit = min(limit, 200)
             
             import datetime
             try:
@@ -2247,10 +2253,15 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 except:
                     base_dt = datetime.datetime.now()
             
+            # Maximum lookback: 2 months = 87840 minutes
+            max_steps = int(87840 / interval_min)
+            
             history_data = []
             for i in range(limit):
                 step_idx = offset_idx + i
-                step_dt = base_dt - datetime.timedelta(minutes=15 * step_idx)
+                if step_idx >= max_steps:
+                    break
+                step_dt = base_dt - datetime.timedelta(minutes=interval_min * step_idx)
                 step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
                 
                 step_pos_raw = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
@@ -2278,7 +2289,9 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 "status": "success",
                 "data": {
                     "history": history_data,
-                    "has_more": step_idx < 5760
+                    "has_more": (offset_idx + limit) < max_steps,
+                    "interval_min": interval_min,
+                    "max_steps": max_steps
                 }
             }
 

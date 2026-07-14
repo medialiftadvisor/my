@@ -1133,22 +1133,46 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <tbody id="aspects-table-body">
                                             </tbody>
                                         </table>
+                                                    <div id="history-pane" class="aspects-pane-content" style="display: none;">
+                                    <!-- History Controls Bar -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); border-radius: 10px; padding: 0.9rem 1.1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-clock-rotate-left" style="color: #ffd700;"></i>
+                                            <span style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1rem;">Transit History</span>
+                                        </div>
+
+                                        <!-- Interval Selector -->
+                                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem;">
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">Interval:</label>
+                                            <div id="history-interval-group" style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
+                                                ${['1 min','5 min','10 min','15 min','30 min','1 hr'].map((lbl, idx) => {
+                                                    const vals = [1,5,10,15,30,60];
+                                                    const active = vals[idx] === 15;
+                                                    return `<button data-interval="${vals[idx]}" class="hist-interval-btn" style="background: ${active ? 'rgba(255,215,0,0.18)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${active ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.1)'}; color: ${active ? '#ffd700' : 'var(--color-text-secondary)'}; border-radius: 5px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-family: Outfit; font-weight: ${active ? '700' : '500'}; cursor: pointer; transition: all 0.18s;">${lbl}</button>`;
+                                                }).join('')}
+                                            </div>
+                                        </div>
+
+                                        <!-- Date Range -->
+                                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">From:</label>
+                                            <input type="datetime-local" id="history-from-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.2); color: #fff; border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-family: Outfit; outline: none; cursor: pointer;">
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">To:</label>
+                                            <input type="datetime-local" id="history-to-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.2); color: #fff; border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-family: Outfit; outline: none; cursor: pointer;">
+                                            <button id="history-apply-filter-btn" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; border-radius: 5px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.18s;">Apply</button>
+                                        </div>
+
+                                        <!-- PDF Button -->
+                                        <button id="history-print-pdf-btn" title="Download / Print as PDF" style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 6px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                            <i class="fa-solid fa-file-pdf"></i> Print / PDF
+                                        </button>
                                     </div>
-                                </div>
-                                
-                                <div id="history-pane" class="aspects-pane-content" style="display: none;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.6rem;">
-                                        <h4 style="font-family: Outfit; color: #ffd700; margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
-                                            <i class="fa-solid fa-clock-rotate-left"></i> History of Every 15 Min (Last 2 Months)
-                                        </h4>
-                                        <span style="font-size: 0.75rem; color: var(--color-text-secondary); background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px;">4 intervals per hour going back</span>
-                                    </div>
-                                    
+
                                     <div class="planet-table-wrapper" style="max-height: 480px; overflow-y: auto; width: 100%;">
-                                        <table class="planet-table" style="width: 100%; border-collapse: collapse;">
+                                        <table id="history-main-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
                                             <thead>
                                                 <tr>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Date & Time</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Date &amp; Time</th>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">Lagna</th>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">☉ Surya</th>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">☽ Chandra</th>
@@ -1169,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <tbody id="history-table-body">
                                                 <tr>
                                                     <td colspan="16" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
-                                                        <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem; color: #ffd700;"></i> Loading transit history...
+                                                        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>History</strong> tab to load data
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -1209,52 +1233,122 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         });
                         
-                        // Load More History Logic
+                        // ─── History Tab Logic ────────────────────────────────────────────
                         let historyOffset = 0;
                         const historyLimit = 50;
+                        let historyInterval = 15; // minutes
+                        let historyFromDt = null;  // override start datetime (ISO)
+                        let historyToDt = null;    // end datetime filter (client-side)
+
                         const historyTbody = resultBox.querySelector('#history-table-body');
-                        const loadMoreBtn = resultBox.querySelector('#history-load-more-btn');
+                        const loadMoreBtn  = resultBox.querySelector('#history-load-more-btn');
                         const historyTabBtn = resultBox.querySelector('#load-history-tab-btn');
 
-                        const fetchHistoryData = () => {
-                            fetch(`${apiBase}/astrology/transit-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${historyLimit}&offset=${historyOffset}&_t=${Date.now()}`)
+                        // Set default datetime-local values: to = now, from = 7 days ago
+                        const toDtInput   = resultBox.querySelector('#history-to-dt');
+                        const fromDtInput = resultBox.querySelector('#history-from-dt');
+                        if (toDtInput && fromDtInput) {
+                            const nowDt   = new Date(isoDt);
+                            const twoMoAgo = new Date(nowDt);
+                            twoMoAgo.setMonth(twoMoAgo.getMonth() - 2);
+                            const fmt = (d) => d.toISOString().slice(0,16);
+                            toDtInput.value   = fmt(nowDt);
+                            fromDtInput.value = fmt(twoMoAgo);
+                            // max = current datetime
+                            toDtInput.max = fmt(nowDt);
+                            fromDtInput.min = fmt(twoMoAgo);
+                        }
+
+                        // ── Interval button toggle ──────────────────────────────────────
+                        const intervalBtns = resultBox.querySelectorAll('.hist-interval-btn');
+                        intervalBtns.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                intervalBtns.forEach(b => {
+                                    b.style.background = 'rgba(255,255,255,0.05)';
+                                    b.style.border     = '1px solid rgba(255,255,255,0.1)';
+                                    b.style.color      = 'var(--color-text-secondary)';
+                                    b.style.fontWeight = '500';
+                                });
+                                btn.style.background = 'rgba(255,215,0,0.18)';
+                                btn.style.border     = '1px solid rgba(255,215,0,0.5)';
+                                btn.style.color      = '#ffd700';
+                                btn.style.fontWeight = '700';
+                                historyInterval = parseInt(btn.getAttribute('data-interval'));
+                                historyOffset = 0;
+                                historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i>Loading...</td></tr>';
+                                fetchHistoryData();
+                            });
+                        });
+
+                        // ── Apply date filter ───────────────────────────────────────────
+                        const applyFilterBtn = resultBox.querySelector('#history-apply-filter-btn');
+                        if (applyFilterBtn) {
+                            applyFilterBtn.addEventListener('click', () => {
+                                const toVal   = toDtInput   ? toDtInput.value   : null;
+                                const fromVal = fromDtInput ? fromDtInput.value : null;
+                                historyFromDt = fromVal || null;
+                                historyToDt   = toVal   || null;
+                                historyOffset = 0;
+                                historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i>Applying filter...</td></tr>';
+                                fetchHistoryData();
+                            });
+                        }
+
+                        // ── Fetch history data ──────────────────────────────────────────
+                        function fetchHistoryData() {
+                            // Use "to" datetime as the base (go backwards from there)
+                            const baseDt = historyToDt ? historyToDt.replace('T', 'T').padEnd(19, ':00') : isoDt;
+                            const url = `${apiBase}/astrology/transit-history?datetime=${encodeURIComponent(baseDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${historyLimit}&offset=${historyOffset}&interval=${historyInterval}&_t=${Date.now()}`;
+
+                            fetch(url)
                                 .then(res => res.json())
                                 .then(res => {
                                     if (res.status === 'success' && res.data && res.data.history) {
+                                        let rows = res.data.history;
+
+                                        // Client-side from-date filter (exclude rows older than fromDt)
+                                        if (historyFromDt) {
+                                            const fromMs = new Date(historyFromDt).getTime();
+                                            rows = rows.filter(item => {
+                                                const itemMs = new Date(item.datetime.replace(' ', 'T')).getTime();
+                                                return itemMs >= fromMs;
+                                            });
+                                        }
+
                                         let rowsHtml = '';
-                                        res.data.history.forEach(item => {
+                                        rows.forEach(item => {
                                             const p = item.planets;
-                                            
+
                                             const getColHtml = (pName) => {
                                                 const pData = p[pName];
-                                                if (!pData) return '<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">N/A</td>';
-                                                
+                                                if (!pData) return '<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">—</td>';
+
                                                 const glyphMap = {
-                                                    'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃', 
-                                                    'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
+                                                    'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿', 'Jupiter': '♃',
+                                                    'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇',
                                                     'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
                                                     'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC',
                                                     'Spashth Rahu': '☊', 'Spashth Ketu': '☋', 'Yam': '♇', 'Arun': '♅', 'Varun': '♆'
                                                 };
                                                 const glyph = glyphMap[pName] || '';
-                                                const glyphPrefix = glyph ? `<span style="color: #ffd700; font-size: 0.95rem; margin-right: 0.35rem; vertical-align: middle;">${glyph}</span>` : '';
-                                                // Sign-relative degree (0-30°)
+                                                const glyphPrefix = glyph ? `<span style="color:#ffd700;font-size:0.95rem;margin-right:0.3rem;">${glyph}</span>` : '';
+                                                // Sign degree
                                                 const d = Math.floor(pData.degree);
                                                 const m = Math.floor((pData.degree - d) * 60);
-                                                const signDegStr = `${d}\u00b0 ${m.toString().padStart(2, '0')}'`;
-                                                // Full tropical degree (0-360°)
+                                                const signDegStr = `${d}° ${m.toString().padStart(2,'0')}'`;
+                                                // Full degree
                                                 let fullDegStr = '';
                                                 if (typeof pData.longitude === 'number') {
                                                     const fd = Math.floor(pData.longitude);
                                                     const fm = Math.floor((pData.longitude - fd) * 60);
-                                                    fullDegStr = `<div style="font-size:0.75rem; color: #ffe600; opacity: 0.75; margin-top:0.15rem; font-weight:600;">${fd}\u00b0${fm.toString().padStart(2,'0')}'</div>`;
+                                                    fullDegStr = `<div style="font-size:0.73rem;color:#ffe600;opacity:0.8;margin-top:0.1rem;font-weight:600;">${fd}°${fm.toString().padStart(2,'0')}'</div>`;
                                                 }
-                                                return `<td style="padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${signDegStr}${fullDegStr}</td>`;
+                                                return `<td style="padding:0.55rem 0.75rem;border-bottom:1px solid rgba(255,255,255,0.02);">${glyphPrefix}${translateText(pData.sign)} ${signDegStr}${fullDegStr}</td>`;
                                             };
-                                            
+
                                             rowsHtml += `
-                                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                                    <td style="padding: 0.6rem 0.8rem; color: #ffd700; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.02);">${item.datetime}</td>
+                                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                                    <td style="padding:0.55rem 0.75rem;color:#ffd700;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.02);white-space:nowrap;">${item.datetime}</td>
                                                     ${getColHtml('Ascendant')}
                                                     ${getColHtml('Sun')}
                                                     ${getColHtml('Moon')}
@@ -1270,36 +1364,36 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     ${getColHtml('South Node')}
                                                     ${getColHtml('True North Node')}
                                                     ${getColHtml('True South Node')}
-                                                </tr>
-                                            `;
+                                                </tr>`;
                                         });
 
                                         if (historyOffset === 0) {
-                                            historyTbody.innerHTML = rowsHtml;
+                                            historyTbody.innerHTML = rowsHtml || '<tr><td colspan="16" style="text-align:center;padding:1.5rem;opacity:0.5;">No data for selected range.</td></tr>';
                                         } else {
                                             historyTbody.innerHTML += rowsHtml;
                                         }
 
                                         historyOffset += historyLimit;
-                                        if (res.data.has_more) {
+                                        if (res.data.has_more && rows.length > 0) {
                                             loadMoreBtn.style.display = 'block';
                                         } else {
                                             loadMoreBtn.style.display = 'none';
                                         }
                                     } else {
                                         if (historyOffset === 0) {
-                                            historyTbody.innerHTML = '<tr><td colspan="16" style="text-align: center; color: red; padding: 1rem;">Failed to load history data.</td></tr>';
+                                            historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:#ff7b7b;padding:1rem;">Failed to load history data.</td></tr>';
                                         }
                                     }
                                 })
                                 .catch(err => {
-                                    console.error("Error loading history:", err);
+                                    console.error('History fetch error:', err);
                                     if (historyOffset === 0) {
-                                        historyTbody.innerHTML = '<tr><td colspan="16" style="text-align: center; color: red; padding: 1rem;">Error: ' + err.message + '</td></tr>';
+                                        historyTbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;
                                     }
                                 });
-                        };
+                        }
 
+                        // ── History tab click ───────────────────────────────────────────
                         if (historyTabBtn) {
                             historyTabBtn.addEventListener('click', () => {
                                 if (historyOffset === 0) {
@@ -1307,11 +1401,64 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             });
                         }
-
                         if (loadMoreBtn) {
                             loadMoreBtn.addEventListener('click', fetchHistoryData);
                         }
-                        
+
+                        // ── PDF / Print button ──────────────────────────────────────────
+                        const printPdfBtn = resultBox.querySelector('#history-print-pdf-btn');
+                        if (printPdfBtn) {
+                            printPdfBtn.addEventListener('click', () => {
+                                const tableEl = resultBox.querySelector('#history-main-table');
+                                if (!tableEl) return;
+
+                                const intervalLabel = historyInterval === 60 ? '1 hr' : `${historyInterval} min`;
+                                const fromLabel = historyFromDt ? historyFromDt.replace('T', ' ') : 'start';
+                                const toLabel   = historyToDt   ? historyToDt.replace('T', ' ')   : 'now';
+
+                                const printWin = window.open('', '_blank', 'width=1200,height=800');
+                                printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Transit History — ${fromLabel} to ${toLabel} (${intervalLabel} intervals)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; background: #fff; padding: 12mm; }
+  h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+  .meta { font-size: 9px; color: #555; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #1a1a2e; color: #ffd700; font-size: 9px; font-weight: 700;
+    padding: 5px 6px; text-align: left; white-space: nowrap; position: sticky; top: 0;
+  }
+  tbody tr:nth-child(even) { background: #f9f9fb; }
+  tbody td { padding: 4px 6px; border-bottom: 1px solid #e5e5e5; font-size: 9px; vertical-align: top; }
+  .time-col { color: #7c3aed; font-weight: 700; white-space: nowrap; }
+  .full-deg { font-size: 8px; color: #7c3aed; font-weight: 600; margin-top: 1px; }
+  @media print {
+    body { padding: 8mm; }
+    thead th { background: #1a1a2e !important; color: #ffd700 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr:nth-child(even) { background: #f5f5fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<h2>🪐 Planet Transit History</h2>
+<div class="meta">
+  Interval: <strong>${intervalLabel}</strong> &nbsp;|&nbsp;
+  From: <strong>${fromLabel}</strong> &nbsp;to&nbsp; <strong>${toLabel}</strong> &nbsp;|&nbsp;
+  Location: <strong>Lat ${lat}, Lng ${lng}</strong> &nbsp;|&nbsp;
+  Generated: <strong>${new Date().toLocaleString()}</strong>
+</div>
+${tableEl.outerHTML.replace(/style="[^"]*font-size:0\.7[^"]*"/g, 'class="full-deg"')}
+<script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`);
+                                printWin.document.close();
+                            });
+                        }
+
                         const typeButtons = resultBox.querySelectorAll('.filter-type-btn');
                         const planetFilterSelect = resultBox.querySelector('#aspect-planet-filter');
                         const aspectsTbody = resultBox.querySelector('#aspects-table-body');
