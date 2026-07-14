@@ -789,7 +789,15 @@ def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
         ("Neptune", (3.0 + diff_days * 0.006) % 360, False),
         ("Pluto", (298.0 + diff_days * 0.004) % 360, False),
         ("True North Node", (335.0 - diff_days * 0.053) % 360, True),
-        ("True South Node", (155.0 - diff_days * 0.053) % 360, True)
+        ("True South Node", (155.0 - diff_days * 0.053) % 360, True),
+        # Rahu = True North Node (Vedic name), Ketu = True South Node (Vedic name)
+        ("Rahu", (335.0 - diff_days * 0.053) % 360, True),
+        ("Ketu", (155.0 - diff_days * 0.053) % 360, True),
+        # Spashth Rahu = Mean North Node (approx 0.9° behind True), Spashth Ketu opposite
+        ("Spashth Rahu", (335.9 - diff_days * 0.0529) % 360, True),
+        ("Spashth Ketu", (155.9 - diff_days * 0.0529) % 360, True),
+        # Earth = geocentric view (Sun + 180°, always on ecliptic)
+        ("Earth", (sun_lon + 180.0) % 360, False)
     ]
     
     signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
@@ -1051,12 +1059,20 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
     symbols = {
         "Sun": "☉", "Moon": "☽", "Mars": "♂", "Mercury": "☿",
         "Jupiter": "♃", "Venus": "♀", "Saturn": "♄", "Uranus": "♅",
-        "Neptune": "♆", "Pluto": "♇"
+        "Neptune": "♆", "Pluto": "♇",
+        "True North Node": "☊", "True South Node": "☋",
+        "Rahu": "☊", "Ketu": "☋",
+        "Spashth Rahu": "☊", "Spashth Ketu": "☋",
+        "Earth": "⊕"
     }
     colors = {
         "Sun": "#ffe600", "Moon": "#ffffff", "Mars": "#ff3333", "Mercury": "#33ff57",
         "Jupiter": "#ffb333", "Venus": "#ff33b3", "Saturn": "#e033ff", "Uranus": "#33e0ff",
-        "Neptune": "#3357ff", "Pluto": "#999999"
+        "Neptune": "#3357ff", "Pluto": "#999999",
+        "True North Node": "#ff9944", "True South Node": "#ff9944",
+        "Rahu": "#ff7700", "Ketu": "#ff7700",
+        "Spashth Rahu": "#ffaa44", "Spashth Ketu": "#ffaa44",
+        "Earth": "#44aaff"
     }
     
     asc_deg = 0.0

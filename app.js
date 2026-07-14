@@ -80,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'Venus': '♀', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇', 
             'True North Node': '☊', 'True South Node': '☋', 'North Node': '☊', 'South Node': '☋',
             'Rahu': '☊', 'Ketu': '☋', 'Ascendant': 'ASC', 'Lagna': 'ASC', 'Lagna / Ascendant': 'ASC',
-            'Spashth Rahu': '☊', 'Spashth Ketu': '☋', 'Yam': '♇', 'Arun': '♅', 'Varun': '♆'
+            'Spashth Rahu': '☊', 'Spashth Ketu': '☋', 'Yam': '♇', 'Arun': '♅', 'Varun': '♆',
+            'Earth': '⊕'
         };
         const planetDisplayNameMap = {
             'Ascendant': 'Lagna',
@@ -97,13 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
             'Neptune': 'Varun',
             'Pluto': 'Yam / Pluto',
             'North Node': 'Rahu',
-            'Rahu': 'Rahu',
             'South Node': 'Ketu',
+            'True North Node': 'True North Node (Rahu)',
+            'True South Node': 'True South Node (Ketu)',
+            'Rahu': 'Rahu',
             'Ketu': 'Ketu',
-            'True North Node': 'Spashth Rahu',
-            'True South Node': 'Spashth Ketu',
             'Spashth Rahu': 'Spashth Rahu',
             'Spashth Ketu': 'Spashth Ketu',
+            'Earth': 'Earth (Bhumi)',
             'Yam': 'Yam',
             'Arun': 'Arun',
             'Varun': 'Varun'
@@ -1188,11 +1190,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Ketu</th>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ Spashth Rahu</th>
                                                     <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Spashth Ketu</th>
+                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">⊕ Earth (Bhumi)</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="history-table-body">
                                                 <tr>
-                                                    <td colspan="16" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
+                                                    <td colspan="18" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
                                                         <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>History</strong> tab to load data
                                                     </td>
                                                 </tr>
@@ -1366,15 +1369,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     ${getColHtml('Uranus')}
                                                     ${getColHtml('Neptune')}
                                                     ${getColHtml('Pluto')}
-                                                    ${getColHtml('North Node')}
-                                                    ${getColHtml('South Node')}
-                                                    ${getColHtml('True North Node')}
-                                                    ${getColHtml('True South Node')}
+                                                    ${getColHtml('Rahu')}
+                                                    ${getColHtml('Ketu')}
+                                                    ${getColHtml('Spashth Rahu')}
+                                                    ${getColHtml('Spashth Ketu')}
+                                                    ${getColHtml('Earth')}
                                                 </tr>`;
                                         });
 
                                         if (historyOffset === 0) {
-                                            historyTbody.innerHTML = rowsHtml || '<tr><td colspan="16" style="text-align:center;padding:1.5rem;opacity:0.5;">No data for selected range.</td></tr>';
+                                            historyTbody.innerHTML = rowsHtml || '<tr><td colspan="18" style="text-align:center;padding:1.5rem;opacity:0.5;">No data for selected range.</td></tr>';
                                         } else {
                                             historyTbody.innerHTML += rowsHtml;
                                         }
@@ -1387,15 +1391,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     } else {
                                         if (historyOffset === 0) {
-                                            historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:#ff7b7b;padding:1rem;">Failed to load history data.</td></tr>';
+                                            historyTbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:#ff7b7b;padding:1rem;">Failed to load history data.</td></tr>';
                                         }
                                     }
                                 })
                                 .catch(err => {
                                     console.error('History fetch error:', err);
                                     if (historyOffset === 0) {
-                                        historyTbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;
-                                    }
+                                        historyTbody.innerHTML = `<tr><td colspan="18" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;                                    }
                                 });
                         }
 
