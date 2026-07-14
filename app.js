@@ -1221,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 btn.style.color = '#ffd700';
                                 btn.style.fontWeight = '700';
                                 btn.style.borderBottom = '2px solid #ffd700';
-                                
+
                                 const target = btn.getAttribute('data-target');
                                 panes.forEach(pane => {
                                     if (pane.id === target) {
@@ -1230,6 +1230,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                         pane.style.display = 'none';
                                     }
                                 });
+
+                                // Auto-load history data when history tab is clicked
+                                if (target === 'history-pane' && typeof historyOffset !== 'undefined' && historyOffset === 0) {
+                                    // Small delay so the pane is visible first
+                                    setTimeout(() => fetchHistoryData(), 80);
+                                }
                             });
                         });
                         
@@ -1393,14 +1399,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                         }
 
-                        // ── History tab click ───────────────────────────────────────────
-                        if (historyTabBtn) {
-                            historyTabBtn.addEventListener('click', () => {
-                                if (historyOffset === 0) {
-                                    fetchHistoryData();
-                                }
-                            });
-                        }
                         if (loadMoreBtn) {
                             loadMoreBtn.addEventListener('click', fetchHistoryData);
                         }

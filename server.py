@@ -1063,7 +1063,11 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
     for p_item in positions:
         p_name = p_item.get("planet") or p_item.get("name") or ""
         if p_name.lower() in ["ascendant", "lagna"]:
-            asc_deg = float(p_item.get("longitude", 0.0))
+            # For chart rotation, use the longitude that matches the plotting mode
+            if ayanamsa == '1':
+                asc_deg = float(p_item.get("longitude", 0.0))
+            else:
+                asc_deg = float(p_item.get("tropical_longitude") or p_item.get("longitude", 0.0))
             break
             
     if asc_deg == 0.0:
@@ -1093,10 +1097,13 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
     planets = []
     for p in positions:
         name = p.get("planet") or p.get("name", "")
-        # Use tropical_longitude for wheel plotting (accurate celestial position);
-        # fall back to longitude (which may be sidereal-shifted display value)
-        plot_lon = p.get("tropical_longitude") or p.get("longitude", 0.0)
-        planets.append((name, symbols.get(name, "?"), float(plot_lon), colors.get(name, "#ffffff")))
+        # Use sidereal longitude (matches table) for Vedic mode;
+        # use tropical longitude for tropical mode
+        if ayanamsa == '1':
+            plot_lon = float(p.get("longitude", 0.0))
+        else:
+            plot_lon = float(p.get("tropical_longitude") or p.get("longitude", 0.0))
+        planets.append((name, symbols.get(name, "?"), plot_lon, colors.get(name, "#ffffff")))
         
     seed_str = f"{dt or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
     h = hashlib.sha256(seed_str.encode('utf-8')).digest()
