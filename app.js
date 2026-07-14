@@ -1136,26 +1136,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                             </tbody>
                                         </table>
                                                     <div id="history-pane" class="aspects-pane-content" style="display: none;">
-                                    <!-- History Controls Bar -->
+                                     <!-- History Controls Bar: fixed 15-min, date range up to 2 months, PDF -->
                                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); border-radius: 10px; padding: 0.9rem 1.1rem;">
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <i class="fa-solid fa-clock-rotate-left" style="color: #ffd700;"></i>
                                             <span style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1rem;">Transit History</span>
+                                            <span style="font-size: 0.72rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: Outfit; font-weight: 600;">Every 15 min</span>
                                         </div>
 
-                                        <!-- Interval Selector -->
-                                        <div style="display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem;">
-                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">Interval:</label>
-                                            <div id="history-interval-group" style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
-                                                ${['1 min','5 min','10 min','15 min','30 min','1 hr'].map((lbl, idx) => {
-                                                    const vals = [1,5,10,15,30,60];
-                                                    const active = vals[idx] === 15;
-                                                    return `<button data-interval="${vals[idx]}" class="hist-interval-btn" style="background: ${active ? 'rgba(255,215,0,0.18)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${active ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.1)'}; color: ${active ? '#ffd700' : 'var(--color-text-secondary)'}; border-radius: 5px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-family: Outfit; font-weight: ${active ? '700' : '500'}; cursor: pointer; transition: all 0.18s;">${lbl}</button>`;
-                                                }).join('')}
-                                            </div>
-                                        </div>
-
-                                        <!-- Date Range -->
+                                        <!-- Date Range (max 2 months back) -->
                                         <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                             <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">From:</label>
                                             <input type="datetime-local" id="history-from-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.2); color: #fff; border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-family: Outfit; outline: none; cursor: pointer;">
@@ -1268,37 +1257,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             fromDtInput.min = fmt(twoMoAgo);
                         }
 
-                        // ── Interval button toggle ──────────────────────────────────────
-                        const intervalBtns = resultBox.querySelectorAll('.hist-interval-btn');
-                        intervalBtns.forEach(btn => {
-                            btn.addEventListener('click', () => {
-                                intervalBtns.forEach(b => {
-                                    b.style.background = 'rgba(255,255,255,0.05)';
-                                    b.style.border     = '1px solid rgba(255,255,255,0.1)';
-                                    b.style.color      = 'var(--color-text-secondary)';
-                                    b.style.fontWeight = '500';
-                                });
-                                btn.style.background = 'rgba(255,215,0,0.18)';
-                                btn.style.border     = '1px solid rgba(255,215,0,0.5)';
-                                btn.style.color      = '#ffd700';
-                                btn.style.fontWeight = '700';
-                                historyInterval = parseInt(btn.getAttribute('data-interval'));
-                                historyOffset = 0;
-                                historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i>Loading...</td></tr>';
-                                fetchHistoryData();
-                            });
-                        });
-
-                        // ── Apply date filter ───────────────────────────────────────────
+                        // ── Apply date filter (max 2 months back) ──────────────────────
                         const applyFilterBtn = resultBox.querySelector('#history-apply-filter-btn');
                         if (applyFilterBtn) {
                             applyFilterBtn.addEventListener('click', () => {
                                 const toVal   = toDtInput   ? toDtInput.value   : null;
-                                const fromVal = fromDtInput ? fromDtInput.value : null;
+                                let fromVal = fromDtInput ? fromDtInput.value : null;
+                                // Clamp: fromDt cannot be more than 2 months before toDt
+                                if (fromVal && toVal) {
+                                    const toMs = new Date(toVal).getTime();
+                                    const twoMonthMs = 2 * 30 * 24 * 60 * 60 * 1000;
+                                    const minMs = toMs - twoMonthMs;
+                                    if (new Date(fromVal).getTime() < minMs) {
+                                        fromVal = new Date(minMs).toISOString().slice(0,16);
+                                        if (fromDtInput) fromDtInput.value = fromVal;
+                                    }
+                                }
                                 historyFromDt = fromVal || null;
                                 historyToDt   = toVal   || null;
                                 historyOffset = 0;
-                                historyTbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i>Applying filter...</td></tr>';
+                                historyTbody.innerHTML = '<tr><td colspan="18" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i>Applying filter...</td></tr>';
                                 fetchHistoryData();
                             });
                         }
@@ -1411,52 +1389,56 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (printPdfBtn) {
                             printPdfBtn.addEventListener('click', () => {
                                 const tableEl = resultBox.querySelector('#history-main-table');
-                                if (!tableEl) return;
+                                if (!tableEl) { alert('No history data to print. Please load the History tab first.'); return; }
 
-                                const intervalLabel = historyInterval === 60 ? '1 hr' : `${historyInterval} min`;
-                                const fromLabel = historyFromDt ? historyFromDt.replace('T', ' ') : 'start';
-                                const toLabel   = historyToDt   ? historyToDt.replace('T', ' ')   : 'now';
+                                const fromLabel = historyFromDt ? historyFromDt.replace('T', ' ') : (toDtInput ? new Date(new Date(toDtInput.value || isoDt).getTime() - 60*24*60*60*1000*60).toLocaleString() : 'start');
+                                const toLabel   = historyToDt   ? historyToDt.replace('T', ' ')   : new Date(isoDt).toLocaleString();
 
-                                const printWin = window.open('', '_blank', 'width=1200,height=800');
-                                printWin.document.write(`<!DOCTYPE html>
+                                // Build clean print HTML
+                                const tableHtml = tableEl.outerHTML;
+                                const printHtml = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Transit History — ${fromLabel} to ${toLabel} (${intervalLabel} intervals)</title>
+<title>Planet Transit History (Every 15 min) — ${fromLabel} to ${toLabel}</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; background: #fff; padding: 12mm; }
-  h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
-  .meta { font-size: 9px; color: #555; margin-bottom: 10px; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    background: #1a1a2e; color: #ffd700; font-size: 9px; font-weight: 700;
-    padding: 5px 6px; text-align: left; white-space: nowrap; position: sticky; top: 0;
-  }
-  tbody tr:nth-child(even) { background: #f9f9fb; }
-  tbody td { padding: 4px 6px; border-bottom: 1px solid #e5e5e5; font-size: 9px; vertical-align: top; }
-  .time-col { color: #7c3aed; font-weight: 700; white-space: nowrap; }
-  .full-deg { font-size: 8px; color: #7c3aed; font-weight: 600; margin-top: 1px; }
-  @media print {
-    body { padding: 8mm; }
-    thead th { background: #1a1a2e !important; color: #ffd700 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr:nth-child(even) { background: #f5f5fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 9px; color: #111; background: #fff; padding: 10mm; }
+h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+.meta { font-size: 8.5px; color: #555; margin-bottom: 10px; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { background: #1a1a2e !important; color: #ffd700 !important; font-size: 8px; font-weight: 700; padding: 4px 5px; text-align: left; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+tr:nth-child(even) td { background: #f5f5fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+td { padding: 3px 5px; border-bottom: 1px solid #e5e5e5; font-size: 8.5px; vertical-align: top; }
+td:first-child { color: #6d28d9; font-weight: 700; white-space: nowrap; }
+@page { size: landscape; margin: 8mm; }
 </style>
 </head>
 <body>
-<h2>🪐 Planet Transit History</h2>
+<h2>&#127692; Planet Transit History &mdash; Every 15 min</h2>
 <div class="meta">
-  Interval: <strong>${intervalLabel}</strong> &nbsp;|&nbsp;
   From: <strong>${fromLabel}</strong> &nbsp;to&nbsp; <strong>${toLabel}</strong> &nbsp;|&nbsp;
-  Location: <strong>Lat ${lat}, Lng ${lng}</strong> &nbsp;|&nbsp;
-  Generated: <strong>${new Date().toLocaleString()}</strong>
+  Lat: <strong>${lat}</strong>, Lng: <strong>${lng}</strong> &nbsp;|&nbsp;
+  System: <strong>${zodiacSys === '0' ? 'Tropical' : 'Vedic Sidereal'}</strong> &nbsp;|&nbsp;
+  Printed: <strong>${new Date().toLocaleString()}</strong>
 </div>
-${tableEl.outerHTML.replace(/style="[^"]*font-size:0\.7[^"]*"/g, 'class="full-deg"')}
-<script>window.onload = function(){ window.print(); }<\/script>
+${tableHtml}
 </body>
-</html>`);
-                                printWin.document.close();
+</html>`;
+
+                                // Use hidden iframe to avoid popup blocker
+                                let printFrame = document.getElementById('__history_print_frame__');
+                                if (printFrame) printFrame.remove();
+                                printFrame = document.createElement('iframe');
+                                printFrame.id = '__history_print_frame__';
+                                printFrame.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+                                document.body.appendChild(printFrame);
+                                const fd = printFrame.contentDocument || printFrame.contentWindow.document;
+                                fd.open(); fd.write(printHtml); fd.close();
+                                setTimeout(() => {
+                                    try { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }
+                                    catch(e) { console.error('Print error:', e); }
+                                }, 600);
                             });
                         }
 

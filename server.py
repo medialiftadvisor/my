@@ -338,6 +338,7 @@ def get_astronomy_planet_position(dt, lat, lng):
     import base64
     import urllib.request
     import json
+    import math
     
     if not ASTRONOMY_APP_ID or not ASTRONOMY_APP_SECRET:
         return None
@@ -372,6 +373,19 @@ def get_astronomy_planet_position(dt, lat, lng):
             }
             signs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
             
+            def fmt_dms(deg_str, signed=True):
+                try:
+                    d = float(deg_str)
+                    s = "-" if d < 0 else ("+" if signed else "")
+                    d_abs = abs(d)
+                    d_int = int(d_abs)
+                    m_int = int((d_abs - d_int) * 60)
+                    s_int = round(((d_abs - d_int) * 60 - m_int) * 60)
+                    if s_int == 60: m_int += 1; s_int = 0
+                    return f"{s}{d_int:02d}° {m_int:02d}' {s_int:02d}\""
+                except:
+                    return deg_str or "N/A"
+
             for row in rows:
                 entry = row.get("entry", {})
                 p_id = entry.get("id", "")
@@ -380,106 +394,140 @@ def get_astronomy_planet_position(dt, lat, lng):
                     if cells:
                         cell = cells[0]
                         pos = cell.get("position", {})
-                        eq = pos.get("equatorial", {})
-                        ra = eq.get("rightAscension", {})
-                        ra_hours = float(ra.get("hours", 0.0))
-                        ra_deg = (ra_hours * 15.0) % 360
-                         
-                        dec = eq.get("declination", {})
-                        dec_degrees = float(dec.get("degrees", 0.0))
-                        dec_str = dec.get("string", "N/A")
-                         
-                        longitude = equatorial_to_longitude(ra_deg, dec_degrees)
+                        
+                        # ── Use ecliptic longitude directly (matches AstronomyAPI website) ──
+                        ecl = pos.get("ecliptic", {})
+                        ecl_lon = ecl.get("longitude", {})
+                        ecl_lat_obj = ecl.get("latitude", {})
+                        
+                        lon_deg_str = ecl_lon.get("degrees", None)
+                        ecl_lat_str = ecl_lat_obj.get("degrees", "0")
+                        
+                        if lon_deg_str is not None:
+                            longitude = float(lon_deg_str) % 360
+                        else:
+                            # Fallback: convert from RA/Dec
+                            eq = pos.get("equatorial", {})
+                            ra = eq.get("rightAscension", {})
+                            ra_deg = float(ra.get("hours", 0.0)) * 15.0
+                            dec = eq.get("declination", {})
+                            dec_d = float(dec.get("degrees", 0.0))
+                            longitude = equatorial_to_longitude(ra_deg, dec_d)
+                        
                         deg = longitude % 30
                         sign_idx = int(longitude / 30) % 12
                         sign = signs_list[sign_idx]
                         lord = lord_map.get(sign, "N/A")
-                         
-                        ra_str = f"{round(ra_deg, 2)}°"
                         
+                        # ── Equatorial coords for display ──
+                        eq = pos.get("equatorial", {})
+                        ra = eq.get("rightAscension", {})
+                        ra_hours = float(ra.get("hours", 0.0))
+                        ra_deg_val = (ra_hours * 15.0) % 360
+                        dec_obj = eq.get("declination", {})
+                        dec_str_raw = dec_obj.get("string", "N/A")
+                        
+                        # ── Horizontal coords ──
                         horiz = pos.get("horizontal", {})
                         alt_raw = horiz.get("altitude", {})
                         az_raw = horiz.get("azimuth", {})
-                        alt_deg_val = alt_raw.get("degrees", "")
-                        az_deg_val = az_raw.get("degrees", "")
-                        # Format as ±DD° MM' SS" for altitude, DDD° MM' SS" for azimuth
-                        def fmt_dms(deg_str, signed=True):
-                            try:
-                                d = float(deg_str)
-                                sign = "-" if d < 0 else ("+" if signed else "")
-                                d_abs = abs(d)
-                                d_int = int(d_abs)
-                                m_int = int((d_abs - d_int) * 60)
-                                s_int = round(((d_abs - d_int) * 60 - m_int) * 60)
-                                if s_int == 60:
-                                    m_int += 1
-                                    s_int = 0
-                                return f"{sign}{d_int:02d}° {m_int:02d}' {s_int:02d}\""
-                            except:
-                                return deg_str or "N/A"
-                        alt_str = fmt_dms(alt_deg_val, signed=True)
-                        az_str = fmt_dms(az_deg_val, signed=False)
-
+                        alt_str = fmt_dms(alt_raw.get("degrees", ""), signed=True)
+                        az_str  = fmt_dms(az_raw.get("degrees", ""),  signed=False)
+                        
                         mapped.append({
                             "name": name_map[p_id],
                             "planet": name_map[p_id],
                             "longitude": longitude,
                             "degree": deg,
                             "is_retrograde": False,
-                            "rasi": {
-                                "name": sign,
-                                "lord": {
-                                    "name": lord
-                                }
-                            },
-                            "right_ascension": ra_str,
-                            "declination": dec_str,
-                            "latitude": pos.get("ecliptic", {}).get("latitude", {}).get("string", "0.0°"),
+                            "rasi": {"name": sign, "lord": {"name": lord}},
+                            "right_ascension": f"{round(ra_deg_val, 2)}°",
+                            "declination": dec_str_raw,
+                            "latitude": ecl_lat_obj.get("string", "0.0°"),
                             "raw_longitude_str": f"{round(longitude, 2)}°",
                             "altitude": alt_str,
                             "azimuth": az_str,
                             "house": 1
                         })
             
-            # Add Ascendant/Lagna calculation
-            sun_lon = 0.0
+            # ── True Lunar Nodes (standard formula from Julian Date) ──
+            dt_i = parse_datetime_helper(dt)
+            y0, m0, d0 = dt_i["year"], dt_i["month"], dt_i["day"]
+            h0, mn0, s0 = dt_i["hour"], dt_i["min"], dt_i["sec"]
+            tz0 = dt_i["tzone"]
+            utc_h = h0 + mn0/60.0 + s0/3600.0 - tz0
+            if m0 <= 2: y0 -= 1; m0 += 12
+            A0 = int(y0/100); B0 = 2 - A0 + int(A0/4)
+            jd = int(365.25*(y0+4716)) + int(30.6001*(m0+1)) + d0 + B0 - 1524.5 + utc_h/24.0
+            T = (jd - 2451545.0) / 36525.0
+            # True North Node (Rahu) tropical longitude
+            rahu_trop = (125.04452 - 1934.136261*T + 0.0020708*T*T) % 360
+            if rahu_trop < 0: rahu_trop += 360
+            ketu_trop  = (rahu_trop + 180.0) % 360
+            # Mean Node (Spashth) — slightly smoother motion
+            spashth_rahu_trop = (125.04455 - 1934.13626197*T) % 360
+            if spashth_rahu_trop < 0: spashth_rahu_trop += 360
+            spashth_ketu_trop = (spashth_rahu_trop + 180.0) % 360
+            
+            # Sun position (tropical) for Earth computation
+            sun_trop = 0.0
             for p in mapped:
                 if p["planet"] == "Sun":
-                    sun_lon = p["longitude"]
+                    sun_trop = p.get("longitude", 0.0)
                     break
+            earth_trop = (sun_trop + 180.0) % 360
             
-            time_hours = dt_info["hour"] + dt_info["min"]/60.0 + dt_info["sec"]/3600.0
-            asc_longitude = (sun_lon + (time_hours - 6.0) * 15.0) % 360
-            asc_deg = asc_longitude % 30
-            asc_sign_idx = int(asc_longitude / 30) % 12
-            asc_sign = signs_list[asc_sign_idx]
+            def make_node_entry(name, lon_trop):
+                lon_trop = float(lon_trop) % 360
+                si = int(lon_trop / 30) % 12
+                sg = signs_list[si]
+                ra_s, dec_s = longitude_to_equatorial(lon_trop)
+                return {
+                    "name": name, "planet": name,
+                    "longitude": lon_trop,
+                    "degree": lon_trop % 30,
+                    "is_retrograde": True,
+                    "rasi": {"name": sg, "lord": {"name": lord_map.get(sg, "N/A")}},
+                    "right_ascension": ra_s, "declination": dec_s,
+                    "latitude": "0° 00' 00\"",
+                    "raw_longitude_str": f"{round(lon_trop, 2)}°",
+                    "altitude": "N/A", "azimuth": "N/A", "house": 1
+                }
+
+            for name, lon in [
+                ("True North Node", rahu_trop), ("True South Node", ketu_trop),
+                ("Rahu", rahu_trop), ("Ketu", ketu_trop),
+                ("Spashth Rahu", spashth_rahu_trop), ("Spashth Ketu", spashth_ketu_trop),
+            ]:
+                mapped.append(make_node_entry(name, lon))
+            
+            # Earth entry
+            mapped.append(make_node_entry("Earth", earth_trop))
+            mapped[-1]["is_retrograde"] = False
+
+            # ── Accurate Ascendant (Lagna) using sidereal time ──
+            asc_longitude = calculate_true_ascendant(dt, lat, lng)
+            asc_deg_val = asc_longitude % 30
+            asc_si = int(asc_longitude / 30) % 12
+            asc_sign = signs_list[asc_si]
             asc_lord = lord_map.get(asc_sign, "N/A")
             asc_ra, asc_dec = longitude_to_equatorial(asc_longitude)
             
             mapped.append({
-                "name": "Ascendant",
-                "planet": "Ascendant",
-                "longitude": asc_longitude,
-                "degree": asc_deg,
+                "name": "Ascendant", "planet": "Ascendant",
+                "longitude": asc_longitude, "degree": asc_deg_val,
                 "is_retrograde": False,
-                "rasi": {
-                    "name": asc_sign,
-                    "lord": {
-                        "name": asc_lord
-                    }
-                },
-                "right_ascension": asc_ra,
-                "declination": asc_dec,
+                "rasi": {"name": asc_sign, "lord": {"name": asc_lord}},
+                "right_ascension": asc_ra, "declination": asc_dec,
+                "latitude": "0° 00' 00\"",
                 "raw_longitude_str": f"{round(asc_longitude, 2)}°",
-                "house": 1
+                "altitude": "N/A", "azimuth": "N/A", "house": 1
             })
             
             if mapped:
                 return {
                     "status": "success",
-                    "data": {
-                        "planetary_positions": mapped
-                    }
+                    "data": {"planetary_positions": mapped}
                 }
     except Exception as e:
         print(f"[Backend] Error calling AstronomyAPI: {e}")
