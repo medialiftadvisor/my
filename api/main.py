@@ -918,6 +918,8 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             lon = float(lon)
             
             # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
+            # Always store the raw tropical ecliptic longitude for chart plotting
+            p["tropical_longitude"] = lon
             if provider in ['astronomyapi', 'divineapi', 'mock'] and ayanamsa == '1':
                 display_lon = (lon - 24.23) % 360
                 sign_idx = int(display_lon / 30) % 12
@@ -1016,8 +1018,11 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
                 tropical_lon = lon
                 
             alt_str, az_str = calculate_horizontal_coords(tropical_lon, ecl_lat_val, dt, lat, lng)
-            p["altitude"] = alt_str
-            p["azimuth"] = az_str
+            # Only overwrite altitude/azimuth if they haven't already been set by the API
+            if not p.get("altitude"):
+                p["altitude"] = alt_str
+            if not p.get("azimuth"):
+                p["azimuth"] = az_str
                 
     # Reorder so Ascendant (Lagna) is always first
     planets_sorted = []
@@ -1090,9 +1095,11 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         
     planets = []
     for p in positions:
-        name = p["planet"]
-        lon = p["longitude"]
-        planets.append((name, symbols.get(name, "?"), lon, colors.get(name, "#ffffff")))
+        name = p.get("planet") or p.get("name", "")
+        # Use tropical_longitude for wheel plotting (accurate celestial position);
+        # fall back to longitude (which may be sidereal-shifted display value)
+        plot_lon = p.get("tropical_longitude") or p.get("longitude", 0.0)
+        planets.append((name, symbols.get(name, "?"), float(plot_lon), colors.get(name, "#ffffff")))
         
     seed_str = f"{dt or '2026-07-09T22:00:00+05:30'}_{lat or '19.076'}_{lng or '72.877'}"
     h = hashlib.sha256(seed_str.encode('utf-8')).digest()
@@ -1332,14 +1339,18 @@ def get_mock_chart(dt, lat, lng, ayanamsa='0', custom_positions=None, style='def
         # Symbol
         svg += f'    <text class="svg-planet-marker" data-name="{name}" data-symbol="{symbol}" data-longitude="{angle}" data-color="{color}" x="{px:.1f}" y="{py:.1f}" fill="{color}" font-size="20" font-weight="bold">{symbol}</text>\n'
         
-        # Text degree label - Sign-relative or Full Degree depending on style
+        # Text degree label - Full Degree for sky style, Sign-relative for others
         dx = 500 + 312 * math.cos(rad)
         dy = 500 + 312 * math.sin(rad) + 3.5
         if style == 'sky':
-            deg_num = int(angle)
+            # Show full 0-360 degree with minutes
+            deg_total = angle % 360
+            deg_num = int(deg_total)
+            minutes_num = int((deg_total - deg_num) * 60)
         else:
-            deg_num = int(angle % 30)
-        minutes_num = int(round((angle % 1) * 60))
+            deg_within_sign = angle % 30
+            deg_num = int(deg_within_sign)
+            minutes_num = int((deg_within_sign - deg_num) * 60)
         svg += f'    <text x="{dx:.1f}" y="{dy:.1f}" fill="#ffffff" font-size="9.5" font-family="Outfit" font-weight="700" text-anchor="middle">{deg_num}°{minutes_num:02d}\'</text>\n'
 
     # Fixed ASC, DSC, MC, IC Marker Axes
