@@ -993,9 +993,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
 
                             const ra = p.right_ascension || 'N/A';
+                            const dec = p.declination || 'N/A';
                             const alt = p.altitude || 'N/A';
                             const az = p.azimuth || 'N/A';
-                            const horiz = `${alt} / ${az}`;
+
+                            const nak = p.nakshatra || 'N/A';
+                            const pad = p.padam || 'N/A';
+                            const nakSubLord = `${p.nakshatra_lord || 'N/A'} / ${p.sub_lord || 'N/A'}`;
+
                             let raw_lon = 'N/A';
                             if (typeof p.longitude === 'number') {
                                 const d = Math.floor(p.longitude);
@@ -1003,13 +1008,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const s = Math.round(((p.longitude - d) * 60 - m) * 60);
                                 raw_lon = `${d}° ${m.toString().padStart(2, '0')}' ${s.toString().padStart(2, '0')}"`;
                             }
-                            const dec = p.declination || 'N/A';
-
-                            const nak = p.nakshatra || 'N/A';
-                            const pad = p.padam || 'N/A';
-                            const nakSubLord = `${p.nakshatra_lord || 'N/A'} / ${p.sub_lord || 'N/A'}`;
-                            const alt = p.altitude || 'N/A';
-                            const az = p.azimuth || 'N/A';
 
                             planetRows += `
                                 <tr>
