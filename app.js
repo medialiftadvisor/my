@@ -1234,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // ─── History Tab Logic ────────────────────────────────────────────
                         let historyOffset = 0;
                         const historyLimit = 50;
-                        let historyInterval = 15; // minutes
+                        let historyInterval = 60; // minutes (1 hour)
                         let historyFromDt = null;  // override start datetime (ISO)
                         let historyToDt = null;    // end datetime filter (client-side)
 

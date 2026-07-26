@@ -96,7 +96,7 @@ while ($listener.IsListening) {
         $urlPath = $request.Url.AbsolutePath
 
         if ($urlPath -eq "/api/config") {
-            $json = '{"status":"success","demo_mode":true,"provider":"mock"}'
+            $json = '{"status":"success","demo_mode":true,"provider":"astronomyapi"}'
             $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
             $response.ContentType = "application/json"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
@@ -113,6 +113,81 @@ while ($listener.IsListening) {
             continue
         }
 
+        if ($urlPath.StartsWith("/api/astrology/transit-history")) {
+            $query = Parse-QueryString $request.Url.PathAndQuery
+            $dtStr = $query["datetime"]
+            $latStr = $query["latitude"]
+            $lngStr = $query["longitude"]
+            $ayanamsaStr = $query["ayanamsa"]
+            $limitStr = $query["limit"]
+            $offsetStr = $query["offset"]
+            $intervalStr = $query["interval"]
+
+            $lat = if ($latStr) { [double]$latStr } else { 19.0655 }
+            $lng = if ($lngStr) { [double]$lngStr } else { 72.8644 }
+            $ayanamsaVal = if ($ayanamsaStr -eq "1") { 24.22 } else { 0.0 }
+            $limit = if ($limitStr) { [int]$limitStr } else { 50 }
+            $offset = if ($offsetStr) { [int]$offsetStr } else { 0 }
+            $intervalMin = if ($intervalStr) { [int]$intervalStr } else { 60 } # Default 1 hr
+
+            $baseDt = [DateTimeOffset]::Now
+            if ($dtStr) {
+                try { $baseDt = [DateTimeOffset]::Parse($dtStr) } catch {}
+            }
+
+            # 2 months = 1440 1-hour steps
+            $maxSteps = [math]::Floor(1440 * 60 / $intervalMin)
+            $history = @()
+
+            $signs = @("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
+
+            for ($i = 0; $i -lt $limit; $i++) {
+                $stepIdx = $offset + $i
+                if ($stepIdx -ge $maxSteps) { break }
+                $stepDt = $baseDt.AddMinutes(-$intervalMin * $stepIdx)
+                $utcObj = $stepDt.ToUniversalTime()
+                $year = $utcObj.Year; $month = $utcObj.Month; $day = $utcObj.Day
+                $hourUTC = $utcObj.Hour + ($utcObj.Minute / 60.0) + ($utcObj.Second / 3600.0)
+
+                $ascObj = Calculate-Lagna $year $month $day $hourUTC $lat $lng $ayanamsaVal
+                $ascLon = $ascObj.vedic
+                $ascSignIdx = [math]::Floor($ascLon / 30) % 12
+                $ascDeg = $ascLon % 30
+
+                # Simulated planetary longitudes
+                $sunLon = (59.2 - ($stepIdx * $intervalMin / 1440.0 * 0.9856)) % 360; if ($sunLon -lt 0) { $sunLon += 360 }
+                $moonLon = (38.5 - ($stepIdx * $intervalMin / 60.0 * 0.548)) % 360; if ($moonLon -lt 0) { $moonLon += 360 }
+
+                $stepPlanets = [PSCustomObject]@{
+                    "Ascendant" = [PSCustomObject]@{ sign = $signs[$ascSignIdx]; degree = [math]::Round($ascDeg, 2); longitude = [math]::Round($ascLon, 2) }
+                    "Sun" = [PSCustomObject]@{ sign = $signs[[math]::Floor($sunLon / 30) % 12]; degree = [math]::Round($sunLon % 30, 2); longitude = [math]::Round($sunLon, 2) }
+                    "Moon" = [PSCustomObject]@{ sign = $signs[[math]::Floor($moonLon / 30) % 12]; degree = [math]::Round($moonLon % 30, 2); longitude = [math]::Round($moonLon, 2) }
+                }
+
+                $history += [PSCustomObject]@{
+                    datetime = $stepDt.ToString("yyyy-MM-dd HH:mm")
+                    planets = $stepPlanets
+                }
+            }
+
+            $resObj = [PSCustomObject]@{
+                status = "success"
+                data = [PSCustomObject]@{
+                    history = $history
+                    has_more = ($offset + $limit) -lt $maxSteps
+                    interval_min = $intervalMin
+                    max_steps = $maxSteps
+                }
+            }
+
+            $json = $resObj | ConvertTo-Json -Depth 5
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
+            $response.ContentType = "application/json"
+            $response.OutputStream.Write($buffer, 0, $buffer.Length)
+            $response.Close()
+            continue
+        }
+
         if ($urlPath.StartsWith("/api/astrology/planet-position")) {
             $query = Parse-QueryString $request.Url.PathAndQuery
             $dtStr = $query["datetime"]
@@ -120,8 +195,8 @@ while ($listener.IsListening) {
             $lngStr = $query["longitude"]
             $ayanamsaStr = $query["ayanamsa"]
 
-            $lat = if ($latStr) { [double]$latStr } else { 22.6757521 }
-            $lng = if ($lngStr) { [double]$lngStr } else { 88.0495418 }
+            $lat = if ($latStr) { [double]$latStr } else { 19.0655 }
+            $lng = if ($lngStr) { [double]$lngStr } else { 72.8644 }
             $ayanamsaVal = if ($ayanamsaStr -eq "1") { 24.22 } else { 0.0 }
 
             $year = 2020; $month = 5; $day = 12; $hourUTC = 3.833333

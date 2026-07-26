@@ -2252,17 +2252,17 @@ class handler(http.server.BaseHTTPRequestHandler):
                     positions = normalize_positions_helper(positions, provider if provider != 'prokerala' else 'mock', ayanamsa, dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877")
                     response_data = get_mock_chart(dt or "2026-07-09T22:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa, custom_positions=positions, style=style)
 
-        # 8. Transit History (every 15 min up to 2 months)
+        # 8. Transit History (every 1 hr up to 2 months)
         elif path == '/api/astrology/transit-history':
             dt = get_param('datetime')
-            lat = get_param('latitude')
-            lng = get_param('longitude')
+            lat = get_param('latitude', '19.0655')
+            lng = get_param('longitude', '72.8644')
             ayanamsa = get_param('ayanamsa', '0')
             limit = int(get_param('limit', '50'))
             offset_idx = int(get_param('offset', '0'))
-            interval_min = int(get_param('interval', '15'))
+            interval_min = int(get_param('interval', '60'))
             if interval_min not in [1, 5, 10, 15, 30, 60]:
-                interval_min = 15
+                interval_min = 60
             limit = min(limit, 200)
             
             import datetime

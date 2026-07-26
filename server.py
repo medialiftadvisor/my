@@ -2159,7 +2159,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 
             if not response_data:
                 if DEMO_MODE or not dt or not lat or not lng:
-                    response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+                    response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.0655", lng or "72.8644", ayanamsa)
                 else:
                     token = get_access_token()
                     if not token:
@@ -2319,10 +2319,10 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
             ayanamsa = get_param('ayanamsa', '0')
             limit = int(get_param('limit', '50'))
             offset_idx = int(get_param('offset', '0'))
-            interval_min = int(get_param('interval', '15'))  # minutes: 1,5,10,15,30,60
+            interval_min = int(get_param('interval', '60'))  # minutes (default 1 hr = 60 min)
             # Validate interval
             if interval_min not in [1, 5, 10, 15, 30, 60]:
-                interval_min = 15
+                interval_min = 60
             # Max steps: 2 months = ~87840 min / interval_min; cap limit to 200 per request
             limit = min(limit, 200)
             
