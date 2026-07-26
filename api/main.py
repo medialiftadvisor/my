@@ -1942,7 +1942,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             return default
 
         la = get_param('la', 'en')
-        provider = get_param('provider', 'prokerala')
+        provider = get_param('provider', 'astronomyapi')
 
         # 1. Daily Horoscope
         if path == '/api/horoscope/daily':

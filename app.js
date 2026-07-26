@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalFetch = window.fetch;
     window.fetch = function (input, init) {
         if (typeof input === 'string' && (input.startsWith('/api') || input.includes('/api/'))) {
-            const provider = localStorage.getItem('api_provider') || 'prokerala';
+            const provider = localStorage.getItem('api_provider') || 'astronomyapi';
             if (!input.includes('/api/config')) {
                 const separator = input.includes('?') ? '&' : '?';
                 input = `${input}${separator}provider=${provider}`;
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize API provider dropdown
     const apiProviderSelect = document.getElementById('api-provider-select');
     if (apiProviderSelect) {
-        const savedProvider = localStorage.getItem('api_provider') || 'prokerala';
+        const savedProvider = localStorage.getItem('api_provider') || 'astronomyapi';
         apiProviderSelect.value = savedProvider;
         apiProviderSelect.addEventListener('change', (e) => {
             localStorage.setItem('api_provider', e.target.value);
