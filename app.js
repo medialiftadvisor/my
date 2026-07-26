@@ -1075,7 +1075,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; flex-wrap: wrap;">
                                     <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
                                     <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
-                                    <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">60-Min History (2 Months)</button>
+                                    <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">60-Min Planetary History</button>
+                                    <button class="aspect-tab-btn" data-target="lagna-pane" id="load-lagna-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;"><i class="fa-solid fa-star-and-crescent" style="color:#ffd700;margin-right:0.35rem;"></i>Ascendant (Lagna) 60-Min History</button>
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
@@ -1203,6 +1204,55 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <button id="history-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">Load More Intervals</button>
                                     </div>
                                 </div>
+
+                                <!-- NEW TAB: Ascendant (Lagna) Detailed 60-Min History -->
+                                <div id="lagna-pane" class="aspects-pane-content" style="display: none;">
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); border-radius: 10px; padding: 0.9rem 1.1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-star-and-crescent" style="color: #ffd700; font-size: 1.1rem;"></i>
+                                            <span style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1rem;">Ascendant (Lagna) Astronomical Metrics History</span>
+                                            <span style="font-size: 0.72rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: Outfit; font-weight: 600;">Every 60 Min (Up to 2 Months)</span>
+                                        </div>
+
+                                        <button id="lagna-print-pdf-btn" title="Download / Print as PDF" style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 6px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                            <i class="fa-solid fa-file-pdf"></i> Print / PDF
+                                        </button>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.78rem; color: #ffd700; font-family: Outfit; background: rgba(255,215,0,0.06); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,215,0,0.18);">
+                                        <span><i class="fa-solid fa-arrows-left-right" style="margin-right: 0.4rem;"></i> <strong>Lagna Astronomical Details:</strong> Longitude, Full Degree, Right Ascension (RA), Declination (Kranti), Altitude (ALT), Azimuth (AZ), Nakshatra &amp; Lords</span>
+                                        <span style="font-weight: 700; opacity: 0.85;">← Scroll Left / Right →</span>
+                                    </div>
+
+                                    <div class="planet-table-wrapper" style="max-height: 520px; overflow-y: auto; overflow-x: auto; width: 100%;">
+                                        <table id="lagna-main-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Date &amp; Time</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Rasi / Sign</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Sign Degree</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Full Longitude (360°)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Right Ascension (RA)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Declination / Kranti</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Altitude (ALT)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Azimuth (AZ)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Nakshatra &amp; Pada</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Nakshatra Lord / Sub Lord</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lagna-table-body">
+                                                <tr>
+                                                    <td colspan="10" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
+                                                        <i class="fa-solid fa-star-and-crescent" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>Ascendant (Lagna) 60-Min History</strong> tab to load data
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div style="display: flex; justify-content: center; margin-top: 1.2rem;">
+                                        <button id="lagna-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">Load More Intervals</button>
+                                    </div>
+                                </div>
                             </div>
                         `;
 
@@ -1231,10 +1281,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                 });
 
-                                // Auto-load history data when history tab is clicked
                                 if (target === 'history-pane' && typeof historyOffset !== 'undefined' && historyOffset === 0) {
-                                    // Small delay so the pane is visible first
                                     setTimeout(() => fetchHistoryData(), 80);
+                                }
+                                if (target === 'lagna-pane' && typeof lagnaOffset !== 'undefined' && lagnaOffset === 0) {
+                                    setTimeout(() => fetchLagnaHistoryData(), 80);
                                 }
                             });
                         });
@@ -1385,6 +1436,83 @@ document.addEventListener('DOMContentLoaded', () => {
                                     console.error('History fetch error:', err);
                                     if (historyOffset === 0) {
                                         historyTbody.innerHTML = `<tr><td colspan="18" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;                                    }
+                                });
+                        }
+
+                        // ─── Lagna Detailed History Tab Logic ─────────────────────────────────
+                        let lagnaOffset = 0;
+                        const lagnaLimit = 50;
+                        const lagnaTbody = resultBox.querySelector('#lagna-table-body');
+                        const lagnaLoadMoreBtn = resultBox.querySelector('#lagna-load-more-btn');
+
+                        if (lagnaLoadMoreBtn) {
+                            lagnaLoadMoreBtn.addEventListener('click', () => {
+                                fetchLagnaHistoryData();
+                            });
+                        }
+
+                        // Print / PDF for Lagna History
+                        const lagnaPdfBtn = resultBox.querySelector('#lagna-print-pdf-btn');
+                        if (lagnaPdfBtn) {
+                            lagnaPdfBtn.addEventListener('click', () => {
+                                window.print();
+                            });
+                        }
+
+                        function fetchLagnaHistoryData() {
+                            const url = `${apiBase}/astrology/lagna-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${lagnaLimit}&offset=${lagnaOffset}&interval=60&_t=${Date.now()}`;
+
+                            if (lagnaOffset === 0) {
+                                lagnaTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Loading Ascendant (Lagna) History...</td></tr>';
+                            }
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(res => {
+                                    if (res.status === 'success' && res.data && res.data.history) {
+                                        const rows = res.data.history;
+                                        let rowsHtml = '';
+                                        rows.forEach(item => {
+                                            const degFormatted = `${Math.floor(item.degree)}° ${Math.round((item.degree % 1) * 60)}'`;
+                                            rowsHtml += `
+                                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                                    <td style="padding: 0.65rem 0.85rem; font-family: monospace; color: #ffd700; font-weight: 600; white-space: nowrap; position: sticky; left: 0; background: #0c0824; z-index: 5;">${item.datetime}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; font-weight: 700; color: #ffffff;"><i class="fa-solid fa-star-and-crescent" style="color:#ffd700;margin-right:0.3rem;"></i> ${item.sign}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; font-weight: 600; color: #e2e8f0;">${degFormatted} (${item.degree.toFixed(2)}°)</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #48bb78; font-weight: 600;">${item.longitude.toFixed(2)}°</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #9f7aea;">${item.right_ascension}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #f6ad55;">${item.declination}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #a0aec0;">${item.altitude}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #63b3ed;">${item.azimuth}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #cbd5e0;">${item.nakshatra}</td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #e2e8f0;"><span style="color:#ffd700;font-weight:600;">${item.nakshatra_lord}</span> / ${item.sub_lord}</td>
+                                                </tr>
+                                            `;
+                                        });
+
+                                        if (lagnaOffset === 0) {
+                                            lagnaTbody.innerHTML = rowsHtml || '<tr><td colspan="10" style="text-align:center;padding:1.5rem;opacity:0.5;">No Lagna history data returned.</td></tr>';
+                                        } else {
+                                            lagnaTbody.innerHTML += rowsHtml;
+                                        }
+
+                                        lagnaOffset += lagnaLimit;
+                                        if (res.data.has_more && rows.length > 0) {
+                                            lagnaLoadMoreBtn.style.display = 'block';
+                                        } else {
+                                            lagnaLoadMoreBtn.style.display = 'none';
+                                        }
+                                    } else {
+                                        if (lagnaOffset === 0) {
+                                            lagnaTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ff7b7b;padding:1rem;">Failed to load Ascendant (Lagna) history.</td></tr>';
+                                        }
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error('Lagna History fetch error:', err);
+                                    if (lagnaOffset === 0) {
+                                        lagnaTbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;
+                                    }
                                 });
                         }
 

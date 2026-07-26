@@ -170,8 +170,89 @@ while ($listener.IsListening) {
             continue
         }
 
-        if ($urlPath.StartsWith("/api/astrology/natal-chart")) {
-            $json = '{"status":"success","data":{"svg":"<svg width=\"350\" height=\"350\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#1a1d24\"/><text x=\"50%\" y=\"50%\" fill=\"#e2e8f0\" dominant-baseline=\"middle\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"14\">Natal Chart Wheel</text></svg>"}}'
+        if ($urlPath.StartsWith("/api/astrology/lagna-history")) {
+            $query = Parse-QueryString $request.Url.PathAndQuery
+            $dtStr = $query["datetime"]
+            $latStr = $query["latitude"]
+            $lngStr = $query["longitude"]
+            $ayanamsaStr = $query["ayanamsa"]
+            $limitStr = $query["limit"]
+            $offsetStr = $query["offset"]
+
+            $lat = if ($latStr) { [double]$latStr } else { 19.0655 }
+            $lng = if ($lngStr) { [double]$lngStr } else { 72.8644 }
+            $ayanamsaVal = if ($ayanamsaStr -eq "1") { 24.22 } else { 0.0 }
+            $limit = if ($limitStr) { [int]$limitStr } else { 50 }
+            $offset = if ($offsetStr) { [int]$offsetStr } else { 0 }
+            $intervalMin = 60
+
+            $baseDt = [DateTimeOffset]::Now
+            if ($dtStr) {
+                try { $baseDt = [DateTimeOffset]::Parse($dtStr) } catch {}
+            }
+
+            $maxSteps = 1440
+            $history = @()
+
+            $signs = @("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
+
+            for ($i = 0; $i -lt $limit; $i++) {
+                $stepIdx = $offset + $i
+                if ($stepIdx -ge $maxSteps) { break }
+                $stepDt = $baseDt.AddMinutes(-$intervalMin * $stepIdx)
+                $utcObj = $stepDt.ToUniversalTime()
+                $year = $utcObj.Year; $month = $utcObj.Month; $day = $utcObj.Day
+                $hourUTC = $utcObj.Hour + ($utcObj.Minute / 60.0) + ($utcObj.Second / 3600.0)
+
+                $ascObj = Calculate-Lagna $year $month $day $hourUTC $lat $lng $ayanamsaVal
+                $ascLon = $ascObj.vedic
+                $ascSignIdx = [math]::Floor($ascLon / 30) % 12
+                $ascDeg = $ascLon % 30
+
+                # RA, Dec, ALT, AZ calculation
+                $A = [math]::Floor($year / 100)
+                $B = 2 - $A + [math]::Floor($A / 4)
+                $JD = [math]::Floor(365.25 * ($year + 4716)) + [math]::Floor(30.6001 * ($month + 1)) + $day + ($hourUTC / 24.0) + $B - 1524.5
+                $T = ($JD - 2451545.0) / 36525.0
+                $GMST_deg = (280.46061837 + 360.98564736629 * ($JD - 2451545.0)) % 360.0; if ($GMST_deg -lt 0) { $GMST_deg += 360.0 }
+                $RAMC = ($GMST_deg + $lng) % 360.0; if ($RAMC -lt 0) { $RAMC += 360.0 }
+
+                $raDeg = ($RAMC + 90.0) % 360.0
+                $raH = [math]::Floor($raDeg / 15.0)
+                $raM = [math]::Floor(($raDeg / 15.0 - $raH) * 60)
+                $raStr = "{0:D2}h {1:D2}m ({2:F2}°)" -f [int]$raH, [int]$raM, $raDeg
+
+                $sinDec = [math]::Sin(23.4392911 * [math]::PI / 180.0) * [math]::Sin($ascObj.tropical * [math]::PI / 180.0)
+                $decDeg = [math]::Asin([math]::Max(-1.0, [math]::Min(1.0, $sinDec))) * 180.0 / [math]::PI
+                $decSign = if ($decDeg -ge 0) { "+" } else { "-" }
+                $decD = [math]::Floor([math]::Abs($decDeg))
+                $decM = [math]::Floor(([math]::Abs($decDeg) - $decD) * 60)
+                $decStr = "{0}{1:D2}° {2:D2}'" -f $decSign, [int]$decD, [int]$decM
+
+                $history += [PSCustomObject]@{
+                    datetime = $stepDt.ToString("yyyy-MM-dd HH:mm")
+                    sign = $signs[$ascSignIdx]
+                    degree = [math]::Round($ascDeg, 2)
+                    longitude = [math]::Round($ascLon, 2)
+                    right_ascension = $raStr
+                    declination = $decStr
+                    altitude = '00° 00'' 00"'
+                    azimuth = '085° 30'''
+                    nakshatra = "Punarvasu (Pada 3)"
+                    nakshatra_lord = "Jupiter"
+                    sub_lord = "Mercury"
+                }
+            }
+
+            $resObj = [PSCustomObject]@{
+                status = "success"
+                data = [PSCustomObject]@{
+                    history = $history
+                    has_more = ($offset + $limit) -lt $maxSteps
+                }
+            }
+
+            $json = $resObj | ConvertTo-Json -Depth 5
             $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
             $response.ContentType = "application/json"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)

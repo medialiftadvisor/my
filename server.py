@@ -226,6 +226,105 @@ def calculate_true_ascendant(dt_str, lat, lng):
     return tropical_ascendant
 
 
+def calculate_true_ascendant_detailed(dt_str, lat, lng, ayanamsa='1'):
+    import math
+    
+    dt_info = parse_datetime_helper(dt_str)
+    y, m, d = dt_info["year"], dt_info["month"], dt_info["day"]
+    h, mn, s = dt_info["hour"], dt_info["min"], dt_info["sec"]
+    tz = dt_info["tzone"]
+    
+    hour_utc = h + mn / 60.0 + s / 3600.0 - tz
+    
+    if m <= 2:
+        y -= 1
+        m += 12
+    a_val = math.floor(y / 100)
+    b_val = 2 - a_val + math.floor(a_val / 4)
+    jd = math.floor(365.25 * (y + 4716)) + math.floor(30.6001 * (m + 1)) + d + (hour_utc / 24.0) + b_val - 1524.5
+    
+    t_val = (jd - 2451545.0) / 36525.0
+    gmst_deg = (280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * t_val * t_val - (t_val * t_val * t_val) / 38710000.0) % 360.0
+    if gmst_deg < 0: gmst_deg += 360.0
+    
+    ramc = (gmst_deg + float(lng)) % 360.0
+    if ramc < 0: ramc += 360.0
+    
+    obliquity = 23.4392911
+    
+    ramc_rad = math.radians(ramc)
+    obliq_rad = math.radians(obliquity)
+    lat_rad = math.radians(float(lat))
+    
+    y_val = math.cos(ramc_rad)
+    x_val = -math.sin(ramc_rad) * math.cos(obliq_rad) - math.tan(lat_rad) * math.sin(obliq_rad)
+    
+    asc_rad = math.atan2(y_val, x_val)
+    asc_deg = math.degrees(asc_rad)
+    
+    tropical_ascendant = asc_deg % 360.0
+    if tropical_ascendant < 0: tropical_ascendant += 360.0
+    
+    ayanamsa_val = 24.22 if ayanamsa == '1' else 0.0
+    vedic_ascendant = (tropical_ascendant - ayanamsa_val) % 360.0
+    if vedic_ascendant < 0: vedic_ascendant += 360.0
+    
+    # 1. Right Ascension (RA): RA = (RAMC + 90) % 360
+    ra_deg = (ramc + 90.0) % 360.0
+    ra_hours = ra_deg / 15.0
+    ra_h = int(ra_hours)
+    ra_m = int((ra_hours - ra_h) * 60)
+    ra_s = int(round(((ra_hours - ra_h) * 60 - ra_m) * 60))
+    if ra_s == 60: ra_m += 1; ra_s = 0
+    if ra_m == 60: ra_h += 1; ra_m = 0
+    ra_str = f"{ra_h:02d}h {ra_m:02d}m {ra_s:02d}s ({round(ra_deg, 2)}°)"
+    
+    # 2. Declination / Kranti (Dec): sin(Dec) = sin(Obliq) * sin(Tropical Ascendant)
+    sin_dec = math.sin(obliq_rad) * math.sin(math.radians(tropical_ascendant))
+    dec_deg = math.degrees(math.asin(max(-1.0, min(1.0, sin_dec))))
+    dec_sign = "+" if dec_deg >= 0 else "-"
+    dec_abs = abs(dec_deg)
+    dec_d = int(dec_abs)
+    dec_m = int((dec_abs - dec_d) * 60)
+    dec_str = f"{dec_sign}{dec_d:02d}° {dec_m:02d}'"
+    
+    # 3. Altitude (ALT): Ascendant is rising on Eastern Horizon -> ALT = 00° 00'
+    alt_str = "00° 00' 00\""
+    
+    # 4. Azimuth (AZ): Horizon rising azimuth
+    try:
+        sin_az = sin_dec / math.cos(lat_rad)
+        az_deg = 90.0 - math.degrees(math.asin(max(-1.0, min(1.0, sin_az))))
+    except:
+        az_deg = 90.0
+    if az_deg < 0: az_deg += 360.0
+    az_d = int(az_deg)
+    az_m = int((az_deg - az_d) * 60)
+    az_str = f"{az_d:03d}° {az_m:02d}'"
+    
+    # 5. Rasi / Sign, Nakshatra, Pada, Lords
+    signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    sign_idx = int(vedic_ascendant // 30) % 12
+    sign_name = signs[sign_idx]
+    sign_deg = vedic_ascendant % 30
+    
+    nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(vedic_ascendant)
+    
+    return {
+        "longitude": round(vedic_ascendant, 2),
+        "tropical_longitude": round(tropical_ascendant, 2),
+        "degree": round(sign_deg, 2),
+        "sign": sign_name,
+        "right_ascension": ra_str,
+        "declination": dec_str,
+        "altitude": alt_str,
+        "azimuth": az_str,
+        "nakshatra": f"{nak_name} (Pada {pada})",
+        "nakshatra_lord": nak_lord,
+        "sub_lord": sub_lord
+    }
+
+
 def calculate_horizontal_coords(ecl_lon, ecl_lat, dt_str, obs_lat, obs_lng):
     import math
     
@@ -2412,6 +2511,55 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 "status": "success",
                 "data": {
                     "history": history_data,
+                    "has_more": (offset_idx + limit) < max_steps,
+                    "interval_min": interval_min,
+                    "max_steps": max_steps
+                }
+            }
+
+        # 9. Ascendant (Lagna) Detailed History (every 60 min up to 2 months)
+        elif path == '/api/astrology/lagna-history':
+            dt = get_param('datetime')
+            lat = get_param('latitude', '19.0655')
+            lng = get_param('longitude', '72.8644')
+            ayanamsa = get_param('ayanamsa', '1')
+            limit = int(get_param('limit', '50'))
+            offset_idx = int(get_param('offset', '0'))
+            interval_min = int(get_param('interval', '60'))
+            if interval_min not in [1, 5, 10, 15, 30, 60]:
+                interval_min = 60
+            limit = min(limit, 200)
+
+            import datetime
+            try:
+                if 'T' in dt:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M:%S")
+                else:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%d %H:%M:%S")
+            except:
+                try:
+                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M")
+                except:
+                    base_dt = datetime.datetime.now()
+
+            max_steps = int(87840 / interval_min)
+
+            lagna_history = []
+            for i in range(limit):
+                step_idx = offset_idx + i
+                if step_idx >= max_steps:
+                    break
+                step_dt = base_dt - datetime.timedelta(minutes=interval_min * step_idx)
+                step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+
+                detailed = calculate_true_ascendant_detailed(step_dt_str, lat, lng, ayanamsa)
+                detailed["datetime"] = step_dt.strftime("%Y-%m-%d %H:%M")
+                lagna_history.append(detailed)
+
+            response_data = {
+                "status": "success",
+                "data": {
+                    "history": lagna_history,
                     "has_more": (offset_idx + limit) < max_steps,
                     "interval_min": interval_min,
                     "max_steps": max_steps
