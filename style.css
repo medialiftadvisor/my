@@ -195,6 +195,10 @@ body {
     margin-left: 280px;
     padding: 2.5rem 3.5rem;
     min-height: 100vh;
+    max-width: calc(100vw - 280px);
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 @media (max-width: 991px) {
@@ -212,6 +216,16 @@ body {
     }
     .main-content {
         margin-left: 80px;
+        max-width: calc(100vw - 80px);
+        padding: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        margin-left: 0;
+        max-width: 100vw;
+        padding: 1rem 0.5rem;
     }
 }
 
@@ -914,11 +928,26 @@ body {
 }
 
 .planet-table-wrapper {
-    overflow-x: auto;
+    display: block;
+    overflow-x: auto !important;
     width: 100%;
     max-width: 100%;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.planet-table-wrapper::-webkit-scrollbar {
+    height: 9px;
+}
+.planet-table-wrapper::-webkit-scrollbar-track {
+    background: rgba(10, 5, 25, 0.9);
+    border-radius: 4px;
+}
+.planet-table-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    border-radius: 4px;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
 }
 
 .planet-table {

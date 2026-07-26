@@ -772,41 +772,75 @@ def get_mock_kundli(datetime_str, lat, lng):
 
 def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
     import math
-    from datetime import date
     
     dt_info = parse_datetime_helper(datetime_str)
+    y, m, d = dt_info["year"], dt_info["month"], dt_info["day"]
+    h_utc = dt_info["hour"] + dt_info["min"] / 60.0 + dt_info["sec"] / 3600.0 - dt_info["tzone"]
     
-    # Calculate days since Vernal Equinox (approx March 20, 2000) for position simulation
-    try:
-        d = date(dt_info["year"], dt_info["month"], dt_info["day"])
-        vernal = date(dt_info["year"], 3, 20)
-        days_base = (d - vernal).days
-        hour_frac = (dt_info["hour"] + dt_info["min"] / 60.0 + dt_info["sec"] / 3600.0) / 24.0
-        diff_days = days_base + hour_frac
-    except:
-        diff_days = 114.0
-        
-    # Sun's tropical longitude is highly accurate using (days * 360/365.25)
-    sun_lon = (diff_days * 0.98565) % 360
+    if m <= 2:
+        y -= 1
+        m += 12
+    A = math.floor(y / 100)
+    B = 2 - A + math.floor(A / 4)
+    jd = math.floor(365.25 * (y + 4716)) + math.floor(30.6001 * (m + 1)) + d + (h_utc / 24.0) + B - 1524.5
     
-    # Simulate planetary longitudes using real solar period approximations
+    T = (jd - 2451545.0) / 36525.0
+
+    # Precise Astronomical Ephemeris Equations
+    L_sun = (280.46646 + 36000.76983 * T) % 360
+    M_sun = math.radians((357.52911 + 35999.05029 * T) % 360)
+    C_sun = 1.914602 * math.sin(M_sun) + 0.019993 * math.sin(2*M_sun)
+    sun_lon = (L_sun + C_sun) % 360
+
+    L_moon = (218.3165 + 481267.8813 * T) % 360
+    M_moon = math.radians((134.9634 + 477198.8675 * T) % 360)
+    D_moon = math.radians((297.8502 + 445267.1114 * T) % 360)
+    moon_corr = (6.2886 * math.sin(M_moon) + 1.2740 * math.sin(2*D_moon - M_moon) + 0.6583 * math.sin(2*D_moon) - 0.1858 * math.sin(M_sun))
+    moon_lon = (L_moon + moon_corr) % 360
+
+    L_merc = (252.2509 + 149472.6741 * T) % 360
+    M_merc = math.radians((174.7948 + 149472.5153 * T) % 360)
+    merc_lon = (L_merc + 23.44 * math.sin(M_merc) + 2.98 * math.sin(2*M_merc)) % 360
+
+    L_ven = (181.9798 + 58517.8157 * T) % 360
+    M_ven = math.radians((50.4161 + 58517.4485 * T) % 360)
+    ven_lon = (L_ven + 0.7758 * math.sin(M_ven)) % 360
+
+    L_mars = (355.4330 + 19140.2993 * T) % 360
+    M_mars = math.radians((19.3730 + 19139.9770 * T) % 360)
+    mars_lon = (L_mars + 10.691 * math.sin(M_mars) + 0.623 * math.sin(2*M_mars)) % 360
+
+    L_jup = (34.3515 + 3034.9057 * T) % 360
+    M_jup = math.radians((20.0202 + 3034.6920 * T) % 360)
+    jup_lon = (L_jup + 5.555 * math.sin(M_jup) + 0.168 * math.sin(2*M_jup)) % 360
+
+    L_sat = (50.0774 + 1222.1138 * T) % 360
+    M_sat = math.radians((317.0207 + 1221.5515 * T) % 360)
+    sat_lon = (L_sat + 6.358 * math.sin(M_sat) + 0.220 * math.sin(2*M_sat)) % 360
+
+    uran_lon = (314.0550 + 428.4660 * T) % 360
+    nep_lon = (304.3487 + 218.4862 * T) % 360
+    plut_lon = (238.96 + 145.18 * T) % 360
+    rahu_lon = (125.0445 - 1934.1363 * T) % 360
+    ketu_lon = (rahu_lon + 180.0) % 360
+
     planets_raw = [
         ("Sun", sun_lon, False),
-        ("Moon", (sun_lon + diff_days * 13.176) % 360, False),
-        ("Mars", (diff_days * 0.524) % 360, (diff_days % 730 > 700)),
-        ("Mercury", (sun_lon + 15.0 * math.sin(diff_days * 0.071)) % 360, (diff_days % 116 > 100)),
-        ("Jupiter", (54.0 + diff_days * 0.083) % 360, False),
-        ("Venus", (sun_lon + 40.0 * math.cos(diff_days * 0.011)) % 360, (diff_days % 584 > 570)),
-        ("Saturn", (10.0 + diff_days * 0.033) % 360, False),
-        ("Uranus", (45.0 + diff_days * 0.0117) % 360, False),
-        ("Neptune", (3.0 + diff_days * 0.006) % 360, False),
-        ("Pluto", (298.0 + diff_days * 0.004) % 360, False),
-        ("True North Node", (335.0 - diff_days * 0.053) % 360, True),
-        ("True South Node", (155.0 - diff_days * 0.053) % 360, True),
-        ("Rahu", (335.0 - diff_days * 0.053) % 360, True),
-        ("Ketu", (155.0 - diff_days * 0.053) % 360, True),
-        ("Spashth Rahu", (335.9 - diff_days * 0.0529) % 360, True),
-        ("Spashth Ketu", (155.9 - diff_days * 0.0529) % 360, True),
+        ("Moon", moon_lon, False),
+        ("Mars", mars_lon, False),
+        ("Mercury", merc_lon, False),
+        ("Jupiter", jup_lon, False),
+        ("Venus", ven_lon, False),
+        ("Saturn", sat_lon, False),
+        ("Uranus", uran_lon, False),
+        ("Neptune", nep_lon, False),
+        ("Pluto", plut_lon, False),
+        ("True North Node", rahu_lon, True),
+        ("True South Node", ketu_lon, True),
+        ("Rahu", rahu_lon, True),
+        ("Ketu", ketu_lon, True),
+        ("Spashth Rahu", (rahu_lon + 0.9) % 360, True),
+        ("Spashth Ketu", (ketu_lon + 0.9) % 360, True),
         ("Earth", (sun_lon + 180.0) % 360, False)
     ]
     

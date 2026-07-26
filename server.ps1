@@ -76,6 +76,72 @@ function Calculate-Lagna($year, $month, $day, $hourUTC, $lat, $lon, $ayanamsa = 
     }
 }
 
+function Calculate-EphemerisPlanets($year, $month, $day, $hourUTC, $ayanamsaVal = 0.0) {
+    if ($month -le 2) { $year -= 1; $month += 12 }
+    $A = [math]::Floor($year / 100)
+    $B = 2 - $A + [math]::Floor($A / 4)
+    $JD = [math]::Floor(365.25 * ($year + 4716)) + [math]::Floor(30.6001 * ($month + 1)) + $day + ($hourUTC / 24.0) + $B - 1524.5
+    $T = ($JD - 2451545.0) / 36525.0
+
+    $L_sun = (280.46646 + 36000.76983 * $T) % 360
+    $M_sun = (357.52911 + 35999.05029 * $T) * [math]::PI / 180.0
+    $C_sun = 1.914602 * [math]::Sin($M_sun) + 0.019993 * [math]::Sin(2*$M_sun)
+    $sun_lon = ($L_sun + $C_sun) % 360; if ($sun_lon -lt 0) { $sun_lon += 360 }
+
+    $L_moon = (218.3165 + 481267.8813 * $T) % 360
+    $M_moon = (134.9634 + 477198.8675 * $T) * [math]::PI / 180.0
+    $D_moon = (297.8502 + 445267.1114 * $T) * [math]::PI / 180.0
+    $moon_corr = 6.2886 * [math]::Sin($M_moon) + 1.2740 * [math]::Sin(2*$D_moon - $M_moon) + 0.6583 * [math]::Sin(2*$D_moon)
+    $moon_lon = ($L_moon + $moon_corr) % 360; if ($moon_lon -lt 0) { $moon_lon += 360 }
+
+    $L_merc = (252.2509 + 149472.6741 * $T) % 360
+    $M_merc = (174.7948 + 149472.5153 * $T) * [math]::PI / 180.0
+    $merc_lon = ($L_merc + 23.44 * [math]::Sin($M_merc)) % 360; if ($merc_lon -lt 0) { $merc_lon += 360 }
+
+    $L_ven = (181.9798 + 58517.8157 * $T) % 360
+    $M_ven = (50.4161 + 58517.4485 * $T) * [math]::PI / 180.0
+    $ven_lon = ($L_ven + 0.7758 * [math]::Sin($M_ven)) % 360; if ($ven_lon -lt 0) { $ven_lon += 360 }
+
+    $L_mars = (355.4330 + 19140.2993 * $T) % 360
+    $M_mars = (19.3730 + 19139.9770 * $T) * [math]::PI / 180.0
+    $mars_lon = ($L_mars + 10.691 * [math]::Sin($M_mars)) % 360; if ($mars_lon -lt 0) { $mars_lon += 360 }
+
+    $L_jup = (34.3515 + 3034.9057 * $T) % 360
+    $M_jup = (20.0202 + 3034.6920 * $T) * [math]::PI / 180.0
+    $jup_lon = ($L_jup + 5.555 * [math]::Sin($M_jup)) % 360; if ($jup_lon -lt 0) { $jup_lon += 360 }
+
+    $L_sat = (50.0774 + 1222.1138 * $T) % 360
+    $M_sat = (317.0207 + 1221.5515 * $T) * [math]::PI / 180.0
+    $sat_lon = ($L_sat + 6.358 * [math]::Sin($M_sat)) % 360; if ($sat_lon -lt 0) { $sat_lon += 360 }
+
+    $uran_lon = (314.0550 + 428.4660 * $T) % 360; if ($uran_lon -lt 0) { $uran_lon += 360 }
+    $nep_lon = (304.3487 + 218.4862 * $T) % 360; if ($nep_lon -lt 0) { $nep_lon += 360 }
+    $plut_lon = (238.96 + 145.18 * $T) % 360; if ($plut_lon -lt 0) { $plut_lon += 360 }
+    $rahu_lon = (125.0445 - 1934.1363 * $T) % 360; if ($rahu_lon -lt 0) { $rahu_lon += 360 }
+    $ketu_lon = ($rahu_lon + 180.0) % 360; if ($ketu_lon -lt 0) { $ketu_lon += 360 }
+
+    if ($ayanamsaVal -gt 0) {
+        $sun_lon = ($sun_lon - $ayanamsaVal) % 360; if ($sun_lon -lt 0) { $sun_lon += 360 }
+        $moon_lon = ($moon_lon - $ayanamsaVal) % 360; if ($moon_lon -lt 0) { $moon_lon += 360 }
+        $merc_lon = ($merc_lon - $ayanamsaVal) % 360; if ($merc_lon -lt 0) { $merc_lon += 360 }
+        $ven_lon = ($ven_lon - $ayanamsaVal) % 360; if ($ven_lon -lt 0) { $ven_lon += 360 }
+        $mars_lon = ($mars_lon - $ayanamsaVal) % 360; if ($mars_lon -lt 0) { $mars_lon += 360 }
+        $jup_lon = ($jup_lon - $ayanamsaVal) % 360; if ($jup_lon -lt 0) { $jup_lon += 360 }
+        $sat_lon = ($sat_lon - $ayanamsaVal) % 360; if ($sat_lon -lt 0) { $sat_lon += 360 }
+        $uran_lon = ($uran_lon - $ayanamsaVal) % 360; if ($uran_lon -lt 0) { $uran_lon += 360 }
+        $nep_lon = ($nep_lon - $ayanamsaVal) % 360; if ($nep_lon -lt 0) { $nep_lon += 360 }
+        $plut_lon = ($plut_lon - $ayanamsaVal) % 360; if ($plut_lon -lt 0) { $plut_lon += 360 }
+        $rahu_lon = ($rahu_lon - $ayanamsaVal) % 360; if ($rahu_lon -lt 0) { $rahu_lon += 360 }
+        $ketu_lon = ($ketu_lon - $ayanamsaVal) % 360; if ($ketu_lon -lt 0) { $ketu_lon += 360 }
+    }
+
+    return [PSCustomObject]@{
+        Sun = $sun_lon; Moon = $moon_lon; Mercury = $merc_lon; Venus = $ven_lon
+        Mars = $mars_lon; Jupiter = $jup_lon; Saturn = $sat_lon; Uranus = $uran_lon
+        Neptune = $nep_lon; Pluto = $plut_lon; Rahu = $rahu_lon; Ketu = $ketu_lon
+    }
+}
+
 while ($listener.IsListening) {
     try {
         $context = $listener.GetContext()
@@ -154,39 +220,27 @@ while ($listener.IsListening) {
                 $ascSignIdx = [math]::Floor($ascLon / 30) % 12
                 $ascDeg = $ascLon % 30
 
-                # Planetary longitudes stepped backwards by hour
-                $sunLon = (59.2 - ($stepIdx * $intervalMin / 60.0 * 0.041)) % 360; if ($sunLon -lt 0) { $sunLon += 360 }
-                $moonLon = (38.5 - ($stepIdx * $intervalMin / 60.0 * 0.548)) % 360; if ($moonLon -lt 0) { $moonLon += 360 }
-                $marsLon = (345.3 - ($stepIdx * $intervalMin / 60.0 * 0.024)) % 360; if ($marsLon -lt 0) { $marsLon += 360 }
-                $mercLon = (64.1 - ($stepIdx * $intervalMin / 60.0 * 0.055)) % 360; if ($mercLon -lt 0) { $mercLon += 360 }
-                $jupLon = (322.8 - ($stepIdx * $intervalMin / 60.0 * 0.003)) % 360; if ($jupLon -lt 0) { $jupLon += 360 }
-                $venLon = (11.2 - ($stepIdx * $intervalMin / 60.0 * 0.05)) % 360; if ($venLon -lt 0) { $venLon += 360 }
-                $satLon = (276.4 - ($stepIdx * $intervalMin / 60.0 * 0.001)) % 360; if ($satLon -lt 0) { $satLon += 360 }
-                $uranLon = (35.0 - ($stepIdx * $intervalMin / 60.0 * 0.0005)) % 360; if ($uranLon -lt 0) { $uranLon += 360 }
-                $nepLon = (340.0 - ($stepIdx * $intervalMin / 60.0 * 0.0003)) % 360; if ($nepLon -lt 0) { $nepLon += 360 }
-                $plutLon = (300.0 - ($stepIdx * $intervalMin / 60.0 * 0.0002)) % 360; if ($plutLon -lt 0) { $plutLon += 360 }
-                $rahuLon = (155.0 + ($stepIdx * $intervalMin / 60.0 * 0.0022)) % 360; if ($rahuLon -lt 0) { $rahuLon += 360 }
-                $ketuLon = ($rahuLon + 180.0) % 360
+                $eph = Calculate-EphemerisPlanets $year $month $day $hourUTC $ayanamsaVal
 
                 $makePlanet = { param($lon) [PSCustomObject]@{ sign = $signs[[math]::Floor($lon / 30) % 12]; degree = [math]::Round($lon % 30, 2); longitude = [math]::Round($lon, 2) } }
 
                 $stepPlanets = [PSCustomObject]@{
                     "Ascendant" = [PSCustomObject]@{ sign = $signs[$ascSignIdx]; degree = [math]::Round($ascDeg, 2); longitude = [math]::Round($ascLon, 2) }
-                    "Sun" = & $makePlanet $sunLon
-                    "Moon" = & $makePlanet $moonLon
-                    "Mars" = & $makePlanet $marsLon
-                    "Mercury" = & $makePlanet $mercLon
-                    "Jupiter" = & $makePlanet $jupLon
-                    "Venus" = & $makePlanet $venLon
-                    "Saturn" = & $makePlanet $satLon
-                    "Uranus" = & $makePlanet $uranLon
-                    "Neptune" = & $makePlanet $nepLon
-                    "Pluto" = & $makePlanet $plutLon
-                    "Rahu" = & $makePlanet $rahuLon
-                    "Ketu" = & $makePlanet $ketuLon
-                    "Spashth Rahu" = & $makePlanet $rahuLon
-                    "Spashth Ketu" = & $makePlanet $ketuLon
-                    "Earth" = & $makePlanet (($sunLon + 180) % 360)
+                    "Sun" = & $makePlanet $eph.Sun
+                    "Moon" = & $makePlanet $eph.Moon
+                    "Mars" = & $makePlanet $eph.Mars
+                    "Mercury" = & $makePlanet $eph.Mercury
+                    "Jupiter" = & $makePlanet $eph.Jupiter
+                    "Venus" = & $makePlanet $eph.Venus
+                    "Saturn" = & $makePlanet $eph.Saturn
+                    "Uranus" = & $makePlanet $eph.Uranus
+                    "Neptune" = & $makePlanet $eph.Neptune
+                    "Pluto" = & $makePlanet $eph.Pluto
+                    "Rahu" = & $makePlanet $eph.Rahu
+                    "Ketu" = & $makePlanet $eph.Ketu
+                    "Spashth Rahu" = & $makePlanet (($eph.Rahu + 0.9) % 360)
+                    "Spashth Ketu" = & $makePlanet (($eph.Ketu + 0.9) % 360)
+                    "Earth" = & $makePlanet (($eph.Sun + 180) % 360)
                 }
 
                 $history += [PSCustomObject]@{

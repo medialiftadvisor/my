@@ -1162,7 +1162,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </button>
                                     </div>
 
-                                    <div class="planet-table-wrapper" style="max-height: 480px; overflow-y: auto; width: 100%;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.78rem; color: #ffd700; font-family: Outfit; background: rgba(255,215,0,0.06); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,215,0,0.18);">
+                                        <span><i class="fa-solid fa-arrows-left-right" style="margin-right: 0.4rem;"></i> <strong>Horizontal Scrollable:</strong> Swipe or scroll left & right to view all 15 celestial placements</span>
+                                        <span style="font-weight: 700; opacity: 0.85;">← Scroll Left / Right →</span>
+                                    </div>
+
+                                    <div class="planet-table-wrapper" style="max-height: 480px; overflow-y: auto; overflow-x: auto; width: 100%;">
                                         <table id="history-main-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
                                             <thead>
                                                 <tr>
