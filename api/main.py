@@ -180,47 +180,54 @@ def get_planet_speed(planet_name, is_retrograde=False):
 
 def calculate_true_ascendant(dt_str, lat, lng):
     import math
-    from datetime import datetime
     
-    # Parse datetime
+    # Parse datetime to UTC components
     dt_info = parse_datetime_helper(dt_str)
     
-    # Calculate Julian Date (JD)
     y, m, d = dt_info["year"], dt_info["month"], dt_info["day"]
     h, mn, s = dt_info["hour"], dt_info["min"], dt_info["sec"]
     tz = dt_info["tzone"]
     
-    # Convert local time to UTC decimal hours
-    utc_hours = h + mn/60.0 + s/3600.0 - tz
+    # UTC hours
+    hour_utc = h + mn / 60.0 + s / 3600.0 - tz
     
-    # Julian Date calculation
+    # Astronomical Julian Day (JD) calculation
     if m <= 2:
         y -= 1
         m += 12
-    A = int(y / 100)
-    B = 2 - A + int(A / 4)
-    jd = int(365.25 * (y + 4716)) + int(30.6001 * (m + 1)) + d + B - 1524.5 + (utc_hours / 24.0)
+    a_val = math.floor(y / 100)
+    b_val = 2 - a_val + math.floor(a_val / 4)
+    jd = math.floor(365.25 * (y + 4716)) + math.floor(30.6001 * (m + 1)) + d + (hour_utc / 24.0) + b_val - 1524.5
     
-    # Greenwich Sidereal Time (GST) in degrees
-    d_jd = jd - 2451545.0
-    mst = (280.46061837 + 360.98564736629 * d_jd) % 360
+    # Greenwich Mean Sidereal Time (GMST)
+    t_val = (jd - 2451545.0) / 36525.0
+    gmst_deg = (280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * t_val * t_val - (t_val * t_val * t_val) / 38710000.0) % 360.0
+    if gmst_deg < 0:
+        gmst_deg += 360.0
+        
+    # Right Ascension of Medium Coeli (RAMC / LST)
+    ramc = (gmst_deg + float(lng)) % 360.0
+    if ramc < 0:
+        ramc += 360.0
+        
+    obliquity = 23.4392911
     
-    # Local Sidereal Time (LST) in degrees
-    lst = (mst + float(lng)) % 360
-    
-    # Obliquity eps = 23.44 degrees
-    eps = math.radians(23.44)
-    lst_rad = math.radians(lst)
+    ramc_rad = math.radians(ramc)
+    obliq_rad = math.radians(obliquity)
     lat_rad = math.radians(float(lat))
     
-    # Ascendant formula
-    # tan(asc) = -cos(lst) / (sin(lst)*cos(eps) + tan(lat)*sin(eps))
-    num = -math.cos(lst_rad)
-    den = math.sin(lst_rad) * math.cos(eps) + math.tan(lat_rad) * math.sin(eps)
+    # Pure mathematical Lagna / Ascendant formula: atan2(y, x)
+    y_val = math.cos(ramc_rad)
+    x_val = -math.sin(ramc_rad) * math.cos(obliq_rad) - math.tan(lat_rad) * math.sin(obliq_rad)
     
-    asc_rad = math.atan2(num, den)
-    asc_deg = math.degrees(asc_rad) % 360
-    return asc_deg
+    asc_rad = math.atan2(y_val, x_val)
+    asc_deg = math.degrees(asc_rad)
+    
+    tropical_ascendant = asc_deg % 360.0
+    if tropical_ascendant < 0:
+        tropical_ascendant += 360.0
+        
+    return tropical_ascendant
 
 def calculate_horizontal_coords(ecl_lon, ecl_lat, dt_str, obs_lat, obs_lng):
     import math
@@ -886,21 +893,22 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
     # Let's ensure Ascendant / Lagna exists in planets
     has_asc = False
     sun_lon = 0.0
-    for p in planets:
+    asc_idx = -1
+    for i, p in enumerate(planets):
         p_name = p.get("name") or p.get("planet") or ""
         if p_name.lower() in ["ascendant", "lagna"]:
             has_asc = True
+            asc_idx = i
         if p_name.lower() == "sun" and p.get("longitude") is not None:
             sun_lon = float(p["longitude"])
             
+    asc_lon = calculate_true_ascendant(dt, lat, lng)
+    asc_deg = asc_lon % 30
+    asc_sign_idx = int(asc_lon / 30) % 12
+    asc_sign = signs_list[asc_sign_idx]
+    asc_lord = lord_map.get(asc_sign, "N/A")
+    
     if not has_asc:
-        asc_lon = calculate_true_ascendant(dt, lat, lng)
-        asc_deg = asc_lon % 30
-        
-        asc_sign_idx = int(asc_lon / 30) % 12
-        asc_sign = signs_list[asc_sign_idx]
-        asc_lord = lord_map.get(asc_sign, "N/A")
-        
         planets.append({
             "name": "Ascendant",
             "planet": "Ascendant",
@@ -915,6 +923,11 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             },
             "house": 1
         })
+    else:
+        planets[asc_idx]["longitude"] = asc_lon
+        planets[asc_idx]["degree"] = asc_deg
+        if not planets[asc_idx].get("rasi") or not planets[asc_idx]["rasi"].get("name"):
+            planets[asc_idx]["rasi"] = {"name": asc_sign, "lord": {"name": asc_lord}}
         
     for p in planets:
         lon = p.get("longitude")
