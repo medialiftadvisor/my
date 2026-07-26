@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Dashboard | Prokerala Astrology Showcase</title>
+    
+    <!-- Google Fonts: Syne & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Ambient glowing backgrounds -->
+    <div class="glow-bg bg-1"></div>
+    <div class="glow-bg bg-2"></div>
+
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-star-and-crescent brand-icon"></i>
+                    <div class="brand-text">
+                        <span class="brand-title">COSMIC</span>
+                        <span class="brand-subtitle">DASHBOARD</span>
+                    </div>
+                </div>
+                <button id="theme-toggle-btn" class="btn" title="Toggle Light/Dark Theme" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--color-gold); width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; margin-left: 0.5rem; flex-shrink: 0; transition: all 0.2s;">
+                    <i class="fa-solid fa-moon" id="theme-toggle-icon"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="#home" class="menu-link active" data-view="home-view">
+                            <i class="fa-solid fa-house-chimney-window"></i> <span data-i18n="menu-home">Dashboard Home</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#horoscope" class="menu-link" data-view="horoscope-view">
+                            <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="menu-horoscope">Daily Horoscope</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#panchang" class="menu-link" data-view="panchang-view">
+                            <i class="fa-solid fa-calendar-day"></i> <span data-i18n="menu-panchang">Vedic Panchang</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#planet-position" class="menu-link" data-view="planet-position-view">
+                            <i class="fa-solid fa-earth-asia"></i> <span data-i18n="menu-positions">Planet Positions</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#natal-chart" class="menu-link" data-view="natal-chart-view">
+                            <i class="fa-solid fa-compass"></i> <span data-i18n="menu-wheel">Natal Chart Wheel</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#kundli" class="menu-link" data-view="kundli-view">
+                            <i class="fa-solid fa-dharmachakra"></i> <span data-i18n="menu-kundli">Kundli Generator</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#matching" class="menu-link" data-view="matching-view">
+                            <i class="fa-solid fa-heart-pulse"></i> <span data-i18n="menu-matching">Relationship Matcher</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="mode-indicator" id="demo-indicator">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Demo Mode (Mock Data)</span>
+                </div>
+                <div class="footer-credit">Powered by Prokerala API</div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            
+            <!-- Dashboard Top Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="view-title">Dashboard Home</h1>
+                    <p id="view-subtitle" class="text-muted">Welcome to your daily cosmic alignment forecast.</p>
+                </div>
+                <div class="header-right" style="display: flex; gap: 1rem; align-items: center;">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <i class="fa-solid fa-globe" style="position: absolute; left: 10px; color: #ffd700; font-size: 0.85rem; pointer-events: none;"></i>
+                        <select id="api-provider-select" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #ffd700; padding: 0.5rem 1rem 0.5rem 2rem; font-family: Outfit; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; outline: none; transition: background 0.3s; font-size: 0.85rem; appearance: none; -webkit-appearance: none; border-right: 8px solid transparent;">
+                            <option value="prokerala" style="background: #18142c; color: #fff;">Prokerala API</option>
+                            <option value="astronomyapi" style="background: #18142c; color: #ffd700;">AstronomyAPI</option>
+                            <option value="divineapi" style="background: #18142c; color: #ffd700;">Divine API</option>
+                        </select>
+                    </div>
+                    <button id="lang-toggle-btn" class="btn" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #ffd700; padding: 0.5rem 1rem; font-family: Outfit; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.3s; font-size: 0.85rem;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <i class="fa-solid fa-language" style="font-size: 1.1rem;"></i>
+                        <span id="lang-btn-text">हिन्दी</span>
+                    </button>
+                    <div class="date-display">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span id="current-date">Thursday, July 9, 2026</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Main Container -->
+            <main class="main-views">
+                
+                <!-- View 1: Dashboard Home -->
+                <section class="dashboard-view active" id="home-view">
+                    <div class="home-grid">
+                        <div class="welcome-banner glass-card">
+                            <div class="banner-content">
+                                <h2>Your Daily Alignment is Clear</h2>
+                                <p>Planetary energies are highly favorable for self-reflection and personal growth. Today favors structured routines, discipline, and completing tasks that require focus.</p>
+                                <a href="#horoscope" class="btn btn-gold anchor-link">Read Sign Forecast <i class="fa-solid fa-arrow-right"></i></a>
+                            </div>
+                            <div class="banner-graphic">
+                                <i class="fa-solid fa-compass-drafting spinner-slow"></i>
+                            </div>
+                        </div>
+
+                        <div class="panchang-quick-card glass-card">
+                            <h3>Today's Panchang Overview</h3>
+                            <div class="quick-meta-list">
+                                <div class="quick-meta-item">
+                                    <span class="label">Sunrise / Sunset</span>
+                                    <strong id="home-sunrise-set">06:04 AM / 07:11 PM</strong>
+                                </div>
+                                <div class="quick-meta-item">
+                                    <span class="label">Current Tithi</span>
+                                    <strong id="home-tithi">Ekadashi (Shukla Paksha)</strong>
+                                </div>
+                                <div class="quick-meta-item">
+                                    <span class="label">Current Nakshatra</span>
+                                    <strong id="home-nakshatra">Chitra</strong>
+                                </div>
+                            </div>
+                            <a href="#panchang" class="view-more-link anchor-link">View Full Panchang <i class="fa-solid fa-chevron-right"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="remedies-container glass-card margin-top-lg">
+                        <h3>Cosmic Discipline Actions for Today</h3>
+                        <div class="remedies-grid">
+                            <div class="remedy-item">
+                                <div class="remedy-icon"><i class="fa-solid fa-dumbbell"></i></div>
+                                <div class="remedy-text">
+                                    <h4>Mars Grounding (Aries/Scorpio)</h4>
+                                    <p>Physical workouts or stretching will discharge extra nervous energy and prevent irritation.</p>
+                                </div>
+                            </div>
+                            <div class="remedy-item">
+                                <div class="remedy-icon"><i class="fa-solid fa-mug-hot"></i></div>
+                                <div class="remedy-text">
+                                    <h4>Venus Balance (Taurus/Libra)</h4>
+                                    <p>Dedicate 10 minutes to write in a gratitude journal to harmonize emotional and creative blocks.</p>
+                                </div>
+                            </div>
+                            <div class="remedy-item">
+                                <div class="remedy-icon"><i class="fa-solid fa-brain"></i></div>
+                                <div class="remedy-text">
+                                    <h4>Mercury Clarity (Gemini/Virgo)</h4>
+                                    <p>Practice single-task focus. Divide your work into 25-minute sprints to eliminate overthinking.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View 2: Daily Horoscope -->
+                <section class="dashboard-view" id="horoscope-view">
+                    <div class="zodiac-elements-filter">
+                        <button class="filter-btn active" data-element="all">All Signs</button>
+                        <button class="filter-btn" data-element="fire">Fire</button>
+                        <button class="filter-btn" data-element="earth">Earth</button>
+                        <button class="filter-btn" data-element="air">Air</button>
+                        <button class="filter-btn" data-element="water">Water</button>
+                    </div>
+
+                    <div class="zodiac-grid">
+                        <!-- Aries -->
+                        <div class="zodiac-card glass-card" data-element="fire" data-sign="aries">
+                            <div class="sign-icon"><i class="fa-solid fa-hand-fist"></i></div>
+                            <h3>Aries</h3>
+                            <span class="sign-date">Mar 21 - Apr 19</span>
+                            <p class="excerpt">Today promises to be an energetic day for Aries. Your goals are well within reach...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Taurus -->
+                        <div class="zodiac-card glass-card" data-element="earth" data-sign="taurus">
+                            <div class="sign-icon"><i class="fa-solid fa-leaf"></i></div>
+                            <h3>Taurus</h3>
+                            <span class="sign-date">Apr 20 - May 20</span>
+                            <p class="excerpt">A day of grounding and stability. Take time to reflect on your career progression...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Gemini -->
+                        <div class="zodiac-card glass-card" data-element="air" data-sign="gemini">
+                            <div class="sign-icon"><i class="fa-solid fa-comments"></i></div>
+                            <h3>Gemini</h3>
+                            <span class="sign-date">May 21 - Jun 20</span>
+                            <p class="excerpt">Communication is your superpower today. You'll express complex ideas with ease...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Cancer -->
+                        <div class="zodiac-card glass-card" data-element="water" data-sign="cancer">
+                            <div class="sign-icon"><i class="fa-solid fa-water"></i></div>
+                            <h3>Cancer</h3>
+                            <span class="sign-date">Jun 21 - Jul 22</span>
+                            <p class="excerpt">Emotional clarity is highlighted. Give yourself space to heal from past habits...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Leo -->
+                        <div class="zodiac-card glass-card" data-element="fire" data-sign="leo">
+                            <div class="sign-icon"><i class="fa-solid fa-crown"></i></div>
+                            <h3>Leo</h3>
+                            <span class="sign-date">Jul 23 - Aug 22</span>
+                            <p class="excerpt">Your natural leadership qualities shine. People are drawn to your optimism and warmth...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Virgo -->
+                        <div class="zodiac-card glass-card" data-element="earth" data-sign="virgo">
+                            <div class="sign-icon"><i class="fa-solid fa-list-check"></i></div>
+                            <h3>Virgo</h3>
+                            <span class="sign-date">Aug 23 - Sep 22</span>
+                            <p class="excerpt">An excellent day for organizing structures. The systems you build today bring peace...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Libra -->
+                        <div class="zodiac-card glass-card" data-element="air" data-sign="libra">
+                            <div class="sign-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                            <h3>Libra</h3>
+                            <span class="sign-date">Sep 23 - Oct 22</span>
+                            <p class="excerpt">Balance returns to your daily loops. Step back from routines and practice self-care...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Scorpio -->
+                        <div class="zodiac-card glass-card" data-element="water" data-sign="scorpio">
+                            <div class="sign-icon"><i class="fa-solid fa-eye"></i></div>
+                            <h3>Scorpio</h3>
+                            <span class="sign-date">Oct 23 - Nov 21</span>
+                            <p class="excerpt">Intense focus allows you to overcome a persistent obstacle. Trust your intuition...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Sagittarius -->
+                        <div class="zodiac-card glass-card" data-element="fire" data-sign="sagittarius">
+                            <div class="sign-icon"><i class="fa-solid fa-compass"></i></div>
+                            <h3>Sagittarius</h3>
+                            <span class="sign-date">Nov 22 - Dec 21</span>
+                            <p class="excerpt">Your optimistic outlook opens doors today. A perfect time for long-term growth planning...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Capricorn -->
+                        <div class="zodiac-card glass-card" data-element="earth" data-sign="capricorn">
+                            <div class="sign-icon"><i class="fa-solid fa-gem"></i></div>
+                            <h3>Capricorn</h3>
+                            <span class="sign-date">Dec 22 - Jan 19</span>
+                            <p class="excerpt">Your professional drive is at an all-time high. Hard work is noticed and appreciated...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Aquarius -->
+                        <div class="zodiac-card glass-card" data-element="air" data-sign="aquarius">
+                            <div class="sign-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                            <h3>Aquarius</h3>
+                            <span class="sign-date">Jan 20 - Feb 18</span>
+                            <p class="excerpt">Innovative thoughts fill your mind today. You are ready to break old limitations...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                        <!-- Pisces -->
+                        <div class="zodiac-card glass-card" data-element="water" data-sign="pisces">
+                            <div class="sign-icon"><i class="fa-solid fa-wand-sparkles"></i></div>
+                            <h3>Pisces</h3>
+                            <span class="sign-date">Feb 19 - Mar 20</span>
+                            <p class="excerpt">Deep intuitive insights guide you today. A great day to practice mindfulness routines...</p>
+                            <button class="btn btn-outline btn-sm">Read Details</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Planet Positions -->
+                <section class="dashboard-view" id="planet-position-view">
+                    <div class="view-split">
+                        <div class="calculator-form-container glass-card">
+                            <h3>Planet Positions Calculator</h3>
+                            <p class="text-muted">Enter details to calculate coordinates, zodiac signs, and retrograde statuses of celestial bodies.</p>
+                            <form id="planet-position-form" class="dashboard-form">
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label for="planet-pos-date">Date & Time</label>
+                                        <input type="datetime-local" id="planet-pos-date" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. Mumbai, New York...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-6">
+                                        <label for="planet-pos-lat">Latitude</label>
+                                        <input type="number" step="any" id="planet-pos-lat" placeholder="19.076" required>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="planet-pos-lng">Longitude</label>
+                                        <input type="number" step="any" id="planet-pos-lng" placeholder="72.877" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label for="planet-pos-zodiac" data-i18n="form-zodiac-system">Zodiac System</label>
+                                        <select id="planet-pos-zodiac">
+                                            <option value="0" data-i18n="zodiac-tropical">Tropical (Western / Sayana)</option>
+                                            <option value="1" data-i18n="zodiac-sidereal" selected>Sidereal (Vedic / Nirayana - Lahiri)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-gold btn-full">Calculate Positions <i class="fa-solid fa-earth-asia"></i></button>
+                            </form>
+                        </div>
+                        
+                        <div class="calculator-result-container" id="planet-position-result">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-earth-asia spinner-slow"></i>
+                                <p>Set date and location parameters, and submit the calculator to retrieve live planetary coordinates.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Western Natal Chart -->
+                <section class="dashboard-view" id="natal-chart-view">
+                    <div class="view-split">
+                        <div class="calculator-form-container glass-card">
+                            <h3>Natal Chart Calculator</h3>
+                            <p class="text-muted">Generate a Western Astrology Natal Chart wheel showing aspect lines, signs, and houses.</p>
+                            <form id="natal-chart-form" class="dashboard-form">
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label for="natal-chart-date">Date & Time</label>
+                                        <input type="datetime-local" id="natal-chart-date" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. Mumbai, London...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-6">
+                                        <label for="natal-chart-lat">Latitude</label>
+                                        <input type="number" step="any" id="natal-chart-lat" placeholder="19.076" required>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="natal-chart-lng">Longitude</label>
+                                        <input type="number" step="any" id="natal-chart-lng" placeholder="72.877" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label for="natal-chart-zodiac" data-i18n="form-zodiac-system">Zodiac System</label>
+                                        <select id="natal-chart-zodiac">
+                                            <option value="0" data-i18n="zodiac-tropical">Tropical (Western / Sayana)</option>
+                                            <option value="1" data-i18n="zodiac-sidereal" selected>Sidereal (Vedic / Nirayana - Lahiri)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-gold btn-full">Generate Natal Chart <i class="fa-solid fa-compass"></i></button>
+                            </form>
+                        </div>
+                        
+                        <div class="calculator-result-container" id="natal-chart-result">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-compass spinner-slow"></i>
+                                <p>Provide query parameters and generate the visual Western Natal Wheel diagram.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View 3: Vedic Panchang -->
+                <section class="dashboard-view" id="panchang-view">
+                    <div class="view-split">
+                        <div class="calculator-form-container glass-card">
+                            <h3>Panchang Calculator</h3>
+                            <p class="text-muted">Enter details to calculate Tithi, Nakshatra, and auspicious muhurtas for any day.</p>
+                            <form id="panchang-form" class="dashboard-form">
+                                <div class="form-row">
+                                    <div class="form-group col-12">
+                                        <label for="panchang-date">Date & Time</label>
+                                        <input type="datetime-local" id="panchang-date" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. London, Tokyo...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-6">
+                                        <label for="panchang-lat">Latitude</label>
+                                        <input type="number" step="any" id="panchang-lat" placeholder="19.076" required>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="panchang-lng">Longitude</label>
+                                        <input type="number" step="any" id="panchang-lng" placeholder="72.877" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-gold btn-full">Generate Panchang <i class="fa-solid fa-calculator"></i></button>
+                            </form>
+                        </div>
+                        
+                        <div class="calculator-result-container" id="panchang-result">
+                            <div class="empty-state">
+                                <i class="fa-regular fa-calendar-check spinner-slow"></i>
+                                <p>Set date and location details, and submit the calculator to retrieve real-time Panchang data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View 4: Kundli Generator -->
+                <section class="dashboard-view" id="kundli-view">
+                    <div class="view-split">
+                        <div class="calculator-form-container glass-card">
+                            <h3>Birth Chart Calculator</h3>
+                            <p class="text-muted">Enter your exact birth parameters to calculate Lagna (Ascendant) and chart coordinates.</p>
+                            <form id="kundli-form" class="dashboard-form">
+                                <div class="form-row">
+                                    <div class="form-group col-6">
+                                        <label for="kundli-dob">Date of Birth</label>
+                                        <input type="date" id="kundli-dob" required>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="kundli-tob">Time of Birth</label>
+                                        <input type="time" id="kundli-tob" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Search Location & Coordinates</label>
+                                    <div style="display: flex; gap: 0.5rem; position: relative;">
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" class="location-search-input" placeholder="Type city (e.g. New Delhi, Sydney...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                            <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-gold detect-gps-btn" title="Detect current GPS location" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-6">
+                                        <label for="kundli-lat">Latitude</label>
+                                        <input type="number" step="any" id="kundli-lat" placeholder="19.076" required>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="kundli-lng">Longitude</label>
+                                        <input type="number" step="any" id="kundli-lng" placeholder="72.877" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-gold btn-full">Generate Kundli Profile <i class="fa-solid fa-dharmachakra"></i></button>
+                            </form>
+                        </div>
+                        
+                        <div class="calculator-result-container" id="kundli-result">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-dharmachakra pulse-slow"></i>
+                                <p>Input birth parameters to construct planetary positions and generate your visual birth chart layout.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View 5: Relationship Matching -->
+                <section class="dashboard-view" id="matching-view">
+                    <div class="view-split">
+                        <div class="calculator-form-container glass-card">
+                            <h3>Synergy Matching</h3>
+                            <p class="text-muted">Enter birth parameters for two profiles to calculate their compatibility matching index.</p>
+                            <form id="matching-form" class="dashboard-form">
+                                <div class="matching-panels">
+                                    <!-- Profile 1 -->
+                                    <div class="partner-panel">
+                                        <h4>Profile 1 (e.g. Female)</h4>
+                                        <div class="form-row">
+                                            <div class="form-group col-12">
+                                                <label for="match-g-dob">Date & Time of Birth</label>
+                                                <input type="datetime-local" id="match-g-dob" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Search Location</label>
+                                            <div style="display: flex; gap: 0.5rem; position: relative;">
+                                                <div style="position: relative; flex: 1;">
+                                                    <input type="text" class="location-search-input" placeholder="Type city (e.g. Paris...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                                    <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                                </div>
+                                                <button type="button" class="btn btn-gold detect-gps-btn" title="Detect GPS" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-6">
+                                                <label for="match-g-lat">Lat</label>
+                                                <input type="number" step="any" id="match-g-lat" placeholder="19.076" required>
+                                            </div>
+                                            <div class="form-group col-6">
+                                                <label for="match-g-lng">Lng</label>
+                                                <input type="number" step="any" id="match-g-lng" placeholder="72.877" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Profile 2 -->
+                                    <div class="partner-panel">
+                                        <h4>Profile 2 (e.g. Male)</h4>
+                                        <div class="form-row">
+                                            <div class="form-group col-12">
+                                                <label for="match-b-dob">Date & Time of Birth</label>
+                                                <input type="datetime-local" id="match-b-dob" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Search Location</label>
+                                            <div style="display: flex; gap: 0.5rem; position: relative;">
+                                                <div style="position: relative; flex: 1;">
+                                                    <input type="text" class="location-search-input" placeholder="Type city (e.g. Cairo...)" style="width: 100%; box-sizing: border-box; padding-right: 2.2rem;" autocomplete="off">
+                                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none;"></i>
+                                                    <div class="geocoding-results-dropdown glass-card" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; max-height: 200px; overflow-y: auto; background: rgba(10,5,25,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 0.25rem 0;"></div>
+                                                </div>
+                                                <button type="button" class="btn btn-gold detect-gps-btn" title="Detect GPS" style="flex: none; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--color-gold); background: transparent; color: var(--color-gold); cursor: pointer;">
+                                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-6">
+                                                <label for="match-b-lat">Lat</label>
+                                                <input type="number" step="any" id="match-b-lat" placeholder="19.076" required>
+                                            </div>
+                                            <div class="form-group col-6">
+                                                <label for="match-b-lng">Lng</label>
+                                                <input type="number" step="any" id="match-b-lng" placeholder="72.877" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-gold btn-full margin-top-md">Calculate Compatibility <i class="fa-solid fa-heart-circle-check"></i></button>
+                            </form>
+                        </div>
+                        
+                        <div class="calculator-result-container" id="matching-result">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-heart pulse-slow"></i>
+                                <p>Submit coordinates and birth dates for both individuals to generate the Ashta Kuta compatibility index.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Horoscope Modal Overlay -->
+    <div class="modal" id="horoscope-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content glass-card">
+            <button class="modal-close" id="close-horoscope-modal" aria-label="Close modal">&times;</button>
+            <div id="horoscope-modal-body">
+                <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Natal Chart Wheel Lightbox Modal -->
+    <div class="modal" id="chart-lightbox-modal">
+        <div class="modal-backdrop" id="close-lightbox-backdrop"></div>
+        <div class="modal-content glass-card" style="max-width: 95vw; width: 95vw; max-height: 90vh; height: 90vh; padding: 1.5rem; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+            <button class="modal-close" id="close-lightbox-modal" aria-label="Close modal" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 2.2rem; background: none; border: none; color: #ffd700; cursor: pointer; z-index: 10;">&times;</button>
+            
+            <div id="lightbox-modal-body" style="width: 100%; height: 100%; display: flex; gap: 2rem; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box;">
+                <!-- Left: Full 360 Wheel -->
+                <div id="lightbox-wheel-container" style="flex: 1.3; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <!-- SVG loaded here -->
+                </div>
+                
+                <!-- Right: Magnifier Panel -->
+                <div id="lightbox-magnifier-container" style="flex: 0.9; max-width: 440px; height: 100%; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border-left: 1px solid rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 12px; box-sizing: border-box; justify-content: center;">
+                    <div id="magnifier-default-state" style="display: flex; flex-direction: column; height: 100%; justify-content: flex-start; box-sizing: border-box;">
+                        <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                            <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 2.2rem; color: #ffd700; margin-bottom: 0.5rem; display: inline-block;"></i>
+                            <h4 style="font-family: Outfit; color: #fff; margin: 0; font-size: 1.2rem; font-weight: 800;">Zodiac Magnifier / राशि चक्र आवर्धक</h4>
+                            <p style="font-size: 0.75rem; line-height: 1.4; color: var(--color-text-secondary); margin-top: 0.4rem; margin-bottom: 0px;">
+                                [EN] Click on any zodiac sector on the wheel to filter aspect lines and view planet details.<br>
+                                [HI] पहलू रेखाओं को फ़िल्टर करने और ग्रहों के विवरण देखने के लिए चक्र पर किसी भी राशि क्षेत्र पर क्लिक करें।
+                            </p>
+                        </div>
+                        
+                        <div style="flex: 1; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.8rem; text-align: left;">
+                            <!-- Legend Section -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">
+                                <h5 style="font-family: Outfit; color: #ffd700; margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Aspect Lines Legend / पहलू रेखाओं का विवरण</h5>
+                                <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.75rem; font-family: Outfit;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #007aff; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Blue / नीला:</strong> Trine & Sextile (120° & 60°) <span style="opacity: 0.65;">- Positive, harmonious flow / अनुकूल और सकारात्मक प्रभाव</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #ff3b30; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Red / लाल:</strong> Conjunction, Opposition & Square (0°, 180° & 90°) <span style="opacity: 0.65;">- Dynamic focus, action / महत्वपूर्ण प्रभाव, तनाव और युति</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #34c759; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Green / हरा:</strong> Quincunx (150°) <span style="opacity: 0.65;">- Adjustments required / समायोजन और संतुलन की आवश्यकता</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 12px; height: 12px; border-radius: 3px; background: #a0aec0; display: inline-block; flex-shrink: 0;"></span>
+                                        <div style="color: #fff; line-height: 1.3;">
+                                            <strong>Grey / धूसर:</strong> Minor aspects (30°, 45°, 135°) <span style="opacity: 0.65;">- Secondary influences / सूक्ष्म और गौण प्रभाव</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart Info Section -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; font-size: 0.75rem; line-height: 1.4; color: var(--color-text-secondary); font-family: Outfit;">
+                                <h5 style="font-family: Outfit; color: #ffd700; margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">About the Chart / जन्म कुंडली के बारे में</h5>
+                                <p style="margin-top: 0; margin-bottom: 0.5rem;">
+                                    <strong>[English]</strong> This natal wheel maps the positions of celestial bodies at your birth. The outer ring displays the zodiac signs, the inner divisions mark the twelve houses of life experiences, and the connecting paths represent planetary aspects—geometric relationships of energy flow between planets.
+                                </p>
+                                <p style="margin: 0;">
+                                    <strong>[हिन्दी]</strong> यह जन्म कुंडली चक्र आपके जन्म के समय आकाशीय पिंडों की स्थिति दर्शाता है। बाहरी वलय राशियों को दर्शाता है, आंतरिक विभाजन जीवन के 12 भावों को इंगित करते हैं, और मध्य रेखाएं ग्रहों की युति/दृष्टि (पहलू) संबंध दर्शाती हैं जो ऊर्जा प्रवाह को दर्शाती हैं।
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="magnifier-active-state" style="display: none; flex-direction: column; height: 100%; justify-content: space-between; box-sizing: border-box;">
+                        <!-- Active zoom contents loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

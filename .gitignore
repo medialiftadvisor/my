@@ -1,0 +1,4 @@
+.env
+astrology-dashboard/.env
+__pycache__/
+*.pyc
