@@ -1075,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="aspects-tabs" style="display: flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; flex-wrap: wrap;">
                                     <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
                                     <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
-                                    <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">History of every 15 min</button>
+                                    <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">60-Min History (2 Months)</button>
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
@@ -1135,13 +1135,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <tbody id="aspects-table-body">
                                             </tbody>
                                         </table>
-                                                    <div id="history-pane" class="aspects-pane-content" style="display: none;">
-                                     <!-- History Controls Bar: fixed 15-min, date range up to 2 months, PDF -->
+                                    </div>
+                                </div>
+                                
+                                <div id="history-pane" class="aspects-pane-content" style="display: none;">
+                                    <!-- History Controls Bar: fixed 60-min, date range up to 2 months, PDF -->
                                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); border-radius: 10px; padding: 0.9rem 1.1rem;">
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <i class="fa-solid fa-clock-rotate-left" style="color: #ffd700;"></i>
                                             <span style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1rem;">Transit History</span>
-                                            <span style="font-size: 0.72rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: Outfit; font-weight: 600;">Every 15 min</span>
+                                            <span style="font-size: 0.72rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: Outfit; font-weight: 600;">Every 60 min (Up to 2 Months)</span>
                                         </div>
 
                                         <!-- Date Range (max 2 months back) -->

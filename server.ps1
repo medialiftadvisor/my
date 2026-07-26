@@ -154,14 +154,39 @@ while ($listener.IsListening) {
                 $ascSignIdx = [math]::Floor($ascLon / 30) % 12
                 $ascDeg = $ascLon % 30
 
-                # Simulated planetary longitudes
-                $sunLon = (59.2 - ($stepIdx * $intervalMin / 1440.0 * 0.9856)) % 360; if ($sunLon -lt 0) { $sunLon += 360 }
+                # Planetary longitudes stepped backwards by hour
+                $sunLon = (59.2 - ($stepIdx * $intervalMin / 60.0 * 0.041)) % 360; if ($sunLon -lt 0) { $sunLon += 360 }
                 $moonLon = (38.5 - ($stepIdx * $intervalMin / 60.0 * 0.548)) % 360; if ($moonLon -lt 0) { $moonLon += 360 }
+                $marsLon = (345.3 - ($stepIdx * $intervalMin / 60.0 * 0.024)) % 360; if ($marsLon -lt 0) { $marsLon += 360 }
+                $mercLon = (64.1 - ($stepIdx * $intervalMin / 60.0 * 0.055)) % 360; if ($mercLon -lt 0) { $mercLon += 360 }
+                $jupLon = (322.8 - ($stepIdx * $intervalMin / 60.0 * 0.003)) % 360; if ($jupLon -lt 0) { $jupLon += 360 }
+                $venLon = (11.2 - ($stepIdx * $intervalMin / 60.0 * 0.05)) % 360; if ($venLon -lt 0) { $venLon += 360 }
+                $satLon = (276.4 - ($stepIdx * $intervalMin / 60.0 * 0.001)) % 360; if ($satLon -lt 0) { $satLon += 360 }
+                $uranLon = (35.0 - ($stepIdx * $intervalMin / 60.0 * 0.0005)) % 360; if ($uranLon -lt 0) { $uranLon += 360 }
+                $nepLon = (340.0 - ($stepIdx * $intervalMin / 60.0 * 0.0003)) % 360; if ($nepLon -lt 0) { $nepLon += 360 }
+                $plutLon = (300.0 - ($stepIdx * $intervalMin / 60.0 * 0.0002)) % 360; if ($plutLon -lt 0) { $plutLon += 360 }
+                $rahuLon = (155.0 + ($stepIdx * $intervalMin / 60.0 * 0.0022)) % 360; if ($rahuLon -lt 0) { $rahuLon += 360 }
+                $ketuLon = ($rahuLon + 180.0) % 360
+
+                $makePlanet = { param($lon) [PSCustomObject]@{ sign = $signs[[math]::Floor($lon / 30) % 12]; degree = [math]::Round($lon % 30, 2); longitude = [math]::Round($lon, 2) } }
 
                 $stepPlanets = [PSCustomObject]@{
                     "Ascendant" = [PSCustomObject]@{ sign = $signs[$ascSignIdx]; degree = [math]::Round($ascDeg, 2); longitude = [math]::Round($ascLon, 2) }
-                    "Sun" = [PSCustomObject]@{ sign = $signs[[math]::Floor($sunLon / 30) % 12]; degree = [math]::Round($sunLon % 30, 2); longitude = [math]::Round($sunLon, 2) }
-                    "Moon" = [PSCustomObject]@{ sign = $signs[[math]::Floor($moonLon / 30) % 12]; degree = [math]::Round($moonLon % 30, 2); longitude = [math]::Round($moonLon, 2) }
+                    "Sun" = & $makePlanet $sunLon
+                    "Moon" = & $makePlanet $moonLon
+                    "Mars" = & $makePlanet $marsLon
+                    "Mercury" = & $makePlanet $mercLon
+                    "Jupiter" = & $makePlanet $jupLon
+                    "Venus" = & $makePlanet $venLon
+                    "Saturn" = & $makePlanet $satLon
+                    "Uranus" = & $makePlanet $uranLon
+                    "Neptune" = & $makePlanet $nepLon
+                    "Pluto" = & $makePlanet $plutLon
+                    "Rahu" = & $makePlanet $rahuLon
+                    "Ketu" = & $makePlanet $ketuLon
+                    "Spashth Rahu" = & $makePlanet $rahuLon
+                    "Spashth Ketu" = & $makePlanet $ketuLon
+                    "Earth" = & $makePlanet (($sunLon + 180) % 360)
                 }
 
                 $history += [PSCustomObject]@{
