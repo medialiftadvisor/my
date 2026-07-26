@@ -2382,8 +2382,13 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 step_dt = base_dt - datetime.timedelta(minutes=interval_min * step_idx)
                 step_dt_str = step_dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
                 
-                step_pos_raw = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
-                step_pos = normalize_positions_helper(step_pos_raw, 'mock', ayanamsa, step_dt_str, lat, lng)
+                astronomy_res = get_astronomy_planet_position(step_dt_str, lat, lng)
+                if astronomy_res and astronomy_res.get("status") == "success" and "data" in astronomy_res:
+                    step_pos_raw = astronomy_res["data"]["planetary_positions"]
+                    step_pos = normalize_positions_helper(step_pos_raw, 'astronomyapi', ayanamsa, step_dt_str, lat, lng)
+                else:
+                    step_pos_raw = get_mock_planet_position(step_dt_str, lat, lng, ayanamsa)["data"]["planetary_positions"]
+                    step_pos = normalize_positions_helper(step_pos_raw, 'mock', ayanamsa, step_dt_str, lat, lng)
                 
                 step_entry = {
                     "datetime": step_dt.strftime("%Y-%m-%d %H:%M"),
