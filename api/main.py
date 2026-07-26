@@ -780,12 +780,14 @@ def get_mock_planet_position(datetime_str, lat, lng, ayanamsa='0'):
     try:
         d = date(dt_info["year"], dt_info["month"], dt_info["day"])
         vernal = date(dt_info["year"], 3, 20)
-        diff_days = (d - vernal).days
+        days_base = (d - vernal).days
+        hour_frac = (dt_info["hour"] + dt_info["min"] / 60.0 + dt_info["sec"] / 3600.0) / 24.0
+        diff_days = days_base + hour_frac
     except:
-        diff_days = 114 # fallback default
+        diff_days = 114.0
         
     # Sun's tropical longitude is highly accurate using (days * 360/365.25)
-    sun_lon = (diff_days * 0.9856) % 360
+    sun_lon = (diff_days * 0.98565) % 360
     
     # Simulate planetary longitudes using real solar period approximations
     planets_raw = [
