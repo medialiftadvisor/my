@@ -308,20 +308,32 @@ def calculate_true_ascendant_detailed(dt_str, lat, lng, ayanamsa='1'):
     sign_name = signs[sign_idx]
     sign_deg = vedic_ascendant % 30
     
+    deg_d = int(sign_deg)
+    deg_m = int((sign_deg - deg_d) * 60)
+    deg_s = int(round(((sign_deg - deg_d) * 60 - deg_m) * 60))
+    if deg_s == 60: deg_m += 1; deg_s = 0
+    if deg_m == 60: deg_d += 1; deg_s = 0
+    deg_formatted = f"{deg_d:02d}° {deg_m:02d}' {deg_s:02d}\""
+
     nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(vedic_ascendant)
     
     return {
-        "longitude": round(vedic_ascendant, 2),
-        "tropical_longitude": round(tropical_ascendant, 2),
-        "degree": round(sign_deg, 2),
+        "longitude": round(vedic_ascendant, 4),
+        "tropical_longitude": round(tropical_ascendant, 4),
+        "degree": round(sign_deg, 4),
+        "degree_formatted": deg_formatted,
         "sign": sign_name,
         "right_ascension": ra_str,
+        "ra_deg": round(ra_deg, 4),
         "declination": dec_str,
         "altitude": alt_str,
         "azimuth": az_str,
         "nakshatra": f"{nak_name} (Pada {pada})",
+        "nakshatra_name": nak_name,
+        "pada": pada,
         "nakshatra_lord": nak_lord,
-        "sub_lord": sub_lord
+        "sub_lord": sub_lord,
+        "ayanamsa_value": ayanamsa_val
     }
 
 
@@ -2517,32 +2529,63 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 }
             }
 
-        # 9. Ascendant (Lagna) Detailed History (every 60 min up to 2 months)
+        # 9. Ascendant (Lagna) Detailed History (configurable up to 2 full years, with Excel export support)
         elif path == '/api/astrology/lagna-history':
             dt = get_param('datetime')
+            from_dt_param = get_param('from_datetime')
+            to_dt_param = get_param('to_datetime')
             lat = get_param('latitude', '19.0655')
             lng = get_param('longitude', '72.8644')
             ayanamsa = get_param('ayanamsa', '1')
-            limit = int(get_param('limit', '50'))
+            is_export = get_param('export', '0') == '1'
+            limit = int(get_param('limit', '25000' if is_export else '100'))
             offset_idx = int(get_param('offset', '0'))
             interval_min = int(get_param('interval', '60'))
-            if interval_min not in [1, 5, 10, 15, 30, 60]:
+            if interval_min <= 0:
                 interval_min = 60
-            limit = min(limit, 200)
+            
+            if not is_export:
+                limit = min(limit, 500)
+            else:
+                limit = min(limit, 25000)
 
             import datetime
+            
+            # Determine base_dt (end datetime)
+            target_dt_str = to_dt_param or dt
             try:
-                if 'T' in dt:
-                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M:%S")
+                if target_dt_str and 'T' in target_dt_str:
+                    base_dt = datetime.datetime.strptime(target_dt_str.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M:%S")
+                elif target_dt_str:
+                    base_dt = datetime.datetime.strptime(target_dt_str.split('+')[0].split('Z')[0], "%Y-%m-%d %H:%M:%S")
                 else:
-                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%d %H:%M:%S")
+                    base_dt = datetime.datetime.now()
             except:
                 try:
-                    base_dt = datetime.datetime.strptime(dt.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M")
+                    base_dt = datetime.datetime.strptime(target_dt_str.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M")
                 except:
                     base_dt = datetime.datetime.now()
 
-            max_steps = int(87840 / interval_min)
+            # If from_datetime is provided, calculate exact span
+            if from_dt_param:
+                try:
+                    if 'T' in from_dt_param:
+                        start_dt = datetime.datetime.strptime(from_dt_param.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M:%S")
+                    else:
+                        start_dt = datetime.datetime.strptime(from_dt_param.split('+')[0].split('Z')[0], "%Y-%m-%d %H:%M:%S")
+                except:
+                    try:
+                        start_dt = datetime.datetime.strptime(from_dt_param.split('+')[0].split('Z')[0], "%Y-%m-%dT%H:%M")
+                    except:
+                        start_dt = base_dt - datetime.timedelta(days=730)
+                
+                total_duration_min = max(0, int((base_dt - start_dt).total_seconds() / 60))
+                # Cap duration to 2 full years = 1,051,920 min
+                total_duration_min = min(total_duration_min, 1051920)
+                max_steps = int(total_duration_min / interval_min) + 1
+            else:
+                # Maximum lookback: 2 Years = 2 * 365.25 * 24 * 60 = 1,051,920 minutes
+                max_steps = int(1051920 / interval_min)
 
             lagna_history = []
             for i in range(limit):
@@ -2561,8 +2604,13 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 "data": {
                     "history": lagna_history,
                     "has_more": (offset_idx + limit) < max_steps,
+                    "total_returned": len(lagna_history),
                     "interval_min": interval_min,
-                    "max_steps": max_steps
+                    "max_steps": max_steps,
+                    "base_datetime": base_dt.strftime("%Y-%m-%d %H:%M"),
+                    "latitude": lat,
+                    "longitude": lng,
+                    "ayanamsa": "Sidereal Lahiri" if ayanamsa == '1' else "Tropical"
                 }
             }
 

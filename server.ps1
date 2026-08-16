@@ -173,27 +173,44 @@ while ($listener.IsListening) {
         if ($urlPath.StartsWith("/api/astrology/lagna-history")) {
             $query = Parse-QueryString $request.Url.PathAndQuery
             $dtStr = $query["datetime"]
+            $fromDtStr = $query["from_datetime"]
+            $toDtStr = $query["to_datetime"]
             $latStr = $query["latitude"]
             $lngStr = $query["longitude"]
             $ayanamsaStr = $query["ayanamsa"]
             $limitStr = $query["limit"]
             $offsetStr = $query["offset"]
+            $intervalStr = $query["interval"]
+            $exportStr = $query["export"]
 
             $lat = if ($latStr) { [double]$latStr } else { 19.0655 }
             $lng = if ($lngStr) { [double]$lngStr } else { 72.8644 }
             $ayanamsaVal = if ($ayanamsaStr -eq "1") { 24.22 } else { 0.0 }
-            $limit = if ($limitStr) { [int]$limitStr } else { 50 }
+            $intervalMin = if ($intervalStr) { [int]$intervalStr } else { 60 }
+            if ($intervalMin -le 0) { $intervalMin = 60 }
+            
+            $isExport = ($exportStr -eq "1")
+            $limit = if ($limitStr) { [int]$limitStr } else { if ($isExport) { 25000 } else { 100 } }
             $offset = if ($offsetStr) { [int]$offsetStr } else { 0 }
-            $intervalMin = 60
 
+            $targetDtStr = if ($toDtStr) { $toDtStr } else { $dtStr }
             $baseDt = [DateTimeOffset]::Now
-            if ($dtStr) {
-                try { $baseDt = [DateTimeOffset]::Parse($dtStr) } catch {}
+            if ($targetDtStr) {
+                try { $baseDt = [DateTimeOffset]::Parse($targetDtStr) } catch {}
             }
 
-            $maxSteps = 1440
-            $history = @()
+            $maxSteps = [int](1051920 / $intervalMin)
+            if ($fromDtStr) {
+                try {
+                    $startDt = [DateTimeOffset]::Parse($fromDtStr)
+                    $spanMin = [int](($baseDt - $startDt).TotalMinutes)
+                    if ($spanMin -gt 0) {
+                        $maxSteps = [int]($spanMin / $intervalMin) + 1
+                    }
+                } catch {}
+            }
 
+            $history = @()
             $signs = @("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
 
             for ($i = 0; $i -lt $limit; $i++) {
@@ -208,6 +225,13 @@ while ($listener.IsListening) {
                 $ascLon = $ascObj.vedic
                 $ascSignIdx = [math]::Floor($ascLon / 30) % 12
                 $ascDeg = $ascLon % 30
+
+                $degD = [int][math]::Floor($ascDeg)
+                $degM = [int][math]::Floor(($ascDeg - $degD) * 60)
+                $degS = [int][math]::Round((($ascDeg - $degD) * 60 - $degM) * 60)
+                if ($degS -eq 60) { $degM += 1; $degS = 0 }
+                if ($degM -eq 60) { $degD += 1; $degM = 0 }
+                $degFormatted = "{0:D2}° {1:D2}' {2:D2}""" -f $degD, $degM, $degS
 
                 # RA, Dec, ALT, AZ calculation
                 $A = [math]::Floor($year / 100)
@@ -232,15 +256,20 @@ while ($listener.IsListening) {
                 $history += [PSCustomObject]@{
                     datetime = $stepDt.ToString("yyyy-MM-dd HH:mm")
                     sign = $signs[$ascSignIdx]
-                    degree = [math]::Round($ascDeg, 2)
-                    longitude = [math]::Round($ascLon, 2)
+                    degree = [math]::Round($ascDeg, 4)
+                    degree_formatted = $degFormatted
+                    longitude = [math]::Round($ascLon, 4)
                     right_ascension = $raStr
+                    ra_deg = [math]::Round($raDeg, 4)
                     declination = $decStr
                     altitude = '00° 00'' 00"'
                     azimuth = '085° 30'''
                     nakshatra = "Punarvasu (Pada 3)"
+                    nakshatra_name = "Punarvasu"
+                    pada = 3
                     nakshatra_lord = "Jupiter"
                     sub_lord = "Mercury"
+                    ayanamsa_value = $ayanamsaVal
                 }
             }
 
@@ -249,6 +278,13 @@ while ($listener.IsListening) {
                 data = [PSCustomObject]@{
                     history = $history
                     has_more = ($offset + $limit) -lt $maxSteps
+                    total_returned = $history.Count
+                    interval_min = $intervalMin
+                    max_steps = $maxSteps
+                    base_datetime = $baseDt.ToString("yyyy-MM-dd HH:mm")
+                    latitude = $lat
+                    longitude = $lng
+                    ayanamsa = if ($ayanamsaVal -gt 0) { "Sidereal Lahiri" } else { "Tropical" }
                 }
             }
 

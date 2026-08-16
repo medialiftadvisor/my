@@ -1076,7 +1076,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <button class="aspect-tab-btn active" data-target="placements-pane" style="background: none; border: none; color: #ffd700; font-family: Outfit; font-weight: 700; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; border-bottom: 2px solid #ffd700; outline: none; transition: all 0.2s;">Planetary Positions</button>
                                     <button class="aspect-tab-btn" data-target="aspects-pane" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">Planetary Aspects</button>
                                     <button class="aspect-tab-btn" data-target="history-pane" id="load-history-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;">60-Min Planetary History</button>
-                                    <button class="aspect-tab-btn" data-target="lagna-pane" id="load-lagna-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s;"><i class="fa-solid fa-star-and-crescent" style="color:#ffd700;margin-right:0.35rem;"></i>Ascendant (Lagna) 60-Min History</button>
+                                    <button class="aspect-tab-btn" data-target="lagna-pane" id="load-lagna-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem;">
+                                        <i class="fa-solid fa-star-and-crescent" style="color:#ffd700;"></i>
+                                        <span>Ascendant (Lagna) 2-Year History</span>
+                                        <span style="background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 0.68rem; padding: 0.12rem 0.45rem; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                            <i class="fa-solid fa-file-excel"></i> Excel
+                                        </span>
+                                    </button>
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
@@ -1205,31 +1211,81 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                 </div>
 
-                                <!-- NEW TAB: Ascendant (Lagna) Detailed 60-Min History -->
+                                <!-- ASCENDANT (LAGNA) 2-YEAR HISTORY TAB WITH PROPER EXCEL DOWNLOAD -->
                                 <div id="lagna-pane" class="aspects-pane-content" style="display: none;">
-                                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); border-radius: 10px; padding: 0.9rem 1.1rem;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <i class="fa-solid fa-star-and-crescent" style="color: #ffd700; font-size: 1.1rem;"></i>
-                                            <span style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1rem;">Ascendant (Lagna) Astronomical Metrics History</span>
-                                            <span style="font-size: 0.72rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: Outfit; font-weight: 600;">Every 60 Min (Up to 2 Months)</span>
+                                    <!-- Header Bar with Excel & CSV Actions -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.12); border-radius: 12px; padding: 1rem 1.2rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                                            <i class="fa-solid fa-star-and-crescent" style="color: #ffd700; font-size: 1.2rem;"></i>
+                                            <div>
+                                                <div style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                                    Ascendant (Lagna) 2-Year Ephemeris &amp; Historical Transits
+                                                    <span style="font-size: 0.72rem; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 600;">Up to 2 Years Range</span>
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.1rem;">
+                                                    Exact astronomical calculations (JD, GMST, RAMC, RA, Declination/Kranti, Altitude, Azimuth, Nakshatra &amp; Sub-Lords)
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <button id="lagna-print-pdf-btn" title="Download / Print as PDF" style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 6px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                            <i class="fa-solid fa-file-pdf"></i> Print / PDF
-                                        </button>
+                                        <!-- Action Buttons in Proper Manner -->
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-left: auto;">
+                                            <!-- Excel (.xlsx) Download Button -->
+                                            <button id="lagna-download-xlsx-btn" title="Download formatted Microsoft Excel (.xlsx) Sheet" style="display: flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, #107c41, #15803d); border: 1px solid #22c55e; color: #ffffff; border-radius: 7px; padding: 0.45rem 1.05rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(16,124,65,0.4); transition: all 0.2s;">
+                                                <i class="fa-solid fa-file-excel" style="font-size: 1rem;"></i> Download Excel (.xlsx)
+                                            </button>
+
+                                            <!-- CSV Download Button -->
+                                            <button id="lagna-download-csv-btn" title="Download UTF-8 CSV Sheet" style="display: flex; align-items: center; gap: 0.45rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; border-radius: 7px; padding: 0.45rem 0.9rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fa-solid fa-file-csv" style="font-size: 1rem;"></i> CSV
+                                            </button>
+
+                                            <!-- Print / PDF Button -->
+                                            <button id="lagna-print-pdf-btn" title="Print / Save as PDF" style="display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 7px; padding: 0.45rem 0.85rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fa-solid fa-file-pdf"></i> Print / PDF
+                                            </button>
+                                        </div>
                                     </div>
 
+                                    <!-- Date Range & Step Frequency Filters -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.8rem 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 600;">From:</label>
+                                            <input type="datetime-local" id="lagna-from-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.25); color: #fff; border-radius: 6px; padding: 0.3rem 0.55rem; font-size: 0.76rem; font-family: Outfit; outline: none; cursor: pointer;">
+
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 600; margin-left: 0.4rem;">To:</label>
+                                            <input type="datetime-local" id="lagna-to-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.25); color: #fff; border-radius: 6px; padding: 0.3rem 0.55rem; font-size: 0.76rem; font-family: Outfit; outline: none; cursor: pointer;">
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto;">
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 600;">Step Frequency:</label>
+                                            <select id="lagna-interval-select" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.25); color: #ffd700; border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.76rem; font-family: Outfit; font-weight: 600; outline: none; cursor: pointer;">
+                                                <option value="60" selected>Every 1 Hour (60 Min)</option>
+                                                <option value="120">Every 2 Hours (120 Min)</option>
+                                                <option value="360">Every 6 Hours (360 Min)</option>
+                                                <option value="720">Every 12 Hours (720 Min)</option>
+                                                <option value="1440">Daily (24 Hours - Same Time)</option>
+                                            </select>
+
+                                            <button id="lagna-apply-filter-btn" style="background: rgba(255,215,0,0.18); border: 1px solid rgba(255,215,0,0.4); color: #ffd700; border-radius: 6px; padding: 0.3rem 0.95rem; font-size: 0.78rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fa-solid fa-arrows-rotate"></i> Apply Filter
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Horizontal Scroll Indicator -->
                                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.78rem; color: #ffd700; font-family: Outfit; background: rgba(255,215,0,0.06); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,215,0,0.18);">
-                                        <span><i class="fa-solid fa-arrows-left-right" style="margin-right: 0.4rem;"></i> <strong>Lagna Astronomical Details:</strong> Longitude, Full Degree, Right Ascension (RA), Declination (Kranti), Altitude (ALT), Azimuth (AZ), Nakshatra &amp; Lords</span>
+                                        <span><i class="fa-solid fa-arrows-left-right" style="margin-right: 0.4rem;"></i> <strong>Lagna Astronomical Placements:</strong> Longitude, Full Degree, Right Ascension (RA), Declination (Kranti), Altitude (ALT), Azimuth (AZ), Nakshatra &amp; Sub-Lords</span>
                                         <span style="font-weight: 700; opacity: 0.85;">← Scroll Left / Right →</span>
                                     </div>
 
+                                    <!-- Table Wrapper -->
                                     <div class="planet-table-wrapper" style="max-height: 520px; overflow-y: auto; overflow-x: auto; width: 100%;">
                                         <table id="lagna-main-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
                                             <thead>
                                                 <tr>
                                                     <th style="padding: 0.65rem 0.85rem; text-align: left;">Date &amp; Time</th>
-                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Rasi / Sign</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ascendant Sign (Rasi)</th>
                                                     <th style="padding: 0.65rem 0.85rem; text-align: left;">Sign Degree</th>
                                                     <th style="padding: 0.65rem 0.85rem; text-align: left;">Full Longitude (360°)</th>
                                                     <th style="padding: 0.65rem 0.85rem; text-align: left;">Right Ascension (RA)</th>
@@ -1243,14 +1299,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <tbody id="lagna-table-body">
                                                 <tr>
                                                     <td colspan="10" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
-                                                        <i class="fa-solid fa-star-and-crescent" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>Ascendant (Lagna) 60-Min History</strong> tab to load data
+                                                        <i class="fa-solid fa-star-and-crescent" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>Ascendant (Lagna) 2-Year History</strong> tab to load data
                                                     </td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div style="display: flex; justify-content: center; margin-top: 1.2rem;">
-                                        <button id="lagna-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">Load More Intervals</button>
+
+                                    <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.2rem; align-items: center; flex-wrap: wrap;">
+                                        <button id="lagna-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">
+                                            <i class="fa-solid fa-circle-chevron-down" style="margin-right: 0.4rem;"></i> Load More Intervals
+                                        </button>
+                                        <button id="lagna-export-all-xlsx-btn" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #34d399; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">
+                                            <i class="fa-solid fa-file-excel" style="margin-right: 0.4rem;"></i> Export Complete 2-Year Range to Excel
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1439,11 +1501,53 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                         }
 
-                        // ─── Lagna Detailed History Tab Logic ─────────────────────────────────
+                        // ─── Ascendant (Lagna) 2-Year History & Excel Export Logic ───────────
                         let lagnaOffset = 0;
-                        const lagnaLimit = 50;
+                        const lagnaLimit = 100;
+                        let lagnaInterval = 60; // default 60 min (1 hr)
+                        let lagnaFromDt = null;
+                        let lagnaToDt = null;
+                        let loadedLagnaRecords = [];
+
                         const lagnaTbody = resultBox.querySelector('#lagna-table-body');
                         const lagnaLoadMoreBtn = resultBox.querySelector('#lagna-load-more-btn');
+                        const lagnaExportAllBtn = resultBox.querySelector('#lagna-export-all-xlsx-btn');
+                        const lagnaFromInput = resultBox.querySelector('#lagna-from-dt');
+                        const lagnaToInput = resultBox.querySelector('#lagna-to-dt');
+                        const lagnaIntervalSelect = resultBox.querySelector('#lagna-interval-select');
+                        const lagnaApplyFilterBtn = resultBox.querySelector('#lagna-apply-filter-btn');
+                        const lagnaXlsxBtn = resultBox.querySelector('#lagna-download-xlsx-btn');
+                        const lagnaCsvBtn = resultBox.querySelector('#lagna-download-csv-btn');
+                        const lagnaPdfBtn = resultBox.querySelector('#lagna-print-pdf-btn');
+
+                        // Set default datetime values for 2-year range
+                        if (lagnaFromInput && lagnaToInput) {
+                            const nowDt = new Date(isoDt);
+                            const twoYearsAgo = new Date(nowDt);
+                            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+                            const fmtLocal = (d) => {
+                                const pad = (n) => String(n).padStart(2, '0');
+                                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                            };
+
+                            lagnaToInput.value = fmtLocal(nowDt);
+                            lagnaFromInput.value = fmtLocal(twoYearsAgo);
+                            lagnaToInput.max = fmtLocal(nowDt);
+                        }
+
+                        // Apply filter button
+                        if (lagnaApplyFilterBtn) {
+                            lagnaApplyFilterBtn.addEventListener('click', () => {
+                                lagnaFromDt = lagnaFromInput ? lagnaFromInput.value : null;
+                                lagnaToDt = lagnaToInput ? lagnaToInput.value : null;
+                                lagnaInterval = lagnaIntervalSelect ? parseInt(lagnaIntervalSelect.value, 10) : 60;
+                                lagnaOffset = 0;
+                                loadedLagnaRecords = [];
+                                lagnaTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Calculating 2-Year Ascendant Ephemeris...</td></tr>';
+                                fetchLagnaHistoryData();
+                            });
+                        }
 
                         if (lagnaLoadMoreBtn) {
                             lagnaLoadMoreBtn.addEventListener('click', () => {
@@ -1451,8 +1555,42 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         }
 
-                        // Print / PDF for Lagna History
-                        const lagnaPdfBtn = resultBox.querySelector('#lagna-print-pdf-btn');
+                        // Export All 2-Year Range to Excel Button
+                        if (lagnaExportAllBtn) {
+                            lagnaExportAllBtn.addEventListener('click', () => {
+                                triggerFullExcelExport();
+                            });
+                        }
+
+                        // Download Excel (.xlsx) button
+                        if (lagnaXlsxBtn) {
+                            lagnaXlsxBtn.addEventListener('click', () => {
+                                if (loadedLagnaRecords.length === 0) {
+                                    triggerFullExcelExport();
+                                } else {
+                                    // If only partial rows loaded, prompt user for complete vs current
+                                    const userChoice = confirm(`You currently have ${loadedLagnaRecords.length} intervals loaded in the table.\n\nClick "OK" to download the COMPLETE 2-YEAR DATASET for the selected range.\nClick "Cancel" to export only currently loaded (${loadedLagnaRecords.length}) rows.`);
+                                    if (userChoice) {
+                                        triggerFullExcelExport();
+                                    } else {
+                                        generateFormattedLagnaExcel(loadedLagnaRecords, `Ascendant_Lagna_History_${lat}_${lng}.xlsx`);
+                                    }
+                                }
+                            });
+                        }
+
+                        // Download CSV button
+                        if (lagnaCsvBtn) {
+                            lagnaCsvBtn.addEventListener('click', () => {
+                                if (loadedLagnaRecords.length === 0) {
+                                    triggerFullCsvExport();
+                                } else {
+                                    generateLagnaCSV(loadedLagnaRecords, `Ascendant_Lagna_History_${lat}_${lng}.csv`);
+                                }
+                            });
+                        }
+
+                        // Print / PDF button
                         if (lagnaPdfBtn) {
                             lagnaPdfBtn.addEventListener('click', () => {
                                 window.print();
@@ -1460,10 +1598,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         function fetchLagnaHistoryData() {
-                            const url = `${apiBase}/astrology/lagna-history?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${lagnaLimit}&offset=${lagnaOffset}&interval=60&_t=${Date.now()}`;
+                            const fromParam = lagnaFromDt ? `&from_datetime=${encodeURIComponent(lagnaFromDt)}` : (lagnaFromInput && lagnaFromInput.value ? `&from_datetime=${encodeURIComponent(lagnaFromInput.value)}` : '');
+                            const toParam = lagnaToDt ? `&to_datetime=${encodeURIComponent(lagnaToDt)}` : (lagnaToInput && lagnaToInput.value ? `&to_datetime=${encodeURIComponent(lagnaToInput.value)}` : `&datetime=${encodeURIComponent(isoDt)}`);
+                            const intervalVal = lagnaIntervalSelect ? lagnaIntervalSelect.value : lagnaInterval;
+
+                            const url = `${apiBase}/astrology/lagna-history?latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&limit=${lagnaLimit}&offset=${lagnaOffset}&interval=${intervalVal}${toParam}${fromParam}&_t=${Date.now()}`;
 
                             if (lagnaOffset === 0) {
-                                lagnaTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Loading Ascendant (Lagna) History...</td></tr>';
+                                lagnaTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem 0;opacity:0.6;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Loading Ascendant (Lagna) 2-Year History...</td></tr>';
                             }
 
                             fetch(url)
@@ -1471,15 +1613,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 .then(res => {
                                     if (res.status === 'success' && res.data && res.data.history) {
                                         const rows = res.data.history;
+                                        if (lagnaOffset === 0) {
+                                            loadedLagnaRecords = [...rows];
+                                        } else {
+                                            loadedLagnaRecords = loadedLagnaRecords.concat(rows);
+                                        }
+
                                         let rowsHtml = '';
                                         rows.forEach(item => {
-                                            const degFormatted = `${Math.floor(item.degree)}° ${Math.round((item.degree % 1) * 60)}'`;
+                                            const degFormatted = item.degree_formatted || `${Math.floor(item.degree)}° ${Math.round((item.degree % 1) * 60)}' 00"`;
                                             rowsHtml += `
                                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
                                                     <td style="padding: 0.65rem 0.85rem; font-family: monospace; color: #ffd700; font-weight: 600; white-space: nowrap; position: sticky; left: 0; background: #0c0824; z-index: 5;">${item.datetime}</td>
                                                     <td style="padding: 0.65rem 0.85rem; font-weight: 700; color: #ffffff;"><i class="fa-solid fa-star-and-crescent" style="color:#ffd700;margin-right:0.3rem;"></i> ${item.sign}</td>
-                                                    <td style="padding: 0.65rem 0.85rem; font-weight: 600; color: #e2e8f0;">${degFormatted} (${item.degree.toFixed(2)}°)</td>
-                                                    <td style="padding: 0.65rem 0.85rem; color: #48bb78; font-weight: 600;">${item.longitude.toFixed(2)}°</td>
+                                                    <td style="padding: 0.65rem 0.85rem; font-weight: 600; color: #e2e8f0;">${degFormatted} <span style="font-size:0.75rem;opacity:0.7;">(${parseFloat(item.degree).toFixed(2)}°)</span></td>
+                                                    <td style="padding: 0.65rem 0.85rem; color: #48bb78; font-weight: 600;">${parseFloat(item.longitude).toFixed(2)}°</td>
                                                     <td style="padding: 0.65rem 0.85rem; color: #9f7aea;">${item.right_ascension}</td>
                                                     <td style="padding: 0.65rem 0.85rem; color: #f6ad55;">${item.declination}</td>
                                                     <td style="padding: 0.65rem 0.85rem; color: #a0aec0;">${item.altitude}</td>
@@ -1491,16 +1639,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                         });
 
                                         if (lagnaOffset === 0) {
-                                            lagnaTbody.innerHTML = rowsHtml || '<tr><td colspan="10" style="text-align:center;padding:1.5rem;opacity:0.5;">No Lagna history data returned.</td></tr>';
+                                            lagnaTbody.innerHTML = rowsHtml || '<tr><td colspan="10" style="text-align:center;padding:1.5rem;opacity:0.5;">No Lagna history data returned for the selected range.</td></tr>';
                                         } else {
                                             lagnaTbody.innerHTML += rowsHtml;
                                         }
 
                                         lagnaOffset += lagnaLimit;
                                         if (res.data.has_more && rows.length > 0) {
-                                            lagnaLoadMoreBtn.style.display = 'block';
+                                            lagnaLoadMoreBtn.style.display = 'inline-flex';
+                                            lagnaExportAllBtn.style.display = 'inline-flex';
                                         } else {
                                             lagnaLoadMoreBtn.style.display = 'none';
+                                            lagnaExportAllBtn.style.display = loadedLagnaRecords.length > 0 ? 'inline-flex' : 'none';
                                         }
                                     } else {
                                         if (lagnaOffset === 0) {
@@ -1514,6 +1664,253 @@ document.addEventListener('DOMContentLoaded', () => {
                                         lagnaTbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#ff7b7b;padding:1rem;">Error: ${err.message}</td></tr>`;
                                     }
                                 });
+                        }
+
+                        // Trigger full range export to Excel
+                        function triggerFullExcelExport() {
+                            const fromParam = lagnaFromInput && lagnaFromInput.value ? `&from_datetime=${encodeURIComponent(lagnaFromInput.value)}` : '';
+                            const toParam = lagnaToInput && lagnaToInput.value ? `&to_datetime=${encodeURIComponent(lagnaToInput.value)}` : `&datetime=${encodeURIComponent(isoDt)}`;
+                            const intervalVal = lagnaIntervalSelect ? lagnaIntervalSelect.value : lagnaInterval;
+
+                            const origBtnHtml = lagnaXlsxBtn.innerHTML;
+                            lagnaXlsxBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Excel...';
+                            lagnaXlsxBtn.disabled = true;
+
+                            const url = `${apiBase}/astrology/lagna-history?latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&export=1&interval=${intervalVal}${toParam}${fromParam}&_t=${Date.now()}`;
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(res => {
+                                    lagnaXlsxBtn.innerHTML = origBtnHtml;
+                                    lagnaXlsxBtn.disabled = false;
+
+                                    if (res.status === 'success' && res.data && res.data.history && res.data.history.length > 0) {
+                                        const dateTag = new Date().toISOString().slice(0, 10);
+                                        generateFormattedLagnaExcel(res.data.history, `Ascendant_Lagna_2Year_History_${dateTag}.xlsx`);
+                                    } else {
+                                        alert('Could not retrieve full history dataset for export.');
+                                    }
+                                })
+                                .catch(err => {
+                                    lagnaXlsxBtn.innerHTML = origBtnHtml;
+                                    lagnaXlsxBtn.disabled = false;
+                                    console.error('Export error:', err);
+                                    alert(`Error generating Excel export: ${err.message}`);
+                                });
+                        }
+
+                        function triggerFullCsvExport() {
+                            const fromParam = lagnaFromInput && lagnaFromInput.value ? `&from_datetime=${encodeURIComponent(lagnaFromInput.value)}` : '';
+                            const toParam = lagnaToInput && lagnaToInput.value ? `&to_datetime=${encodeURIComponent(lagnaToInput.value)}` : `&datetime=${encodeURIComponent(isoDt)}`;
+                            const intervalVal = lagnaIntervalSelect ? lagnaIntervalSelect.value : lagnaInterval;
+
+                            const origBtnHtml = lagnaCsvBtn.innerHTML;
+                            lagnaCsvBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting CSV...';
+                            lagnaCsvBtn.disabled = true;
+
+                            const url = `${apiBase}/astrology/lagna-history?latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&export=1&interval=${intervalVal}${toParam}${fromParam}&_t=${Date.now()}`;
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(res => {
+                                    lagnaCsvBtn.innerHTML = origBtnHtml;
+                                    lagnaCsvBtn.disabled = false;
+
+                                    if (res.status === 'success' && res.data && res.data.history && res.data.history.length > 0) {
+                                        const dateTag = new Date().toISOString().slice(0, 10);
+                                        generateLagnaCSV(res.data.history, `Ascendant_Lagna_2Year_History_${dateTag}.csv`);
+                                    } else {
+                                        alert('Could not retrieve full history dataset for CSV export.');
+                                    }
+                                })
+                                .catch(err => {
+                                    lagnaCsvBtn.innerHTML = origBtnHtml;
+                                    lagnaCsvBtn.disabled = false;
+                                    console.error('CSV export error:', err);
+                                    alert(`Error generating CSV export: ${err.message}`);
+                                });
+                        }
+
+                        // Proper Excel Generator using SheetJS / XLSX
+                        function generateFormattedLagnaExcel(dataRows, filename) {
+                            if (!dataRows || dataRows.length === 0) {
+                                alert('No Lagna history records to export.');
+                                return;
+                            }
+
+                            const currentSysName = zodiacSys === '0' ? 'Tropical (Western)' : 'Sidereal Lahiri (Vedic - 24.22° Ayanamsa)';
+                            const fromStr = lagnaFromInput && lagnaFromInput.value ? lagnaFromInput.value.replace('T', ' ') : '2 Years Prior';
+                            const toStr = lagnaToInput && lagnaToInput.value ? lagnaToInput.value.replace('T', ' ') : isoDt.replace('T', ' ');
+
+                            if (typeof XLSX !== 'undefined') {
+                                const wb = XLSX.utils.book_new();
+
+                                // Metadata Title Header
+                                const headerBlock = [
+                                    ["ASCENDANT (LAGNA) 2-YEAR HISTORICAL TRANSIT EPHEMERIS"],
+                                    ["Generated on:", new Date().toLocaleString(), "Zodiac System:", currentSysName],
+                                    ["Observer Latitude:", lat, "Observer Longitude:", lng, "Ayanamsa Offset:", zodiacSys === '1' ? '24.22°' : '0.00°'],
+                                    ["Date Range:", `${fromStr} to ${toStr}`, "Step Frequency:", `${lagnaIntervalSelect ? lagnaIntervalSelect.value : 60} Minutes`, "Total Records:", dataRows.length],
+                                    [] // Blank separator
+                                ];
+
+                                // Column Headers
+                                const tableHeaders = [
+                                    "Date & Time",
+                                    "Ascendant Sign (Rasi)",
+                                    "Sign Degree (° ' \")",
+                                    "Sign Degree (Decimal °)",
+                                    "Full Longitude (0-360°)",
+                                    "Right Ascension (RA)",
+                                    "RA (Decimal °)",
+                                    "Declination / Kranti",
+                                    "Altitude (ALT)",
+                                    "Azimuth (AZ)",
+                                    "Nakshatra",
+                                    "Pada",
+                                    "Nakshatra Lord",
+                                    "Sub Lord",
+                                    "Ayanamsa Value",
+                                    "Observer Latitude",
+                                    "Observer Longitude"
+                                ];
+
+                                // Data rows mapping
+                                const dataGrid = dataRows.map(item => [
+                                    item.datetime || '',
+                                    item.sign || '',
+                                    item.degree_formatted || `${Math.floor(item.degree)}° ${Math.round((item.degree % 1) * 60)}' 00"`,
+                                    Number(parseFloat(item.degree).toFixed(4)),
+                                    Number(parseFloat(item.longitude).toFixed(4)),
+                                    item.right_ascension || '',
+                                    Number(parseFloat(item.ra_deg || item.longitude).toFixed(4)),
+                                    item.declination || '',
+                                    item.altitude || '00° 00\' 00"',
+                                    item.azimuth || '',
+                                    item.nakshatra_name || (item.nakshatra ? item.nakshatra.split(' (')[0] : ''),
+                                    item.pada || 1,
+                                    item.nakshatra_lord || '',
+                                    item.sub_lord || '',
+                                    item.ayanamsa_value || (zodiacSys === '1' ? 24.22 : 0),
+                                    parseFloat(lat),
+                                    parseFloat(lng)
+                                ]);
+
+                                const fullSheetData = [...headerBlock, tableHeaders, ...dataGrid];
+                                const ws = XLSX.utils.aoa_to_sheet(fullSheetData);
+
+                                // Set clean column widths
+                                ws['!cols'] = [
+                                    { wch: 18 }, // Date & Time
+                                    { wch: 22 }, // Sign
+                                    { wch: 20 }, // Degree formatted
+                                    { wch: 22 }, // Degree decimal
+                                    { wch: 24 }, // Longitude
+                                    { wch: 22 }, // RA
+                                    { wch: 18 }, // RA deg
+                                    { wch: 20 }, // Declination
+                                    { wch: 16 }, // Altitude
+                                    { wch: 16 }, // Azimuth
+                                    { wch: 20 }, // Nakshatra
+                                    { wch: 8 },  // Pada
+                                    { wch: 16 }, // Nakshatra Lord
+                                    { wch: 16 }, // Sub Lord
+                                    { wch: 18 }, // Ayanamsa
+                                    { wch: 18 }, // Lat
+                                    { wch: 18 }  // Lng
+                                ];
+
+                                XLSX.utils.book_append_sheet(wb, ws, "Lagna 2-Year Ephemeris");
+
+                                // Sheet 2: Methodology & Astronomical Formulas
+                                const methodologyData = [
+                                    ["ASTRONOMICAL CALCULATION METHODOLOGY & EPHEMERIS FORMULAS"],
+                                    [""],
+                                    ["Parameter", "Formula / Standard"],
+                                    ["Julian Day (JD)", "Fliegel & Van Flandern standard astronomical formula from UTC date & time"],
+                                    ["Greenwich Mean Sidereal Time (GMST)", "IAU formula: GMST = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + ..."],
+                                    ["Right Ascension of Medium Coeli (RAMC)", "RAMC = (GMST + Observer_Longitude) mod 360.0"],
+                                    ["Obliquity of Ecliptic (ε)", "23.4392911°"],
+                                    ["Tropical Ascendant (Lagna)", "atan2( cos(RAMC), -sin(RAMC)*cos(ε) - tan(Latitude)*sin(ε) )"],
+                                    ["Vedic Ascendant (Sidereal)", "Tropical_Ascendant - Lahiri_Ayanamsa (24.22°)"],
+                                    ["Ascendant Right Ascension (RA)", "(RAMC + 90.0°) mod 360.0"],
+                                    ["Ascendant Declination (Kranti)", "arcsin( sin(ε) * sin(Tropical_Ascendant) )"],
+                                    ["Ascendant Horizon Altitude", "00° 00' 00\" (Ascendant is the rising intersection with eastern horizon)"],
+                                    ["Ascendant Horizon Azimuth", "90.0° - arcsin( sin(Declination) / cos(Latitude) )"],
+                                    ["Nakshatra (Constellation)", "Each 13° 20' division of 360° zodiac with 4 Padas (3° 20' each)"],
+                                    [""],
+                                    ["Platform:", "Cosmic Dashboard AstronomyAPI Platform"]
+                                ];
+                                const ws2 = XLSX.utils.aoa_to_sheet(methodologyData);
+                                ws2['!cols'] = [{ wch: 38 }, { wch: 75 }];
+                                XLSX.utils.book_append_sheet(wb, ws2, "Methodology & Formulas");
+
+                                XLSX.writeFile(wb, filename);
+                            } else {
+                                generateLagnaCSV(dataRows, filename.replace('.xlsx', '.csv'));
+                            }
+                        }
+
+                        // CSV generator fallback
+                        function generateLagnaCSV(dataRows, filename) {
+                            if (!dataRows || dataRows.length === 0) {
+                                alert('No data to export.');
+                                return;
+                            }
+
+                            const headers = [
+                                "Date & Time",
+                                "Ascendant Sign (Rasi)",
+                                "Sign Degree Formatted",
+                                "Sign Degree Decimal",
+                                "Full Longitude 360 Decimal",
+                                "Right Ascension (RA)",
+                                "RA Decimal Deg",
+                                "Declination / Kranti",
+                                "Altitude (ALT)",
+                                "Azimuth (AZ)",
+                                "Nakshatra",
+                                "Pada",
+                                "Nakshatra Lord",
+                                "Sub Lord",
+                                "Ayanamsa Value",
+                                "Latitude",
+                                "Longitude"
+                            ];
+
+                            const csvRows = [headers.join(",")];
+                            dataRows.forEach(item => {
+                                const row = [
+                                    `"${item.datetime || ''}"`,
+                                    `"${item.sign || ''}"`,
+                                    `"${item.degree_formatted || ''}"`,
+                                    parseFloat(item.degree || 0).toFixed(4),
+                                    parseFloat(item.longitude || 0).toFixed(4),
+                                    `"${item.right_ascension || ''}"`,
+                                    parseFloat(item.ra_deg || item.longitude || 0).toFixed(4),
+                                    `"${item.declination || ''}"`,
+                                    `"${item.altitude || '00° 00\' 00"'}"`,
+                                    `"${item.azimuth || ''}"`,
+                                    `"${item.nakshatra_name || item.nakshatra || ''}"`,
+                                    item.pada || 1,
+                                    `"${item.nakshatra_lord || ''}"`,
+                                    `"${item.sub_lord || ''}"`,
+                                    item.ayanamsa_value || (zodiacSys === '1' ? 24.22 : 0),
+                                    lat,
+                                    lng
+                                ];
+                                csvRows.push(row.join(","));
+                            });
+
+                            const csvString = "\uFEFF" + csvRows.join("\r\n");
+                            const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.setAttribute("href", url);
+                            link.setAttribute("download", filename);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
                         }
 
                         if (loadMoreBtn) {
