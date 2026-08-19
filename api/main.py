@@ -1188,6 +1188,32 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
                 p["altitude"] = alt_str
             if not p.get("azimuth"):
                 p["azimuth"] = az_str
+
+            # 7. Exact Decimal Declination (declination_deg)
+            dec_val = p.get("declination")
+            dec_deg_num = None
+            if isinstance(dec_val, (int, float)):
+                dec_deg_num = float(dec_val)
+            elif isinstance(dec_val, str) and dec_val not in ["N/A", ""]:
+                try:
+                    clean_dec = dec_val.replace('"', '').replace("'", '').replace('°', '').strip()
+                    parts = clean_dec.split()
+                    sign = -1.0 if '-' in parts[0] else 1.0
+                    d_val = abs(float(parts[0]))
+                    m_val = float(parts[1]) if len(parts) > 1 else 0.0
+                    s_val = float(parts[2]) if len(parts) > 2 else 0.0
+                    dec_deg_num = sign * (d_val + m_val/60.0 + s_val/3600.0)
+                except:
+                    dec_deg_num = None
+
+            if dec_deg_num is None:
+                import math
+                eps = math.radians(23.4392911)
+                lam = math.radians(tropical_lon)
+                sin_dec = math.sin(lam) * math.sin(eps)
+                dec_deg_num = math.degrees(math.asin(max(-1.0, min(1.0, sin_dec))))
+
+            p["declination_deg"] = round(dec_deg_num, 4)
                 
     # Reorder so Ascendant (Lagna) is always first
     planets_sorted = []

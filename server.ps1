@@ -76,6 +76,28 @@ function Calculate-Lagna($year, $month, $day, $hourUTC, $lat, $lon, $ayanamsa = 
     }
 }
 
+function Calculate-Declination($tropicalLon) {
+    $obliqRad = 23.4392911 * [math]::PI / 180.0
+    $lonRad = ($tropicalLon % 360.0) * [math]::PI / 180.0
+    $sinDec = [math]::Sin($obliqRad) * [math]::Sin($lonRad)
+    $decRad = [math]::Asin([math]::Max(-1.0, [math]::Min(1.0, $sinDec)))
+    $decDeg = $decRad * 180.0 / [math]::PI
+
+    $decSign = if ($decDeg -ge 0) { "+" } else { "-" }
+    $decAbs = [math]::Abs($decDeg)
+    $d = [math]::Floor($decAbs)
+    $m = [math]::Floor(($decAbs - $d) * 60)
+    $s = [math]::Round((($decAbs - $d) * 60 - $m) * 60)
+    if ($s -eq 60) { $m += 1; $s = 0 }
+    if ($m -eq 60) { $d += 1; $m = 0 }
+    $decStr = "{0}{1:D2}° {2:D2}' {3:D2}""" -f $decSign, [int]$d, [int]$m, [int]$s
+
+    return [PSCustomObject]@{
+        deg = [math]::Round($decDeg, 4)
+        formatted = $decStr
+    }
+}
+
 function Calculate-EphemerisPlanets($year, $month, $day, $hourUTC, $ayanamsaVal = 0.0) {
     if ($month -le 2) { $year -= 1; $month += 12 }
     $A = [math]::Floor($year / 100)
@@ -521,6 +543,13 @@ while ($listener.IsListening) {
                     sub_lord = "Mercury"
                 }
             )
+
+            foreach ($p in $planets) {
+                $tropLon = ($p.longitude + $ayanamsaVal) % 360.0
+                $decObj = Calculate-Declination $tropLon
+                $p | Add-Member -MemberType NoteProperty -Name "declination" -Value $decObj.formatted -Force
+                $p | Add-Member -MemberType NoteProperty -Name "declination_deg" -Value $decObj.deg -Force
+            }
 
             $resObj = [PSCustomObject]@{
                 status = "success"

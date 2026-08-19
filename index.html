@@ -41,7 +41,7 @@
             <nav class="sidebar-menu">
                 <ul>
                     <li>
-                        <a href="#home" class="menu-link active" data-view="home-view">
+                        <a href="#home" class="menu-link" data-view="home-view">
                             <i class="fa-solid fa-house-chimney-window"></i> <span data-i18n="menu-home">Dashboard Home</span>
                         </a>
                     </li>
@@ -56,7 +56,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#planet-position" class="menu-link" data-view="planet-position-view">
+                        <a href="#planet-position" class="menu-link active" data-view="planet-position-view">
                             <i class="fa-solid fa-earth-asia"></i> <span data-i18n="menu-positions">Planet Positions</span>
                         </a>
                     </li>
@@ -118,7 +118,7 @@
             <main class="main-views">
                 
                 <!-- View 1: Dashboard Home -->
-                <section class="dashboard-view active" id="home-view">
+                <section class="dashboard-view" id="home-view">
                     <div class="home-grid">
                         <div class="welcome-banner glass-card">
                             <div class="banner-content">
@@ -290,7 +290,7 @@
                 </section>
 
                 <!-- View: Planet Positions -->
-                <section class="dashboard-view" id="planet-position-view">
+                <section class="dashboard-view active" id="planet-position-view">
                     <div class="view-split">
                         <div class="calculator-form-container glass-card">
                             <h3>Planet Positions Calculator</h3>
@@ -334,8 +334,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-gold btn-full">Calculate Positions <i class="fa-solid fa-earth-asia"></i></button>
+                                <button type="submit" class="btn btn-gold btn-full" id="calc-positions-btn">Calculate Positions <i class="fa-solid fa-earth-asia"></i></button>
                             </form>
+                            <!-- 4-Level Ascendant Nakshatra Lord Declination Chain Summary Box below button -->
+                            <div id="form-declination-chain-summary" style="margin-top: 1.25rem;"></div>
                         </div>
                         
                         <div class="calculator-result-container" id="planet-position-result">

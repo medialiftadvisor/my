@@ -141,14 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Check hash on load
+    // Check hash on load - default to Planet Positions Calculator
     const checkHashRoute = () => {
-        const hash = window.location.hash || '#home';
+        const hash = window.location.hash || '#planet-position';
         const activeLink = document.querySelector(`.menu-link[href="${hash}"]`);
         if (activeLink) {
             navigateToView(activeLink.getAttribute('data-view'));
         } else {
-            navigateToView('home-view');
+            navigateToView('planet-position-view');
         }
     };
     checkHashRoute();
@@ -964,6 +964,201 @@ document.addEventListener('DOMContentLoaded', () => {
                             return signName;
                         }
 
+                        // ─── 4-Level Ascendant Nakshatra Lord Declination Chain Engine ───
+                        function getNakshatraInfoFromLongitude(lonDeg) {
+                            const nakshatraNames = [
+                                "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+                                "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
+                                "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+                                "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
+                                "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+                            ];
+                            const nakshatraLords = [
+                                "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu",
+                                "Jupiter", "Saturn", "Mercury", "Ketu", "Venus", "Sun",
+                                "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
+                                "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu",
+                                "Jupiter", "Saturn", "Mercury"
+                            ];
+                            const normLon = ((lonDeg % 360) + 360) % 360;
+                            const nakSpan = 360.0 / 27.0; // 13.333333333° (13° 20')
+                            const nakIndex = Math.floor(normLon / nakSpan) % 27;
+                            const padaSpan = nakSpan / 4.0; // 3.333333333° (3° 20')
+                            const pada = (Math.floor((normLon % nakSpan) / padaSpan) % 4) + 1;
+
+                            return {
+                                name: nakshatraNames[nakIndex],
+                                pada: pada,
+                                lord: nakshatraLords[nakIndex],
+                                index: nakIndex
+                            };
+                        }
+
+                        function findPlanetByLord(planetsList, lordName) {
+                            if (!lordName) return null;
+                            const l = lordName.toLowerCase().trim();
+                            return planetsList.find(p => {
+                                const name = (p.name || p.planet || '').toLowerCase().trim();
+                                if (name === l) return true;
+                                if (l === 'sun' && (name.includes('sun') || name.includes('surya'))) return true;
+                                if (l === 'moon' && (name.includes('moon') || name.includes('chandra'))) return true;
+                                if (l === 'mars' && (name.includes('mars') || name.includes('mangal'))) return true;
+                                if (l === 'mercury' && (name.includes('mercury') || name.includes('budha'))) return true;
+                                if (l === 'jupiter' && (name.includes('jupiter') || name.includes('guru'))) return true;
+                                if (l === 'venus' && (name.includes('venus') || name.includes('shukra'))) return true;
+                                if (l === 'saturn' && (name.includes('saturn') || name.includes('shani'))) return true;
+                                if (l === 'rahu' && (name.includes('rahu') || name.includes('north node'))) return true;
+                                if (l === 'ketu' && (name.includes('ketu') || name.includes('south node'))) return true;
+                                return false;
+                            });
+                        }
+
+                        function extractDecimalDeclination(p) {
+                            if (typeof p.declination_deg === 'number' && !isNaN(p.declination_deg)) {
+                                return p.declination_deg;
+                            }
+                            if (p.declination !== undefined && p.declination !== null) {
+                                if (typeof p.declination === 'number' && !isNaN(p.declination)) {
+                                    return p.declination;
+                                }
+                                const str = String(p.declination).replace('"', '').replace("'", '').replace('°', '').trim();
+                                const parts = str.split(/\s+/);
+                                if (parts.length > 0 && !isNaN(parseFloat(parts[0]))) {
+                                    const sign = str.includes('-') ? -1.0 : 1.0;
+                                    const d = Math.abs(parseFloat(parts[0]));
+                                    const m = parts.length > 1 ? (parseFloat(parts[1]) || 0) : 0;
+                                    const s = parts.length > 2 ? (parseFloat(parts[2]) || 0) : 0;
+                                    return sign * (d + m / 60.0 + s / 3600.0);
+                                }
+                            }
+                            // Calculate via tropical longitude: sin(delta) = sin(23.4392911°) * sin(lambda)
+                            const tropLon = p.tropical_longitude !== undefined ? p.tropical_longitude : (p.longitude !== undefined ? p.longitude : 0);
+                            const epsRad = (23.4392911 * Math.PI) / 180.0;
+                            const lamRad = (tropLon * Math.PI) / 180.0;
+                            const sinDec = Math.sin(lamRad) * Math.sin(epsRad);
+                            return (Math.asin(Math.max(-1.0, Math.min(1.0, sinDec))) * 180.0) / Math.PI;
+                        }
+
+                        function formatDeclinationDMS(deg) {
+                            const sign = deg >= 0 ? '+' : '-';
+                            const absDeg = Math.abs(deg);
+                            const d = Math.floor(absDeg);
+                            const m = Math.floor((absDeg - d) * 60);
+                            const s = Math.round(((absDeg - d) * 60 - m) * 60);
+                            const sFinal = s === 60 ? 0 : s;
+                            const mFinal = s === 60 ? m + 1 : m;
+                            return `${sign}${String(d).padStart(2, '0')}° ${String(mFinal).padStart(2, '0')}' ${String(sFinal).padStart(2, '0')}"`;
+                        }
+
+                        function computeAscendantDeclinationChain(planetsList) {
+                            let lagna = planetsList.find(p => {
+                                const n = (p.name || p.planet || '').toLowerCase();
+                                return n.includes('ascendant') || n.includes('lagna');
+                            });
+                            if (!lagna && planetsList.length > 0) lagna = planetsList[0];
+
+                            const chain = [];
+                            let currentObj = lagna;
+                            let isLagna = true;
+
+                            for (let level = 1; level <= 4; level++) {
+                                if (!currentObj) break;
+
+                                const bodyName = isLagna ? 'Ascendant (Lagna)' : (currentObj.name || currentObj.planet || `Lord ${level-1}`);
+                                const decVal = extractDecimalDeclination(currentObj);
+                                const decDms = formatDeclinationDMS(decVal);
+
+                                let sidLon = currentObj.longitude !== undefined ? currentObj.longitude : (currentObj.tropical_longitude || 0);
+                                const nakInfo = getNakshatraInfoFromLongitude(sidLon);
+                                const nakName = currentObj.nakshatra || nakInfo.name;
+                                const pada = currentObj.padam || currentObj.pada || nakInfo.pada;
+                                const lordName = currentObj.nakshatra_lord || nakInfo.lord;
+                                const signName = (currentObj.rasi && typeof currentObj.rasi === 'object' ? currentObj.rasi.name : currentObj.sign) || 'N/A';
+
+                                chain.push({
+                                    level: level,
+                                    name: bodyName,
+                                    sign: signName,
+                                    longitude: sidLon,
+                                    nakshatra: nakName,
+                                    pada: pada,
+                                    nakshatra_lord: lordName,
+                                    declination_deg: decVal,
+                                    declination_formatted: decDms,
+                                    body: currentObj
+                                });
+
+                                // Next level planet: the nakshatra lord of the current body
+                                currentObj = findPlanetByLord(planetsList, lordName);
+                                isLagna = false;
+                            }
+
+                            const totalDecDeg = chain.reduce((acc, curr) => acc + curr.declination_deg, 0);
+                            const totalDecDms = formatDeclinationDMS(totalDecDeg);
+
+                            return {
+                                chain: chain,
+                                total_declination_deg: totalDecDeg,
+                                total_declination_formatted: totalDecDms
+                            };
+                        }
+
+                        // Compute 4-level Declination Chain
+                        const decChainResult = computeAscendantDeclinationChain(planets);
+
+                        // Render Left Form Summary Box below Calculate Positions button
+                        const formSummaryEl = document.getElementById('form-declination-chain-summary');
+                        if (formSummaryEl) {
+                            formSummaryEl.innerHTML = `
+                                <div style="background: rgba(255,215,0,0.04); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 1.1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.4); font-family: Outfit;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,215,0,0.18); padding-bottom: 0.6rem; margin-bottom: 0.8rem;">
+                                        <div style="font-weight: 700; color: #ffd700; font-size: 0.92rem; display: flex; align-items: center; gap: 0.4rem;">
+                                            <i class="fa-solid fa-calculator" style="color: #ffd700;"></i>
+                                            <span>4-Level Ascendant Declination</span>
+                                        </div>
+                                        <span style="font-size: 0.68rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.5rem; border-radius: 12px; font-weight: 700;">Kranti Sum</span>
+                                    </div>
+
+                                    <div style="background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.06)); border: 1px solid rgba(255,215,0,0.4); border-radius: 8px; padding: 0.75rem; text-align: center; margin-bottom: 0.85rem;">
+                                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); font-weight: 600;">Total Calculated Declination / कुल क्रांति</div>
+                                        <div style="font-size: 1.55rem; font-weight: 800; color: #ffd700; font-family: monospace; text-shadow: 0 0 15px rgba(255,215,0,0.4); margin: 0.2rem 0;">
+                                            ${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°
+                                        </div>
+                                        <div style="font-size: 0.82rem; color: #34d399; font-weight: 600; font-family: monospace;">
+                                            ${decChainResult.total_declination_formatted}
+                                        </div>
+                                    </div>
+
+                                    <!-- Step by step items -->
+                                    <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                                        ${decChainResult.chain.map((c) => `
+                                            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 0.45rem 0.65rem; display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; font-size: 0.78rem;">
+                                                <div>
+                                                    <div style="font-weight: 700; color: #fff;">
+                                                        <span style="color: #ffd700; font-size: 0.72rem; margin-right: 0.2rem;">L${c.level}:</span> ${c.name}
+                                                    </div>
+                                                    <div style="font-size: 0.7rem; color: var(--color-text-secondary);">
+                                                        Nak: <strong>${c.nakshatra} (P${c.pada})</strong> <span style="color:#ffd700;margin-left:0.2rem;">→ ${c.nakshatra_lord}</span>
+                                                    </div>
+                                                </div>
+                                                <div style="text-align: right; font-family: monospace; font-weight: 700; color: #38bdf8;">
+                                                    ${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°
+                                                    <div style="font-size: 0.68rem; color: var(--color-text-secondary); font-weight: 500;">${c.declination_formatted}</div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+
+                                    <!-- Sum equation breakdown -->
+                                    <div style="margin-top: 0.75rem; padding: 0.55rem 0.7rem; background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px dashed rgba(255,215,0,0.25); font-family: monospace; font-size: 0.7rem; color: #ffd700; line-height: 1.4;">
+                                        <strong>Formula:</strong><br>
+                                        ${decChainResult.chain.map(c => `(${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°)`).join(' + ')}
+                                        = <strong style="color:#34d399;">${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°</strong>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         let planetRows = '';
                         planets.forEach(p => {
                             const name = p.name || p.planet || 'N/A';
@@ -995,7 +1190,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 : `<span style="color: #2ef56a; font-weight: 700; background: rgba(46,245,106,0.1); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(46,245,106,0.2);">${retroText}</span>`;
 
                             const ra = p.right_ascension || 'N/A';
-                            const dec = p.declination || 'N/A';
+                            
+                            // Declination with both DMS and Decimal degrees
+                            const decDegNum = extractDecimalDeclination(p);
+                            const decDmsFormatted = formatDeclinationDMS(decDegNum);
+                            const decStr = p.declination || decDmsFormatted;
+
                             const alt = p.altitude || 'N/A';
                             const az = p.azimuth || 'N/A';
 
@@ -1020,13 +1220,82 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <td>${translateText(nakSubLord)}</td>
                                     <td>${raw_lon}</td>
                                     <td>${ra}</td>
-                                    <td>${dec}</td>
+                                    <td>
+                                        <div style="font-weight: 600; color: #e2e8f0;">${decStr}</div>
+                                        <div style="color: #ffd700; font-family: monospace; font-size: 0.76rem; font-weight: 700; margin-top: 0.15rem;">${decDegNum >= 0 ? '+' : ''}${decDegNum.toFixed(4)}°</div>
+                                    </td>
                                     <td>${alt}</td>
                                     <td>${az}</td>
                                     <td>${retroBadge}</td>
                                 </tr>
                             `;
                         });
+
+                        // 4-Level Declination Chain Full Visual Card at top of Placements pane
+                        const declinationChainSectionHtml = `
+                            <div class="declination-chain-card" style="background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.22); border-radius: 12px; padding: 1.25rem 1.4rem; margin-bottom: 1.5rem; font-family: Outfit;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.1rem; border-bottom: 1px solid rgba(255,215,0,0.12); padding-bottom: 0.75rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <i class="fa-solid fa-circle-nodes" style="color: #ffd700; font-size: 1.3rem;"></i>
+                                        <div>
+                                            <div style="font-weight: 700; color: #ffd700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                                4-Level Ascendant Nakshatra Lord Declination (Kranti) Chain
+                                                <span style="font-size: 0.7rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">Lagna + 3 Lords</span>
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.1rem;">
+                                                Sequential Declination / Kranti addition: Ascendant (Lagna) + Lord 1 + Lord 2 + Lord 3
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Total Calculated Declination Box -->
+                                    <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.08)); border: 1px solid rgba(255,215,0,0.45); border-radius: 8px; padding: 0.5rem 1.2rem; text-align: right; box-shadow: 0 4px 15px rgba(255,215,0,0.15);">
+                                        <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--color-text-secondary); font-weight: 700;">Total Declination / कुल क्रांति</div>
+                                        <div style="font-size: 1.45rem; font-weight: 800; color: #ffd700; font-family: monospace;">
+                                            ${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°
+                                            <span style="font-size: 0.85rem; color: #34d399; font-weight: 600; margin-left: 0.35rem;">(${decChainResult.total_declination_formatted})</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 4 Step Grid Cards -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.9rem; margin-bottom: 1rem;">
+                                    ${decChainResult.chain.map((c, i) => `
+                                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,215,0,${i === 0 ? '0.45' : '0.15'}); border-radius: 8px; padding: 0.85rem 1rem; position: relative;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                                                <span style="font-size: 0.72rem; font-weight: 700; color: #ffd700; text-transform: uppercase;">Step ${c.level}</span>
+                                                <span style="font-size: 0.65rem; background: rgba(255,255,255,0.08); padding: 0.1rem 0.45rem; border-radius: 10px; color: #e2e8f0;">${i === 0 ? 'Root Ascendant' : `Lord of Step ${i}`}</span>
+                                            </div>
+                                            <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 0.25rem;">
+                                                ${getDualPlanetName(c.name)}
+                                            </div>
+                                            <div style="font-size: 0.74rem; color: var(--color-text-secondary); margin-bottom: 0.45rem; line-height: 1.45;">
+                                                Sign: <strong style="color:#fff;">${c.sign}</strong><br>
+                                                Nakshatra: <strong style="color:#e2e8f0;">${c.nakshatra} (P${c.pada})</strong><br>
+                                                Next Lord → <strong style="color:#ffd700;">${c.nakshatra_lord}</strong>
+                                            </div>
+                                            <div style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.25); border-radius: 6px; padding: 0.35rem 0.55rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <span style="font-size: 0.7rem; color: var(--color-text-secondary); font-weight: 600;">Declination:</span>
+                                                <span style="font-family: monospace; font-weight: 700; color: #38bdf8; font-size: 0.84rem;">
+                                                    ${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+
+                                <!-- Step-by-Step Addition Formula Breakdown -->
+                                <div style="background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,215,0,0.25); border-radius: 8px; padding: 0.65rem 1rem; font-family: monospace; font-size: 0.78rem; color: #ffd700; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <strong style="color: #ffd700;">Addition Equation:</strong>
+                                        ${decChainResult.chain.map(c => `<span style="color:#fff;">(${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°)</span> <span style="opacity:0.6;font-size:0.7rem;">[${c.name}]</span>`).join(' + ')}
+                                    </div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: #34d399;">
+                                        = ${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°
+                                    </div>
+                                </div>
+                            </div>
+                        `;
 
                         let natalChartHtml = '';
                         if (natalRes.status === 'success' && natalRes.data && natalRes.data.svg) {
@@ -1086,6 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
+                                    ${declinationChainSectionHtml}
                                     ${natalChartHtml}
                                     <div class="planet-table-wrapper">
                                         <table class="planet-table">
@@ -1098,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <th>Nakshatra Lord / Sub Lord</th>
                                                     <th>Full Degree</th>
                                                     <th>Right Ascension (RA)</th>
-                                                    <th>Declination / Kranti</th>
+                                                    <th>Declination / Kranti (DMS &amp; Decimal °)</th>
                                                     <th>Altitude (ALT)</th>
                                                     <th>Azimuth (AZ)</th>
                                                     <th>Status</th>
