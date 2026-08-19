@@ -164,6 +164,44 @@ function Calculate-EphemerisPlanets($year, $month, $day, $hourUTC, $ayanamsaVal 
     }
 }
 
+$global:nakshatrasList = @("Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati")
+$global:nakLordsList = @("Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury", "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury", "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury")
+$global:vimshottariYears = @{ "Ketu" = 7; "Venus" = 20; "Sun" = 6; "Moon" = 10; "Mars" = 7; "Rahu" = 18; "Jupiter" = 16; "Saturn" = 19; "Mercury" = 17 }
+
+function Get-NakshatraDetails($lonDeg) {
+    $normLon = ($lonDeg % 360.0 + 360.0) % 360.0
+    $nakSpan = 360.0 / 27.0
+    $nakIdx = [math]::Floor($normLon / $nakSpan) % 27
+    $nakName = $global:nakshatrasList[$nakIdx]
+    $nakLord = $global:nakLordsList[$nakIdx]
+
+    $padaSpan = $nakSpan / 4.0
+    $pada = [math]::Floor(($normLon % $nakSpan) / $padaSpan) + 1
+
+    $remInNak = $normLon % $nakSpan
+    $startIdx = $nakIdx % 9
+    $order = @()
+    for ($i = 0; $i -lt 9; $i++) { $order += $global:nakLordsList[($startIdx + $i) % 9] }
+
+    $currPos = 0.0
+    $subLord = $order[0]
+    foreach ($l in $order) {
+        $spanL = $nakSpan * ($global:vimshottariYears[$l] / 120.0)
+        if ($remInNak -ge $currPos -and $remInNak -lt ($currPos + $spanL + 0.000001)) {
+            $subLord = $l
+            break
+        }
+        $currPos += $spanL
+    }
+
+    return [PSCustomObject]@{
+        name = $nakName
+        pada = $pada
+        lord = $nakLord
+        sub_lord = $subLord
+    }
+}
+
 while ($listener.IsListening) {
     try {
         $context = $listener.GetContext()
@@ -560,6 +598,170 @@ while ($listener.IsListening) {
             }
 
             $json = $resObj | ConvertTo-Json -Depth 5
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
+            $response.ContentType = "application/json"
+            $response.OutputStream.Write($buffer, 0, $buffer.Length)
+            $response.Close()
+            continue
+        }
+
+        if ($urlPath.StartsWith("/api/astrology/lagna-4yr-matches")) {
+            $query = Parse-QueryString $request.Url.PathAndQuery
+            $dtStr = $query["datetime"]
+            $latStr = $query["latitude"]
+            $lngStr = $query["longitude"]
+            $ayanamsaStr = $query["ayanamsa"]
+
+            $lat = if ($latStr) { [double]$latStr } else { 19.0655 }
+            $lng = if ($lngStr) { [double]$lngStr } else { 72.8644 }
+            $ayanamsaVal = if ($ayanamsaStr -eq "1") { 24.22 } else { 0.0 }
+
+            $baseDt = [DateTimeOffset]::Now
+            if ($dtStr) {
+                try { $baseDt = [DateTimeOffset]::Parse($dtStr) } catch {}
+            }
+
+            # Generate current planets
+            $utcObj = $baseDt.ToUniversalTime()
+            $ascObj = Calculate-Lagna $utcObj.Year $utcObj.Month $utcObj.Day ($utcObj.Hour + $utcObj.Minute / 60.0 + $utcObj.Second / 3600.0) $lat $lng $ayanamsaVal
+            $eph = Calculate-EphemerisPlanets $utcObj.Year $utcObj.Month $utcObj.Day ($utcObj.Hour + $utcObj.Minute / 60.0 + $utcObj.Second / 3600.0) $ayanamsaVal
+
+            $targetPlanets = @(
+                [PSCustomObject]@{ name = "Ascendant"; longitude = $ascObj.vedic }
+                [PSCustomObject]@{ name = "Sun"; longitude = $eph.Sun }
+                [PSCustomObject]@{ name = "Moon"; longitude = $eph.Moon }
+                [PSCustomObject]@{ name = "Mars"; longitude = $eph.Mars }
+                [PSCustomObject]@{ name = "Mercury"; longitude = $eph.Mercury }
+                [PSCustomObject]@{ name = "Jupiter"; longitude = $eph.Jupiter }
+                [PSCustomObject]@{ name = "Venus"; longitude = $eph.Venus }
+                [PSCustomObject]@{ name = "Saturn"; longitude = $eph.Saturn }
+                [PSCustomObject]@{ name = "Uranus"; longitude = $eph.Uranus }
+                [PSCustomObject]@{ name = "Neptune"; longitude = $eph.Neptune }
+                [PSCustomObject]@{ name = "Pluto"; longitude = $eph.Pluto }
+                [PSCustomObject]@{ name = "Rahu"; longitude = $eph.Rahu }
+                [PSCustomObject]@{ name = "Ketu"; longitude = $eph.Ketu }
+                [PSCustomObject]@{ name = "Spashth Rahu"; longitude = (($eph.Rahu + 0.9) % 360) }
+                [PSCustomObject]@{ name = "Spashth Ketu"; longitude = (($eph.Ketu + 0.9) % 360) }
+                [PSCustomObject]@{ name = "Earth"; longitude = (($eph.Sun + 180) % 360) }
+            )
+
+            $signs = @("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
+            $matches = @()
+
+            foreach ($p in $targetPlanets) {
+                $pName = $p.name
+                $targetLon = ($p.longitude % 360.0 + 360.0) % 360.0
+                $tNak = Get-NakshatraDetails $targetLon
+                $tSign = $signs[[math]::Floor($targetLon / 30) % 12]
+                $tDeg = $targetLon % 30.0
+                $tDegD = [int][math]::Floor($tDeg)
+                $tDegM = [int][math]::Floor(($tDeg - $tDegD) * 60)
+                $tDegFormatted = "{0:D2}° {1:D2}'" -f $tDegD, $tDegM
+
+                $pMatches = @()
+                for ($yr = 1; $yr -le 4; $yr++) {
+                    if ($pMatches.Count -ge 3) { break }
+                    $candDay = $baseDt.AddYears(-$yr)
+
+                    # Quick 10-min scan
+                    $bestM = 0
+                    $minDiff = 999.0
+                    for ($m = 0; $m -lt 1440; $m += 10) {
+                        $tCand = $candDay.Date.AddMinutes($m)
+                        $u = $tCand.ToUniversalTime()
+                        $hUTC = $u.Hour + ($u.Minute / 60.0) + ($u.Second / 3600.0)
+                        $asc = Calculate-Lagna $u.Year $u.Month $u.Day $hUTC $lat $lng $ayanamsaVal
+                        $diff = [math]::Abs(($asc.vedic - $targetLon + 180) % 360 - 180)
+                        if ($diff -lt $minDiff) {
+                            $minDiff = $diff
+                            $bestM = $m
+                        }
+                    }
+
+                    # Fine 1-min scan
+                    $fineBestDt = $null
+                    $fineMinDiff = 999.0
+                    $fineLon = 0.0
+                    $fineTrop = 0.0
+                    for ($m = [math]::Max(0, $bestM - 15); $m -le [math]::Min(1440, $bestM + 16); $m++) {
+                        $tCand = $candDay.Date.AddMinutes($m)
+                        $u = $tCand.ToUniversalTime()
+                        $hUTC = $u.Hour + ($u.Minute / 60.0) + ($u.Second / 3600.0)
+                        $asc = Calculate-Lagna $u.Year $u.Month $u.Day $hUTC $lat $lng $ayanamsaVal
+                        $diff = [math]::Abs(($asc.vedic - $targetLon + 180) % 360 - 180)
+                        if ($diff -lt $fineMinDiff) {
+                            $fineMinDiff = $diff
+                            $fineBestDt = $tCand
+                            $fineLon = $asc.vedic
+                            $fineTrop = $asc.tropical
+                        }
+                    }
+
+                    if ($fineBestDt -and $fineMinDiff -le 0.5) {
+                        $cNak = Get-NakshatraDetails $fineLon
+                        $cSign = $signs[[math]::Floor($fineLon / 30) % 12]
+                        $cDeg = $fineLon % 30.0
+                        $cDegD = [int][math]::Floor($cDeg)
+                        $cDegM = [int][math]::Floor(($cDeg - $cDegD) * 60)
+                        $cDegS = [int][math]::Round((($cDeg - $cDegD) * 60 - $cDegM) * 60)
+                        if ($cDegS -eq 60) { $cDegM += 1; $cDegS = 0 }
+                        if ($cDegM -eq 60) { $cDegD += 1; $cDegM = 0 }
+                        $cDegFormatted = "{0:D2}° {1:D2}' {2:D2}""" -f $cDegD, $cDegM, $cDegS
+
+                        $decObj = Calculate-Declination $fineTrop
+                        $isLordMatch = ($cNak.lord -eq $tNak.lord)
+                        $isSubMatch = ($cNak.sub_lord -eq $tNak.sub_lord)
+
+                        $matchType = if ($isLordMatch -and $isSubMatch) { "Exact (Degree + Lord + Sub-Lord)" } elseif ($isLordMatch) { "Lord Match" } else { "Degree Match" }
+
+                        $pMatches += [PSCustomObject]@{
+                            target_planet = $pName
+                            target_sign = $tSign
+                            target_degree = [math]::Round($tDeg, 4)
+                            target_degree_formatted = $tDegFormatted
+                            target_longitude = [math]::Round($targetLon, 4)
+                            target_nakshatra = "$($tNak.name) (Pada $($tNak.pada))"
+                            target_nakshatra_lord = $tNak.lord
+                            target_sub_lord = $tNak.sub_lord
+                            occurrence_index = $pMatches.Count + 1
+                            year_offset = "$yr Year(s) Ago"
+                            datetime = $fineBestDt.ToString("yyyy-MM-dd HH:mm")
+                            lagna_sign = $cSign
+                            lagna_degree = [math]::Round($cDeg, 4)
+                            lagna_degree_formatted = $cDegFormatted
+                            lagna_longitude = [math]::Round($fineLon, 4)
+                            right_ascension = ""
+                            declination = $decObj.formatted
+                            declination_deg = $decObj.deg
+                            altitude = "00° 00' 00"""
+                            azimuth = ""
+                            nakshatra = "$($cNak.name) (Pada $($cNak.pada))"
+                            nakshatra_lord = $cNak.lord
+                            sub_lord = $cNak.sub_lord
+                            lord_matched = $isLordMatch
+                            sub_matched = $isSubMatch
+                            match_type = $matchType
+                        }
+                    }
+                }
+                $matches += $pMatches
+            }
+
+            $resObj = [PSCustomObject]@{
+                status = "success"
+                data = [PSCustomObject]@{
+                    matches = $matches
+                    total_matches = $matches.Count
+                    base_datetime = $baseDt.ToString("yyyy-MM-dd HH:mm")
+                    latitude = $lat
+                    longitude = $lng
+                    ayanamsa = if ($ayanamsaStr -eq "1") { "Sidereal Lahiri" } else { "Tropical" }
+                    years_span = 4
+                    max_entries_per_planet = 3
+                }
+            }
+
+            $json = $resObj | ConvertTo-Json -Depth 6
             $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
             $response.ContentType = "application/json"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)

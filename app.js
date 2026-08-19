@@ -1352,6 +1352,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <i class="fa-solid fa-file-excel"></i> Excel
                                         </span>
                                     </button>
+                                    <button class="aspect-tab-btn" data-target="lagna-4yr-pane" id="load-lagna-4yr-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem;">
+                                        <i class="fa-solid fa-clock-rotate-left" style="color:#ffd700;"></i>
+                                        <span>4-Year Lagna (1–30° Matches &amp; Lords)</span>
+                                        <span style="background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 0.68rem; padding: 0.12rem 0.45rem; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                            <i class="fa-solid fa-file-excel"></i> Excel
+                                        </span>
+                                    </button>
                                 </div>
                                 
                                 <div id="placements-pane" class="aspects-pane-content">
@@ -1428,91 +1435,82 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                             <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">From:</label>
                                             <input type="datetime-local" id="history-from-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.2); color: #fff; border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-family: Outfit; outline: none; cursor: pointer;">
-                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap;">To:</label>
+                                            <label style="font-size: 0.78rem; color: var(--color-text-secondary); font-family: Outfit; white-space: nowrap; margin-left: 0.2rem;">To:</label>
                                             <input type="datetime-local" id="history-to-dt" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.2); color: #fff; border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-family: Outfit; outline: none; cursor: pointer;">
-                                            <button id="history-apply-filter-btn" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; border-radius: 5px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.18s;">Apply</button>
+                                            <button id="history-apply-filter-btn" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; border-radius: 5px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-family: Outfit; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fa-solid fa-filter"></i> Apply
+                                            </button>
                                         </div>
 
-                                        <!-- PDF Button -->
-                                        <button id="history-print-pdf-btn" title="Download / Print as PDF" style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 6px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                            <i class="fa-solid fa-file-pdf"></i> Print / PDF
-                                        </button>
+                                        <!-- Download PDF / Print button -->
+                                        <div style="margin-left: auto;">
+                                            <button id="history-print-pdf-btn" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); border: 1px solid #ffd700; color: #ffd700; padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+                                                <i class="fa-solid fa-file-pdf"></i> Download PDF
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.78rem; color: #ffd700; font-family: Outfit; background: rgba(255,215,0,0.06); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,215,0,0.18);">
-                                        <span><i class="fa-solid fa-arrows-left-right" style="margin-right: 0.4rem;"></i> <strong>Horizontal Scrollable:</strong> Swipe or scroll left & right to view all 15 celestial placements</span>
-                                        <span style="font-weight: 700; opacity: 0.85;">← Scroll Left / Right →</span>
-                                    </div>
-
-                                    <div class="planet-table-wrapper" style="max-height: 480px; overflow-y: auto; overflow-x: auto; width: 100%;">
+                                    <div class="planet-table-wrapper" style="max-height: 520px; overflow-y: auto; overflow-x: auto; width: 100%;">
                                         <table id="history-main-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
                                             <thead>
                                                 <tr>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Date &amp; Time</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">Lagna</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☉ Surya</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☽ Chandra</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♂ Mangal</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☿ Budha</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♃ Guru</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♀ Shukra</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♄ Shani</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♅ Arun</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♆ Varun</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">♇ Yam / Pluto</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ Rahu</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Ketu</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☊ Spashth Rahu</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">☋ Spashth Ketu</th>
-                                                    <th style="padding: 0.6rem 0.8rem; text-align: left;">⊕ Earth (Bhumi)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Date &amp; Time</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ascendant</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Sun</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Moon</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Mars</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Mercury</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Jupiter</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Venus</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Saturn</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Uranus</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Neptune</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Pluto</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Rahu</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ketu</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Spashth Rahu</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Spashth Ketu</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Earth</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="history-table-body">
-                                                <tr>
-                                                    <td colspan="18" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
-                                                        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>History</strong> tab to load data
-                                                    </td>
-                                                </tr>
+                                                <tr><td colspan="17" style="text-align: center; opacity: 0.6; padding: 2rem 0;"><i class="fa-solid fa-spinner fa-spin" style="color: #ffd700; margin-right: 0.5rem;"></i> Click the <strong>60-Min Planetary History</strong> tab to load data</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div style="display: flex; justify-content: center; margin-top: 1.2rem;">
-                                        <button id="history-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">Load More Intervals</button>
+                                    <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+                                        <button id="history-load-more-btn" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 6px; padding: 0.5rem 1.5rem; font-family: Outfit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: none; outline: none;">
+                                            <i class="fa-solid fa-circle-chevron-down" style="margin-right: 0.4rem;"></i> Load More (60-Min Intervals)
+                                        </button>
                                     </div>
                                 </div>
-
-                                <!-- ASCENDANT (LAGNA) 2-YEAR HISTORY TAB WITH PROPER EXCEL DOWNLOAD -->
+                                
                                 <div id="lagna-pane" class="aspects-pane-content" style="display: none;">
-                                    <!-- Header Bar with Excel & CSV Actions -->
-                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.12); border-radius: 12px; padding: 1rem 1.2rem;">
-                                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-                                            <i class="fa-solid fa-star-and-crescent" style="color: #ffd700; font-size: 1.2rem;"></i>
+                                    <!-- Lagna 2-Year Controls Bar with Excel Export Button -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.15); border-radius: 10px; padding: 0.9rem 1.2rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                            <i class="fa-solid fa-star-and-crescent" style="color: #ffd700; font-size: 1.3rem;"></i>
                                             <div>
                                                 <div style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                                    Ascendant (Lagna) 2-Year Ephemeris &amp; Historical Transits
-                                                    <span style="font-size: 0.72rem; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 600;">Up to 2 Years Range</span>
+                                                    Ascendant (Lagna) 2-Year Comprehensive Ephemeris
+                                                    <span style="font-size: 0.7rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">Full 2-Year Lookback Range</span>
                                                 </div>
-                                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.1rem;">
-                                                    Exact astronomical calculations (JD, GMST, RAMC, RA, Declination/Kranti, Altitude, Azimuth, Nakshatra &amp; Sub-Lords)
+                                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.15rem;">
+                                                    Detailed Lagna history including Longitude, Full Degree, RA, Declination (Kranti), ALT, AZ, Nakshatra &amp; Sub-Lords
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Action Buttons in Proper Manner -->
-                                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-left: auto;">
-                                            <!-- Excel (.xlsx) Download Button -->
-                                            <button id="lagna-download-xlsx-btn" title="Download formatted Microsoft Excel (.xlsx) Sheet" style="display: flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, #107c41, #15803d); border: 1px solid #22c55e; color: #ffffff; border-radius: 7px; padding: 0.45rem 1.05rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(16,124,65,0.4); transition: all 0.2s;">
-                                                <i class="fa-solid fa-file-excel" style="font-size: 1rem;"></i> Download Excel (.xlsx)
+                                        <!-- Action Buttons: Excel (.xlsx), CSV, Print PDF -->
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button id="lagna-download-xlsx-btn" style="background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.1)); border: 1px solid #34d399; color: #34d399; padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s; box-shadow: 0 2px 10px rgba(16,185,129,0.2);">
+                                                <i class="fa-solid fa-file-excel"></i> Download Excel (.xlsx)
                                             </button>
-
-                                            <!-- CSV Download Button -->
-                                            <button id="lagna-download-csv-btn" title="Download UTF-8 CSV Sheet" style="display: flex; align-items: center; gap: 0.45rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; border-radius: 7px; padding: 0.45rem 0.9rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                                <i class="fa-solid fa-file-csv" style="font-size: 1rem;"></i> CSV
+                                            <button id="lagna-download-csv-btn" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-file-csv"></i> CSV
                                             </button>
-
-                                            <!-- Print / PDF Button -->
-                                            <button id="lagna-print-pdf-btn" title="Print / Save as PDF" style="display: flex; align-items: center; gap: 0.4rem; background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35); color: #ff7b7b; border-radius: 7px; padding: 0.45rem 0.85rem; font-size: 0.82rem; font-family: Outfit; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                                <i class="fa-solid fa-file-pdf"></i> Print / PDF
+                                            <button id="lagna-print-pdf-btn" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-print"></i> Print / PDF
                                             </button>
                                         </div>
                                     </div>
@@ -1585,6 +1583,84 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                <div id="lagna-4yr-pane" class="aspects-pane-content" style="display: none;">
+                                    <!-- Lagna 4-Year Matches Controls Bar -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.18); border-radius: 10px; padding: 0.9rem 1.2rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                            <i class="fa-solid fa-clock-rotate-left" style="color: #ffd700; font-size: 1.3rem;"></i>
+                                            <div>
+                                                <div style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                                    4-Year Previous Ascendant (Lagna) Historical Matches
+                                                    <span style="font-size: 0.7rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">1–30° Degree, Same Lord &amp; Sub-Lord</span>
+                                                    <span style="font-size: 0.7rem; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">Max 3 Entries / Planet</span>
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.15rem;">
+                                                    Past 4 years historical occurrences where Lagna was at the exact same Sign Degree (1–30°), Nakshatra Lord, and KP Sub-Lord.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Buttons: Excel (.xlsx), CSV, Print PDF, Refresh -->
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button id="lagna-4yr-download-xlsx-btn" style="background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.1)); border: 1px solid #34d399; color: #34d399; padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s; box-shadow: 0 2px 10px rgba(16,185,129,0.2);">
+                                                <i class="fa-solid fa-file-excel"></i> Download Excel (.xlsx)
+                                            </button>
+                                            <button id="lagna-4yr-download-csv-btn" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-file-csv"></i> CSV
+                                            </button>
+                                            <button id="lagna-4yr-print-pdf-btn" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-print"></i> Print / PDF
+                                            </button>
+                                            <button id="lagna-4yr-refresh-btn" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-family: Outfit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-arrows-rotate"></i> Recalculate
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filter Bar -->
+                                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 0.75rem 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                                            <label style="font-size: 0.8rem; color: var(--color-text-secondary); font-family: Outfit; font-weight: 600;">Filter by Reference Body:</label>
+                                            <select id="lagna-4yr-planet-filter" style="background: #0d0826; border: 1px solid rgba(255,215,0,0.25); color: #ffd700; border-radius: 6px; padding: 0.35rem 0.85rem; font-size: 0.8rem; font-family: Outfit; font-weight: 600; outline: none; cursor: pointer;">
+                                                <option value="all">All Celestial Bodies (All Matches)</option>
+                                            </select>
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-left: auto;">
+                                            <span id="lagna-4yr-match-count-badge" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; font-size: 0.76rem; padding: 0.25rem 0.65rem; border-radius: 6px; font-family: Outfit; font-weight: 700;">0 Matches Loaded</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Wrapper -->
+                                    <div class="planet-table-wrapper" style="max-height: 540px; overflow-y: auto; overflow-x: auto; width: 100%;">
+                                        <table id="lagna-4yr-table" class="planet-table" style="width: 100%; border-collapse: collapse;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Reference Body</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ref Sign &amp; Degree (1–30°)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ref Nakshatra</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Ref Lord / Sub Lord</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Occurrence</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Matched Date &amp; Time</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Matched Lagna Sign &amp; Degree</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Full Longitude (360°)</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Declination / Kranti</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Matched Nakshatra &amp; Pada</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Matched Lord / Sub Lord</th>
+                                                    <th style="padding: 0.65rem 0.85rem; text-align: left;">Match Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lagna-4yr-table-body">
+                                                <tr>
+                                                    <td colspan="12" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
+                                                        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>4-Year Lagna Matches</strong> tab to calculate historical matches
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         `;
 
@@ -1618,6 +1694,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                                 if (target === 'lagna-pane' && typeof lagnaOffset !== 'undefined' && lagnaOffset === 0) {
                                     setTimeout(() => fetchLagnaHistoryData(), 80);
+                                }
+                                if (target === 'lagna-4yr-pane' && typeof loadedLagna4YrMatches !== 'undefined' && loadedLagna4YrMatches.length === 0) {
+                                    setTimeout(() => fetchLagna4YrMatches(), 80);
                                 }
                             });
                         });
@@ -2168,6 +2247,351 @@ document.addEventListener('DOMContentLoaded', () => {
                                     item.ayanamsa_value || (zodiacSys === '1' ? 24.22 : 0),
                                     lat,
                                     lng
+                                ];
+                                csvRows.push(row.join(","));
+                            });
+
+                            const csvString = "\uFEFF" + csvRows.join("\r\n");
+                            const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.setAttribute("href", url);
+                            link.setAttribute("download", filename);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
+
+                        // ─── 4-Year Lagna Matching Logic (1–30° Matches, Same Lord & Sub Lord, Max 3/Planet) ───
+                        let loadedLagna4YrMatches = [];
+                        const lagna4YrTbody = resultBox.querySelector('#lagna-4yr-table-body');
+                        const lagna4YrXlsxBtn = resultBox.querySelector('#lagna-4yr-download-xlsx-btn');
+                        const lagna4YrCsvBtn = resultBox.querySelector('#lagna-4yr-download-csv-btn');
+                        const lagna4YrPdfBtn = resultBox.querySelector('#lagna-4yr-print-pdf-btn');
+                        const lagna4YrRefreshBtn = resultBox.querySelector('#lagna-4yr-refresh-btn');
+                        const lagna4YrPlanetFilter = resultBox.querySelector('#lagna-4yr-planet-filter');
+                        const lagna4YrCountBadge = resultBox.querySelector('#lagna-4yr-match-count-badge');
+
+                        function renderLagna4YrTable(matches) {
+                            if (!lagna4YrTbody) return;
+                            const filterVal = lagna4YrPlanetFilter ? lagna4YrPlanetFilter.value : 'all';
+                            const filtered = filterVal === 'all' ? matches : matches.filter(m => (m.target_planet || '').toLowerCase() === filterVal.toLowerCase());
+
+                            if (lagna4YrCountBadge) {
+                                lagna4YrCountBadge.innerText = `${filtered.length} Matches Loaded`;
+                            }
+
+                            if (!filtered || filtered.length === 0) {
+                                lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:2rem 0;opacity:0.6;">No matches found for the selected filter.</td></tr>`;
+                                return;
+                            }
+
+                            let html = '';
+                            filtered.forEach(m => {
+                                const isExact = m.lord_matched && m.sub_matched;
+                                const matchBadge = isExact 
+                                    ? `<span style="background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.45); color: #34d399; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">★ Exact Match</span>`
+                                    : (m.lord_matched 
+                                        ? `<span style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">Lord Match</span>`
+                                        : `<span style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.72rem;">Degree Match</span>`);
+
+                                html += `
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding: 0.65rem 0.85rem; font-weight: 700; color: #fff; position: sticky; left: 0; background: #0c0824; z-index: 5;">
+                                            ${getDualPlanetName(m.target_planet)}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #ffd700; font-weight: 600;">
+                                            ${m.target_sign} ${m.target_degree_formatted} <span style="font-size:0.75rem;opacity:0.7;">(${parseFloat(m.target_degree).toFixed(2)}°)</span>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #e2e8f0;">${m.target_nakshatra}</td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #38bdf8; font-weight: 600;">
+                                            ${m.target_nakshatra_lord} / <span style="color:#a78bfa;">${m.target_sub_lord}</span>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-weight: 700; color: #34d399; font-family: monospace;">
+                                            #${m.occurrence_index} (${m.year_offset})
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-family: monospace; color: #ffd700; font-weight: 700; white-space: nowrap;">
+                                            ${m.datetime}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-weight: 600; color: #fff;">
+                                            ${m.lagna_sign} ${m.lagna_degree_formatted}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #48bb78; font-weight: 600;">
+                                            ${parseFloat(m.lagna_longitude).toFixed(2)}°
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #f6ad55; font-weight: 600;">
+                                            ${m.declination} <span style="font-size:0.72rem;opacity:0.8;">(${m.declination_deg >= 0 ? '+' : ''}${parseFloat(m.declination_deg).toFixed(4)}°)</span>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #cbd5e0;">${m.nakshatra}</td>
+                                        <td style="padding: 0.65rem 0.85rem; color: #e2e8f0;">
+                                            <strong style="color:${m.lord_matched ? '#34d399' : '#fff'};">${m.nakshatra_lord}</strong> / <strong style="color:${m.sub_matched ? '#34d399' : '#fff'};">${m.sub_lord}</strong>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; white-space: nowrap;">
+                                            ${matchBadge}
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+
+                            lagna4YrTbody.innerHTML = html;
+                        }
+
+                        function fetchLagna4YrMatches() {
+                            if (!lagna4YrTbody) return;
+                            lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:2rem 0;opacity:0.7;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Searching 4-Year Lagna Ephemeris for exact Degree, Lord &amp; Sub-Lord matches...</td></tr>`;
+
+                            const url = `${apiBase}/astrology/lagna-4yr-matches?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&_t=${Date.now()}`;
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(res => {
+                                    if (res.status === 'success' && res.data && res.data.matches) {
+                                        loadedLagna4YrMatches = res.data.matches;
+
+                                        // Populate planet filter dropdown
+                                        if (lagna4YrPlanetFilter) {
+                                            const currentVal = lagna4YrPlanetFilter.value || 'all';
+                                            const planetNames = [...new Set(loadedLagna4YrMatches.map(m => m.target_planet))];
+                                            let optHtml = '<option value="all">All Celestial Bodies (All Matches)</option>';
+                                            planetNames.forEach(pName => {
+                                                optHtml += `<option value="${pName}">${getDualPlanetName(pName)}</option>`;
+                                            });
+                                            lagna4YrPlanetFilter.innerHTML = optHtml;
+                                            lagna4YrPlanetFilter.value = currentVal;
+                                        }
+
+                                        renderLagna4YrTable(loadedLagna4YrMatches);
+                                    } else {
+                                        lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:#ff7b7b;padding:1.5rem;">Failed to retrieve 4-year matches.</td></tr>`;
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error('4-Year Lagna fetch error:', err);
+                                    lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:#ff7b7b;padding:1.5rem;">Error: ${err.message}</td></tr>`;
+                                });
+                        }
+
+                        if (lagna4YrPlanetFilter) {
+                            lagna4YrPlanetFilter.addEventListener('change', () => {
+                                renderLagna4YrTable(loadedLagna4YrMatches);
+                            });
+                        }
+
+                        if (lagna4YrRefreshBtn) {
+                            lagna4YrRefreshBtn.addEventListener('click', fetchLagna4YrMatches);
+                        }
+
+                        if (lagna4YrXlsxBtn) {
+                            lagna4YrXlsxBtn.addEventListener('click', () => {
+                                if (loadedLagna4YrMatches.length === 0) {
+                                    fetchLagna4YrMatches();
+                                    setTimeout(() => {
+                                        if (loadedLagna4YrMatches.length > 0) {
+                                            const dateTag = new Date().toISOString().slice(0, 10);
+                                            generateFormattedLagna4YrExcel(loadedLagna4YrMatches, `Ascendant_Lagna_4Year_Matches_${dateTag}.xlsx`);
+                                        }
+                                    }, 1000);
+                                } else {
+                                    const dateTag = new Date().toISOString().slice(0, 10);
+                                    generateFormattedLagna4YrExcel(loadedLagna4YrMatches, `Ascendant_Lagna_4Year_Matches_${dateTag}.xlsx`);
+                                }
+                            });
+                        }
+
+                        if (lagna4YrCsvBtn) {
+                            lagna4YrCsvBtn.addEventListener('click', () => {
+                                if (loadedLagna4YrMatches.length === 0) {
+                                    alert('Please load data first by clicking Recalculate.');
+                                } else {
+                                    const dateTag = new Date().toISOString().slice(0, 10);
+                                    generateLagna4YrCSV(loadedLagna4YrMatches, `Ascendant_Lagna_4Year_Matches_${dateTag}.csv`);
+                                }
+                            });
+                        }
+
+                        if (lagna4YrPdfBtn) {
+                            lagna4YrPdfBtn.addEventListener('click', () => {
+                                window.print();
+                            });
+                        }
+
+                        function generateFormattedLagna4YrExcel(matchesData, filename) {
+                            if (typeof XLSX !== 'undefined') {
+                                const wb = XLSX.utils.book_new();
+
+                                const headerBlock = [
+                                    ["ASCENDANT (LAGNA) 4-YEAR DEGREE & LORD MATCHING EPHEMERIS"],
+                                    ["Generated At:", new Date().toISOString().replace('T', ' ').slice(0, 19)],
+                                    ["Base Reference Datetime:", dateVal.replace('T', ' ')],
+                                    ["Observer Coordinates:", `Lat: ${lat}°, Lng: ${lng}°`],
+                                    ["Zodiac System:", zodiacSys === '0' ? 'Tropical (Western)' : 'Sidereal Lahiri (Vedic)'],
+                                    ["Lookback Span:", "4 Years Previous (Max 3 Entries per Celestial Body)"],
+                                    ["Match Criteria:", "Same 1-30° Sign Degree, Same Nakshatra Lord, Same KP Sub-Lord"],
+                                    ["Total Matches Found:", matchesData.length],
+                                    [""]
+                                ];
+
+                                const tableHeaders = [
+                                    "Reference Body",
+                                    "Reference Sign",
+                                    "Reference Degree Formatted",
+                                    "Reference Degree Decimal",
+                                    "Reference Full Longitude (360°)",
+                                    "Reference Nakshatra",
+                                    "Reference Nakshatra Lord",
+                                    "Reference Sub Lord",
+                                    "Occurrence #",
+                                    "Year Offset",
+                                    "Matched Date & Time",
+                                    "Matched Lagna Sign",
+                                    "Matched Lagna Degree Formatted",
+                                    "Matched Lagna Degree Decimal",
+                                    "Matched Lagna Longitude (360°)",
+                                    "Matched Lagna RA",
+                                    "Matched Lagna Declination",
+                                    "Matched Lagna Declination Decimal",
+                                    "Matched Nakshatra & Pada",
+                                    "Matched Nakshatra Lord",
+                                    "Matched Sub Lord",
+                                    "Lord Match",
+                                    "Sub-Lord Match",
+                                    "Match Classification"
+                                ];
+
+                                const dataGrid = matchesData.map(m => [
+                                    m.target_planet || '',
+                                    m.target_sign || '',
+                                    m.target_degree_formatted || '',
+                                    Number(parseFloat(m.target_degree || 0).toFixed(4)),
+                                    Number(parseFloat(m.target_longitude || 0).toFixed(4)),
+                                    m.target_nakshatra || '',
+                                    m.target_nakshatra_lord || '',
+                                    m.target_sub_lord || '',
+                                    m.occurrence_index || 1,
+                                    m.year_offset || '',
+                                    m.datetime || '',
+                                    m.lagna_sign || '',
+                                    m.lagna_degree_formatted || '',
+                                    Number(parseFloat(m.lagna_degree || 0).toFixed(4)),
+                                    Number(parseFloat(m.lagna_longitude || 0).toFixed(4)),
+                                    m.right_ascension || '',
+                                    m.declination || '',
+                                    Number(parseFloat(m.declination_deg || 0).toFixed(4)),
+                                    m.nakshatra || '',
+                                    m.nakshatra_lord || '',
+                                    m.sub_lord || '',
+                                    m.lord_matched ? 'YES' : 'NO',
+                                    m.sub_matched ? 'YES' : 'NO',
+                                    m.match_type || 'Exact Match'
+                                ]);
+
+                                const fullSheetData = [...headerBlock, tableHeaders, ...dataGrid];
+                                const ws = XLSX.utils.aoa_to_sheet(fullSheetData);
+
+                                ws['!cols'] = [
+                                    { wch: 18 }, // Ref Body
+                                    { wch: 16 }, // Ref Sign
+                                    { wch: 22 }, // Ref Deg Formatted
+                                    { wch: 20 }, // Ref Deg Dec
+                                    { wch: 24 }, // Ref Full Lon
+                                    { wch: 22 }, // Ref Nakshatra
+                                    { wch: 18 }, // Ref Lord
+                                    { wch: 18 }, // Ref Sub Lord
+                                    { wch: 14 }, // Occurrence
+                                    { wch: 16 }, // Year Offset
+                                    { wch: 20 }, // Matched DT
+                                    { wch: 18 }, // Lagna Sign
+                                    { wch: 24 }, // Lagna Deg Formatted
+                                    { wch: 20 }, // Lagna Deg Dec
+                                    { wch: 24 }, // Lagna Lon 360
+                                    { wch: 20 }, // Lagna RA
+                                    { wch: 20 }, // Lagna Dec
+                                    { wch: 20 }, // Lagna Dec Deg
+                                    { wch: 24 }, // Nakshatra
+                                    { wch: 18 }, // Lord
+                                    { wch: 18 }, // Sub Lord
+                                    { wch: 14 }, // Lord Match
+                                    { wch: 16 }, // Sub Match
+                                    { wch: 24 }  // Match Type
+                                ];
+
+                                XLSX.utils.book_append_sheet(wb, ws, "4-Year Lagna Matches");
+
+                                const methodologyData = [
+                                    ["4-YEAR ASCENDANT (LAGNA) DEGREE & LORD MATCHING METHODOLOGY"],
+                                    [""],
+                                    ["Principle", "Astronomical & Astrological Rule"],
+                                    ["Lookback Span", "4 Years backwards from selected Base Datetime"],
+                                    ["Degree Matching", "Finds timestamps when Lagna (Ascendant) enters the exact same 1–30° sign degree as the reference planet"],
+                                    ["Nakshatra Lord Matching", "Verifies whether the rising Lagna constellation lord equals the reference planet's Nakshatra lord (Vimshottari Dasha system)"],
+                                    ["KP Sub-Lord Matching", "Verifies whether the rising Lagna KP Sub-Lord matches the reference planet's Sub-Lord (Krishnamurti Paddhati proportional divisions)"],
+                                    ["Max Entries Per Planet", "Restricted to top 3 historical occurrences across the 4-year cycle"],
+                                    ["Astronomical Engine", "Fliegel-Van Flandern JD, IAU GMST, RAMC, Obliquity ε = 23.4392911°, Exact atan2(y, x) Ascendant formula"],
+                                    [""],
+                                    ["Platform:", "Cosmic Dashboard AstronomyAPI Platform"]
+                                ];
+                                const ws2 = XLSX.utils.aoa_to_sheet(methodologyData);
+                                ws2['!cols'] = [{ wch: 30 }, { wch: 80 }];
+                                XLSX.utils.book_append_sheet(wb, ws2, "Matching Methodology");
+
+                                XLSX.writeFile(wb, filename);
+                            } else {
+                                generateLagna4YrCSV(matchesData, filename.replace('.xlsx', '.csv'));
+                            }
+                        }
+
+                        function generateLagna4YrCSV(matchesData, filename) {
+                            if (!matchesData || matchesData.length === 0) {
+                                alert('No data to export.');
+                                return;
+                            }
+
+                            const headers = [
+                                "Reference Body",
+                                "Reference Sign",
+                                "Reference Degree Formatted",
+                                "Reference Degree Decimal",
+                                "Reference Full Longitude",
+                                "Reference Nakshatra",
+                                "Reference Nakshatra Lord",
+                                "Reference Sub Lord",
+                                "Occurrence Index",
+                                "Year Offset",
+                                "Matched Date & Time",
+                                "Matched Lagna Sign",
+                                "Matched Lagna Degree Formatted",
+                                "Matched Lagna Degree Decimal",
+                                "Matched Lagna Longitude",
+                                "Matched Lagna Declination",
+                                "Matched Nakshatra & Pada",
+                                "Matched Nakshatra Lord",
+                                "Matched Sub Lord",
+                                "Match Classification"
+                            ];
+
+                            const csvRows = [headers.join(",")];
+                            matchesData.forEach(m => {
+                                const row = [
+                                    `"${m.target_planet || ''}"`,
+                                    `"${m.target_sign || ''}"`,
+                                    `"${m.target_degree_formatted || ''}"`,
+                                    parseFloat(m.target_degree || 0).toFixed(4),
+                                    parseFloat(m.target_longitude || 0).toFixed(4),
+                                    `"${m.target_nakshatra || ''}"`,
+                                    `"${m.target_nakshatra_lord || ''}"`,
+                                    `"${m.target_sub_lord || ''}"`,
+                                    m.occurrence_index || 1,
+                                    `"${m.year_offset || ''}"`,
+                                    `"${m.datetime || ''}"`,
+                                    `"${m.lagna_sign || ''}"`,
+                                    `"${m.lagna_degree_formatted || ''}"`,
+                                    parseFloat(m.lagna_degree || 0).toFixed(4),
+                                    parseFloat(m.lagna_longitude || 0).toFixed(4),
+                                    `"${m.declination || ''}"`,
+                                    `"${m.nakshatra || ''}"`,
+                                    `"${m.nakshatra_lord || ''}"`,
+                                    `"${m.sub_lord || ''}"`,
+                                    `"${m.match_type || ''}"`
                                 ];
                                 csvRows.push(row.join(","));
                             });

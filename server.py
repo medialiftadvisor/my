@@ -337,6 +337,110 @@ def calculate_true_ascendant_detailed(dt_str, lat, lng, ayanamsa='1'):
     }
 
 
+def calculate_4yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=None):
+    import datetime
+    import math
+
+    dt_info = parse_datetime_helper(dt_str)
+    base_dt = datetime.datetime(dt_info["year"], dt_info["month"], dt_info["day"], dt_info["hour"], dt_info["min"], dt_info["sec"])
+    ayanamsa_val = 24.22 if ayanamsa == '1' else 0.0
+
+    # Get target planets if not provided
+    if not custom_planets:
+        raw_pos = get_astronomy_planet_position(dt_str, lat, lng, ayanamsa)
+        norm_data = normalize_positions_helper(raw_pos, ayanamsa=ayanamsa, lat=lat, lng=lng, dt_str=dt_str)
+        target_planets = norm_data.get("planet_position") or norm_data.get("planetary_positions") or []
+    else:
+        target_planets = custom_planets
+
+    signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    results = []
+
+    # Search previous 4 years
+    years_back = [1, 2, 3, 4]
+
+    for p in target_planets:
+        p_name = p.get("name") or p.get("planet") or "Body"
+        target_lon = float(p.get("longitude", 0.0)) % 360.0
+        t_nak, t_pada, t_lord, t_sub = get_nakshatra_details(target_lon)
+        t_sign_idx = int(target_lon // 30) % 12
+        t_sign = signs[t_sign_idx]
+        t_deg = target_lon % 30.0
+
+        matches_for_planet = []
+
+        for yr in years_back:
+            if len(matches_for_planet) >= 3:
+                break
+
+            cand_day = base_dt - datetime.timedelta(days=int(yr * 365.25))
+
+            # Fast 10-minute coarse scan of candidate day
+            best_m = 0
+            min_diff = 999.0
+            for m in range(0, 1440, 10):
+                t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
+                cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+                asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
+                diff = abs((asc_detail["longitude"] - target_lon + 180) % 360 - 180)
+                if diff < min_diff:
+                    min_diff = diff
+                    best_m = m
+
+            # 1-minute fine scan around best_m
+            fine_best_dt = None
+            fine_min_diff = 999.0
+            fine_detail = None
+            for m in range(max(0, best_m - 15), min(1440, best_m + 16)):
+                t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
+                cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+                asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
+                diff = abs((asc_detail["longitude"] - target_lon + 180) % 360 - 180)
+                if diff < fine_min_diff:
+                    fine_min_diff = diff
+                    fine_best_dt = t_cand
+                    fine_detail = asc_detail
+
+            if fine_best_dt and fine_min_diff <= 0.5 and fine_detail:
+                c_lord = fine_detail["nakshatra_lord"]
+                c_sub = fine_detail["sub_lord"]
+                is_lord_match = (c_lord.lower() == t_lord.lower())
+                is_sub_match = (c_sub.lower() == t_sub.lower())
+
+                matches_for_planet.append({
+                    "target_planet": p_name,
+                    "target_sign": t_sign,
+                    "target_degree": round(t_deg, 4),
+                    "target_degree_formatted": f"{int(t_deg):02d}° {int((t_deg%1)*60):02d}'",
+                    "target_longitude": round(target_lon, 4),
+                    "target_nakshatra": f"{t_nak} (Pada {t_pada})",
+                    "target_nakshatra_lord": t_lord,
+                    "target_sub_lord": t_sub,
+                    "occurrence_index": len(matches_for_planet) + 1,
+                    "year_offset": f"{yr} Year(s) Ago",
+                    "datetime": fine_best_dt.strftime("%Y-%m-%d %H:%M"),
+                    "lagna_sign": fine_detail["sign"],
+                    "lagna_degree": fine_detail["degree"],
+                    "lagna_degree_formatted": fine_detail["degree_formatted"],
+                    "lagna_longitude": fine_detail["longitude"],
+                    "right_ascension": fine_detail["right_ascension"],
+                    "declination": fine_detail["declination"],
+                    "declination_deg": fine_detail.get("declination_deg", 0.0),
+                    "altitude": fine_detail["altitude"],
+                    "azimuth": fine_detail["azimuth"],
+                    "nakshatra": fine_detail["nakshatra"],
+                    "nakshatra_lord": c_lord,
+                    "sub_lord": c_sub,
+                    "lord_matched": is_lord_match,
+                    "sub_matched": is_sub_match,
+                    "match_type": "Exact (Degree + Lord + Sub-Lord)" if (is_lord_match and is_sub_match) else ("Lord Match" if is_lord_match else "Degree Match")
+                })
+
+        results.extend(matches_for_planet)
+
+    return results
+
+
 def calculate_horizontal_coords(ecl_lon, ecl_lat, dt_str, obs_lat, obs_lng):
     import math
     
@@ -2639,6 +2743,35 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                     "ayanamsa": "Sidereal Lahiri" if ayanamsa == '1' else "Tropical"
                 }
             }
+
+        # 10. Ascendant (Lagna) 4-Year Matching Degree & Lords History (max 3 entries per planet, with Excel export support)
+        elif path == '/api/astrology/lagna-4yr-matches':
+            dt = get_param('datetime')
+            lat = get_param('latitude', '19.0655')
+            lng = get_param('longitude', '72.8644')
+            ayanamsa = get_param('ayanamsa', '1')
+
+            try:
+                matches_list = calculate_4yr_lagna_matches(dt, lat, lng, ayanamsa)
+                response_data = {
+                    "status": "success",
+                    "data": {
+                        "matches": matches_list,
+                        "total_matches": len(matches_list),
+                        "base_datetime": dt,
+                        "latitude": lat,
+                        "longitude": lng,
+                        "ayanamsa": "Sidereal Lahiri" if ayanamsa == '1' else "Tropical",
+                        "years_span": 4,
+                        "max_entries_per_planet": 3
+                    }
+                }
+            except Exception as e:
+                print(f"[Backend Error] lagna-4yr-matches: {e}")
+                response_data = {
+                    "status": "error",
+                    "message": str(e)
+                }
 
         else:
             response_data = {"status": "error", "message": "Unknown endpoint"}
