@@ -2459,7 +2459,10 @@ class handler(http.server.BaseHTTPRequestHandler):
                         else:
                             response_data = get_mock_planet_position(dt, lat, lng, ayanamsa)
 
-            if response_data.get("status") in ["success", "ok"] and "data" in response_data:
+            if not response_data:
+                response_data = get_mock_planet_position(dt or "2026-07-09T06:00:00+05:30", lat or "19.076", lng or "72.877", ayanamsa)
+
+            if isinstance(response_data, dict) and response_data.get("status") in ["success", "ok"] and "data" in response_data:
                 data_dict = response_data["data"]
                 planets = data_dict.get("planet_position") or data_dict.get("planetary_positions")
                 if planets:
@@ -2751,8 +2754,8 @@ class handler(http.server.BaseHTTPRequestHandler):
                     "message": str(e)
                 }
 
-        else:
-            response_data = {"status": "error", "message": "Unknown endpoint"}
+        if not response_data:
+            response_data = {"status": "error", "message": f"Endpoint {path} not found or returned empty response"}
             
         self.wfile.write(json.dumps(response_data).encode('utf-8'))
 
