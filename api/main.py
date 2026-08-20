@@ -2186,13 +2186,17 @@ class handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
+        path = parsed_url.path.rstrip('/')
+        if not path.startswith('/api'):
+            path = '/api' + path
         query_params = urllib.parse.parse_qs(parsed_url.query)
         self.handle_api_request(path, query_params)
 
     def do_POST(self):
         parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
+        path = parsed_url.path.rstrip('/')
+        if not path.startswith('/api'):
+            path = '/api' + path
         
         content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length).decode('utf-8')
@@ -2751,6 +2755,8 @@ class handler(http.server.BaseHTTPRequestHandler):
             print(f"[Backend] Error calling Prokerala API: {e}")
             print("[Backend] Falling back to Demo/Mock responses.")
             return fallback_func()
+
+DashboardProxyHandler = handler
 
 def run_server():
     load_env()
