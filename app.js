@@ -1014,21 +1014,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         function extractDecimalDeclination(p) {
+                            if (!p) return 0;
+                            if (typeof p.declination_mag === 'number' && !isNaN(p.declination_mag)) {
+                                return Math.abs(p.declination_mag);
+                            }
                             if (typeof p.declination_deg === 'number' && !isNaN(p.declination_deg)) {
-                                return p.declination_deg;
+                                return Math.abs(p.declination_deg);
                             }
                             if (p.declination !== undefined && p.declination !== null) {
                                 if (typeof p.declination === 'number' && !isNaN(p.declination)) {
-                                    return p.declination;
+                                    return Math.abs(p.declination);
                                 }
-                                const str = String(p.declination).replace('"', '').replace("'", '').replace('°', '').trim();
+                                const str = String(p.declination).replace('"', '').replace("'", '').replace('°', '').replace('+', '').replace('-', '').trim();
                                 const parts = str.split(/\s+/);
                                 if (parts.length > 0 && !isNaN(parseFloat(parts[0]))) {
-                                    const sign = str.includes('-') ? -1.0 : 1.0;
                                     const d = Math.abs(parseFloat(parts[0]));
                                     const m = parts.length > 1 ? (parseFloat(parts[1]) || 0) : 0;
                                     const s = parts.length > 2 ? (parseFloat(parts[2]) || 0) : 0;
-                                    return sign * (d + m / 60.0 + s / 3600.0);
+                                    return d + m / 60.0 + s / 3600.0;
                                 }
                             }
                             // Calculate via tropical longitude: sin(delta) = sin(23.4392911°) * sin(lambda)
@@ -1036,18 +1039,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             const epsRad = (23.4392911 * Math.PI) / 180.0;
                             const lamRad = (tropLon * Math.PI) / 180.0;
                             const sinDec = Math.sin(lamRad) * Math.sin(epsRad);
-                            return (Math.asin(Math.max(-1.0, Math.min(1.0, sinDec))) * 180.0) / Math.PI;
+                            return Math.abs((Math.asin(Math.max(-1.0, Math.min(1.0, sinDec))) * 180.0) / Math.PI);
                         }
 
                         function formatDeclinationDMS(deg) {
-                            const sign = deg >= 0 ? '+' : '-';
                             const absDeg = Math.abs(deg);
                             const d = Math.floor(absDeg);
                             const m = Math.floor((absDeg - d) * 60);
                             const s = Math.round(((absDeg - d) * 60 - m) * 60);
                             const sFinal = s === 60 ? 0 : s;
                             const mFinal = s === 60 ? m + 1 : m;
-                            return `${sign}${String(d).padStart(2, '0')}° ${String(mFinal).padStart(2, '0')}' ${String(sFinal).padStart(2, '0')}"`;
+                            return `${String(d).padStart(2, '0')}° ${String(mFinal).padStart(2, '0')}' ${String(sFinal).padStart(2, '0')}"`;
                         }
 
                         function computeAscendantDeclinationChain(planetsList) {
@@ -1116,13 +1118,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <i class="fa-solid fa-calculator" style="color: #ffd700;"></i>
                                             <span>4-Level Ascendant Declination</span>
                                         </div>
-                                        <span style="font-size: 0.68rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.5rem; border-radius: 12px; font-weight: 700;">Kranti Sum</span>
+                                        <span style="font-size: 0.68rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.5rem; border-radius: 12px; font-weight: 700;">Magnitude Sum</span>
                                     </div>
 
                                     <div style="background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.06)); border: 1px solid rgba(255,215,0,0.4); border-radius: 8px; padding: 0.75rem; text-align: center; margin-bottom: 0.85rem;">
-                                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); font-weight: 600;">Total Calculated Declination / कुल क्रांति</div>
+                                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); font-weight: 600;">Total Declination Magnitude / कुल क्रांति परिमाण</div>
                                         <div style="font-size: 1.55rem; font-weight: 800; color: #ffd700; font-family: monospace; text-shadow: 0 0 15px rgba(255,215,0,0.4); margin: 0.2rem 0;">
-                                            ${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°
+                                            ${decChainResult.total_declination_deg.toFixed(4)}°
                                         </div>
                                         <div style="font-size: 0.82rem; color: #34d399; font-weight: 600; font-family: monospace;">
                                             ${decChainResult.total_declination_formatted}
@@ -1142,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     </div>
                                                 </div>
                                                 <div style="text-align: right; font-family: monospace; font-weight: 700; color: #38bdf8;">
-                                                    ${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°
+                                                    ${c.declination_deg.toFixed(4)}°
                                                     <div style="font-size: 0.68rem; color: var(--color-text-secondary); font-weight: 500;">${c.declination_formatted}</div>
                                                 </div>
                                             </div>
@@ -1151,9 +1153,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                     <!-- Sum equation breakdown -->
                                     <div style="margin-top: 0.75rem; padding: 0.55rem 0.7rem; background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px dashed rgba(255,215,0,0.25); font-family: monospace; font-size: 0.7rem; color: #ffd700; line-height: 1.4;">
-                                        <strong>Formula:</strong><br>
-                                        ${decChainResult.chain.map(c => `(${c.declination_deg >= 0 ? '+' : ''}${c.declination_deg.toFixed(4)}°)`).join(' + ')}
-                                        = <strong style="color:#34d399;">${decChainResult.total_declination_deg >= 0 ? '+' : ''}${decChainResult.total_declination_deg.toFixed(4)}°</strong>
+                                        <strong>Magnitude Sum:</strong><br>
+                                        ${decChainResult.chain.map(c => `(${c.declination_deg.toFixed(4)}°)`).join(' + ')}
+                                        = <strong style="color:#34d399;">${decChainResult.total_declination_deg.toFixed(4)}°</strong>
                                     </div>
                                 </div>
                             `;

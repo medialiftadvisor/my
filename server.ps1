@@ -70,9 +70,45 @@ function Calculate-Lagna($year, $month, $day, $hourUTC, $lat, $lon, $ayanamsa = 
     $vedic_ascendant = ($tropical_ascendant - $ayanamsa) % 360.0
     if ($vedic_ascendant -lt 0) { $vedic_ascendant += 360.0 }
 
+    $targetLon = if ($ayanamsa -gt 0) { $vedic_ascendant } else { $tropical_ascendant }
+    $nakDetails = Get-NakshatraDetails $targetLon
+    $decDetails = Calculate-Declination $tropical_ascendant
+
+    $signs = @("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
+    $signIdx = [math]::Floor($targetLon / 30) % 12
+    $degVal = $targetLon % 30
+    $degD = [int][math]::Floor($degVal)
+    $degM = [int][math]::Floor(($degVal - $degD) * 60)
+    $degS = [int][math]::Round((($degVal - $degD) * 60 - $degM) * 60)
+    if ($degS -eq 60) { $degM += 1; $degS = 0 }
+    if ($degM -eq 60) { $degD += 1; $degM = 0 }
+    $degFormatted = "{0:D2}° {1:D2}' {2:D2}""" -f $degD, $degM, $degS
+
+    $raDeg = ($RAMC + 90.0) % 360.0
+    $raH = [math]::Floor($raDeg / 15.0)
+    $raM = [math]::Floor(($raDeg / 15.0 - $raH) * 60)
+    $raStr = "{0:D2}h {1:D2}m ({2:F2}°)" -f [int]$raH, [int]$raM, $raDeg
+
     return [PSCustomObject]@{
         tropical = $tropical_ascendant
         vedic = $vedic_ascendant
+        sign = $signs[$signIdx]
+        degree = [math]::Round($degVal, 4)
+        degree_formatted = $degFormatted
+        longitude = [math]::Round($targetLon, 4)
+        ramcDeg = $raDeg
+        raDms = $raStr
+        decDeg = $decDetails.deg
+        decMag = $decDetails.mag
+        decDms = $decDetails.formatted
+        decDmsMag = $decDetails.formatted_mag
+        altDms = "00° 00' 00`""
+        azDms = "090° 00' 00`""
+        nakshatra = $nakDetails.name
+        nakshatra_full = "$($nakDetails.name) (Pada $($nakDetails.pada))"
+        pada = $nakDetails.pada
+        nakshatra_lord = $nakDetails.lord
+        sub_lord = $nakDetails.sub_lord
     }
 }
 
@@ -83,18 +119,21 @@ function Calculate-Declination($tropicalLon) {
     $decRad = [math]::Asin([math]::Max(-1.0, [math]::Min(1.0, $sinDec)))
     $decDeg = $decRad * 180.0 / [math]::PI
 
-    $decSign = if ($decDeg -ge 0) { "+" } else { "-" }
     $decAbs = [math]::Abs($decDeg)
     $d = [math]::Floor($decAbs)
     $m = [math]::Floor(($decAbs - $d) * 60)
     $s = [math]::Round((($decAbs - $d) * 60 - $m) * 60)
     if ($s -eq 60) { $m += 1; $s = 0 }
     if ($m -eq 60) { $d += 1; $m = 0 }
+    $decSign = if ($decDeg -ge 0) { "+" } else { "-" }
     $decStr = "{0}{1:D2}° {2:D2}' {3:D2}""" -f $decSign, [int]$d, [int]$m, [int]$s
+    $decMagStr = "{0:D2}° {1:D2}' {2:D2}""" -f [int]$d, [int]$m, [int]$s
 
     return [PSCustomObject]@{
         deg = [math]::Round($decDeg, 4)
+        mag = [math]::Round($decAbs, 4)
         formatted = $decStr
+        formatted_mag = $decMagStr
     }
 }
 
@@ -282,53 +321,25 @@ while ($listener.IsListening) {
                 $hourUTC = $utcObj.Hour + ($utcObj.Minute / 60.0) + ($utcObj.Second / 3600.0)
 
                 $ascObj = Calculate-Lagna $year $month $day $hourUTC $lat $lng $ayanamsaVal
-                $ascLon = $ascObj.vedic
-                $ascSignIdx = [math]::Floor($ascLon / 30) % 12
-                $ascDeg = $ascLon % 30
-
-                $degD = [int][math]::Floor($ascDeg)
-                $degM = [int][math]::Floor(($ascDeg - $degD) * 60)
-                $degS = [int][math]::Round((($ascDeg - $degD) * 60 - $degM) * 60)
-                if ($degS -eq 60) { $degM += 1; $degS = 0 }
-                if ($degM -eq 60) { $degD += 1; $degM = 0 }
-                $degFormatted = "{0:D2}° {1:D2}' {2:D2}""" -f $degD, $degM, $degS
-
-                # RA, Dec, ALT, AZ calculation
-                $A = [math]::Floor($year / 100)
-                $B = 2 - $A + [math]::Floor($A / 4)
-                $JD = [math]::Floor(365.25 * ($year + 4716)) + [math]::Floor(30.6001 * ($month + 1)) + $day + ($hourUTC / 24.0) + $B - 1524.5
-                $T = ($JD - 2451545.0) / 36525.0
-                $GMST_deg = (280.46061837 + 360.98564736629 * ($JD - 2451545.0)) % 360.0; if ($GMST_deg -lt 0) { $GMST_deg += 360.0 }
-                $RAMC = ($GMST_deg + $lng) % 360.0; if ($RAMC -lt 0) { $RAMC += 360.0 }
-
-                $raDeg = ($RAMC + 90.0) % 360.0
-                $raH = [math]::Floor($raDeg / 15.0)
-                $raM = [math]::Floor(($raDeg / 15.0 - $raH) * 60)
-                $raStr = "{0:D2}h {1:D2}m ({2:F2}°)" -f [int]$raH, [int]$raM, $raDeg
-
-                $sinDec = [math]::Sin(23.4392911 * [math]::PI / 180.0) * [math]::Sin($ascObj.tropical * [math]::PI / 180.0)
-                $decDeg = [math]::Asin([math]::Max(-1.0, [math]::Min(1.0, $sinDec))) * 180.0 / [math]::PI
-                $decSign = if ($decDeg -ge 0) { "+" } else { "-" }
-                $decD = [math]::Floor([math]::Abs($decDeg))
-                $decM = [math]::Floor(([math]::Abs($decDeg) - $decD) * 60)
-                $decStr = "{0}{1:D2}° {2:D2}'" -f $decSign, [int]$decD, [int]$decM
 
                 $history += [PSCustomObject]@{
                     datetime = $stepDt.ToString("yyyy-MM-dd HH:mm")
-                    sign = $signs[$ascSignIdx]
-                    degree = [math]::Round($ascDeg, 4)
-                    degree_formatted = $degFormatted
-                    longitude = [math]::Round($ascLon, 4)
-                    right_ascension = $raStr
-                    ra_deg = [math]::Round($raDeg, 4)
-                    declination = $decStr
-                    altitude = '00° 00'' 00"'
-                    azimuth = '085° 30'''
-                    nakshatra = "Punarvasu (Pada 3)"
-                    nakshatra_name = "Punarvasu"
-                    pada = 3
-                    nakshatra_lord = "Jupiter"
-                    sub_lord = "Mercury"
+                    sign = $ascObj.sign
+                    degree = $ascObj.degree
+                    degree_formatted = $ascObj.degree_formatted
+                    longitude = $ascObj.longitude
+                    right_ascension = $ascObj.raDms
+                    ra_deg = $ascObj.ramcDeg
+                    declination = $ascObj.decDms
+                    declination_deg = $ascObj.decDeg
+                    declination_mag = $ascObj.decMag
+                    altitude = $ascObj.altDms
+                    azimuth = $ascObj.azDms
+                    nakshatra = $ascObj.nakshatra_full
+                    nakshatra_name = $ascObj.nakshatra
+                    pada = $ascObj.pada
+                    nakshatra_lord = $ascObj.nakshatra_lord
+                    sub_lord = $ascObj.sub_lord
                     ayanamsa_value = $ayanamsaVal
                 }
             }
@@ -477,117 +488,86 @@ while ($listener.IsListening) {
             $ascSignIdx = [math]::Floor($ascLon / 30) % 12
             $ascDeg = $ascLon % 30
 
+            $eph = Calculate-EphemerisPlanets $year $month $day $hourUTC $ayanamsaVal
+
+            $makePlanetObj = {
+                param($name, $lon, $isRetro)
+                $pLon = [math]::Round($lon, 4)
+                $pSignIdx = [math]::Floor($pLon / 30) % 12
+                $pDeg = [math]::Round($pLon % 30, 4)
+                $pNak = Get-NakshatraDetails $pLon
+                $tropLon = ($pLon + $ayanamsaVal) % 360.0
+                $decObj = Calculate-Declination $tropLon
+
+                return [PSCustomObject]@{
+                    name = $name
+                    planet = $name
+                    longitude = [math]::Round($pLon, 2)
+                    degree = [math]::Round($pDeg, 2)
+                    is_retrograde = $isRetro
+                    rasi = [PSCustomObject]@{
+                        name = $signs[$pSignIdx]
+                        lord = [PSCustomObject]@{
+                            name = $lords[$pSignIdx]
+                            vedic_name = $vedicLords[$pSignIdx]
+                        }
+                    }
+                    nakshatra = $pNak.name
+                    padam = $pNak.pada
+                    nakshatra_lord = $pNak.lord
+                    sub_lord = $pNak.sub_lord
+                    right_ascension = ""
+                    ra_deg = [math]::Round($tropLon, 4)
+                    declination = $decObj.formatted
+                    declination_deg = $decObj.deg
+                    declination_mag = $decObj.mag
+                    altitude = "00° 00' 00`""
+                    azimuth = "90° 00' 00`""
+                }
+            }
+
             $planets = @(
                 [PSCustomObject]@{
                     name = "Ascendant"
                     planet = "Ascendant"
-                    longitude = [math]::Round($ascLon, 2)
-                    degree = [math]::Round($ascDeg, 2)
+                    longitude = [math]::Round($ascObj.longitude, 2)
+                    degree = [math]::Round($ascObj.degree, 2)
                     is_retrograde = $false
                     rasi = [PSCustomObject]@{
-                        name = $signs[$ascSignIdx]
+                        name = $ascObj.sign
                         lord = [PSCustomObject]@{
                             name = $lords[$ascSignIdx]
                             vedic_name = $vedicLords[$ascSignIdx]
                         }
                     }
-                    nakshatra = "Punarvasu"
-                    padam = 3
-                    nakshatra_lord = "Jupiter"
-                    sub_lord = "Mercury"
+                    nakshatra = $ascObj.nakshatra
+                    padam = $ascObj.pada
+                    nakshatra_lord = $ascObj.nakshatra_lord
+                    sub_lord = $ascObj.sub_lord
+                    right_ascension = $ascObj.raDms
+                    ra_deg = [math]::Round($ascObj.ramcDeg, 4)
+                    declination = $ascObj.decDms
+                    declination_deg = [math]::Round($ascObj.decDeg, 4)
+                    declination_mag = [math]::Round($ascObj.decMag, 4)
+                    altitude = $ascObj.altDms
+                    azimuth = $ascObj.azDms
                 },
-                [PSCustomObject]@{
-                    name = "Sun"
-                    planet = "Sun"
-                    longitude = 59.2
-                    degree = 29.1
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Taurus"; lord = [PSCustomObject]@{ name = "Venus"; vedic_name = "Shukra" } }
-                    nakshatra = "Mrigashira"
-                    padam = 2
-                    nakshatra_lord = "Mars"
-                    sub_lord = "Saturn"
-                },
-                [PSCustomObject]@{
-                    name = "Moon"
-                    planet = "Moon"
-                    longitude = 38.5
-                    degree = 8.5
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Taurus"; lord = [PSCustomObject]@{ name = "Venus"; vedic_name = "Shukra" } }
-                    nakshatra = "Krittika"
-                    padam = 4
-                    nakshatra_lord = "Sun"
-                    sub_lord = "Venus"
-                },
-                [PSCustomObject]@{
-                    name = "Mars"
-                    planet = "Mars"
-                    longitude = 345.3
-                    degree = 15.3
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Pisces"; lord = [PSCustomObject]@{ name = "Jupiter"; vedic_name = "Guru" } }
-                    nakshatra = "Uttara Bhadrapada"
-                    padam = 4
-                    nakshatra_lord = "Saturn"
-                    sub_lord = "Jupiter"
-                },
-                [PSCustomObject]@{
-                    name = "Mercury"
-                    planet = "Mercury"
-                    longitude = 64.1
-                    degree = 4.1
-                    is_retrograde = $true
-                    rasi = [PSCustomObject]@{ name = "Gemini"; lord = [PSCustomObject]@{ name = "Mercury"; vedic_name = "Budha" } }
-                    nakshatra = "Ardra"
-                    padam = 1
-                    nakshatra_lord = "Rahu"
-                    sub_lord = "Moon"
-                },
-                [PSCustomObject]@{
-                    name = "Jupiter"
-                    planet = "Jupiter"
-                    longitude = 322.8
-                    degree = 22.8
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Aquarius"; lord = [PSCustomObject]@{ name = "Saturn"; vedic_name = "Shani" } }
-                    nakshatra = "Purva Bhadrapada"
-                    padam = 1
-                    nakshatra_lord = "Jupiter"
-                    sub_lord = "Saturn"
-                },
-                [PSCustomObject]@{
-                    name = "Venus"
-                    planet = "Venus"
-                    longitude = 11.2
-                    degree = 11.2
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Aries"; lord = [PSCustomObject]@{ name = "Mars"; vedic_name = "Mangala" } }
-                    nakshatra = "Ashwini"
-                    padam = 4
-                    nakshatra_lord = "Ketu"
-                    sub_lord = "Saturn"
-                },
-                [PSCustomObject]@{
-                    name = "Saturn"
-                    planet = "Saturn"
-                    longitude = 276.4
-                    degree = 6.4
-                    is_retrograde = $false
-                    rasi = [PSCustomObject]@{ name = "Capricorn"; lord = [PSCustomObject]@{ name = "Saturn"; vedic_name = "Shani" } }
-                    nakshatra = "Uttarashadha"
-                    padam = 3
-                    nakshatra_lord = "Sun"
-                    sub_lord = "Mercury"
-                }
+                (& $makePlanetObj "Sun" $eph.Sun $false),
+                (& $makePlanetObj "Moon" $eph.Moon $false),
+                (& $makePlanetObj "Mars" $eph.Mars $false),
+                (& $makePlanetObj "Mercury" $eph.Mercury $false),
+                (& $makePlanetObj "Jupiter" $eph.Jupiter $false),
+                (& $makePlanetObj "Venus" $eph.Venus $false),
+                (& $makePlanetObj "Saturn" $eph.Saturn $false),
+                (& $makePlanetObj "Uranus" $eph.Uranus $false),
+                (& $makePlanetObj "Neptune" $eph.Neptune $false),
+                (& $makePlanetObj "Pluto" $eph.Pluto $false),
+                (& $makePlanetObj "Rahu" $eph.Rahu $true),
+                (& $makePlanetObj "Ketu" $eph.Ketu $true),
+                (& $makePlanetObj "Spashth Rahu" (($eph.Rahu + 0.9) % 360) $true),
+                (& $makePlanetObj "Spashth Ketu" (($eph.Ketu + 0.9) % 360) $true),
+                (& $makePlanetObj "Earth" (($eph.Sun + 180.0) % 360) $false)
             )
-
-            foreach ($p in $planets) {
-                $tropLon = ($p.longitude + $ayanamsaVal) % 360.0
-                $decObj = Calculate-Declination $tropLon
-                $p | Add-Member -MemberType NoteProperty -Name "declination" -Value $decObj.formatted -Force
-                $p | Add-Member -MemberType NoteProperty -Name "declination_deg" -Value $decObj.deg -Force
-            }
 
             $resObj = [PSCustomObject]@{
                 status = "success"

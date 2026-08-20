@@ -1185,64 +1185,79 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
         "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
         "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn", "Pisces": "Jupiter"
     }
+    vedic_lord_map = {
+        "Sun": "Surya", "Moon": "Chandra", "Mars": "Mangala", "Mercury": "Budha",
+        "Jupiter": "Guru", "Venus": "Shukra", "Saturn": "Shani"
+    }
     
-    # Let's ensure Ascendant / Lagna exists in planets
-    has_asc = False
     sun_lon = 0.0
-    asc_idx = -1
-    for i, p in enumerate(planets):
+    for p in planets:
         p_name = p.get("name") or p.get("planet") or ""
-        if p_name.lower() in ["ascendant", "lagna"]:
-            has_asc = True
-            asc_idx = i
         if p_name.lower() == "sun" and p.get("longitude") is not None:
             sun_lon = float(p["longitude"])
-            
-    asc_lon = calculate_true_ascendant(dt, lat, lng)
-    asc_deg = asc_lon % 30
-    asc_sign_idx = int(asc_lon / 30) % 12
-    asc_sign = signs_list[asc_sign_idx]
+
+    # Calculate exact Ascendant (Lagna) details using 2-Year History mathematical engine
+    asc_details = calculate_true_ascendant_detailed(dt, lat, lng, ayanamsa)
+    asc_lon = asc_details["longitude"]
+    asc_deg = asc_details["degree"]
+    asc_sign = asc_details["sign"]
     asc_lord = lord_map.get(asc_sign, "N/A")
-    
-    if not has_asc:
-        planets.append({
-            "name": "Ascendant",
-            "planet": "Ascendant",
-            "longitude": asc_lon,
-            "degree": asc_deg,
-            "is_retrograde": False,
-            "rasi": {
-                "name": asc_sign,
-                "lord": {
-                    "name": asc_lord
-                }
-            },
-            "house": 1
-        })
-    else:
-        planets[asc_idx]["longitude"] = asc_lon
-        planets[asc_idx]["degree"] = asc_deg
-        if not planets[asc_idx].get("rasi") or not planets[asc_idx]["rasi"].get("name"):
-            planets[asc_idx]["rasi"] = {"name": asc_sign, "lord": {"name": asc_lord}}
+    asc_vedic_lord = vedic_lord_map.get(asc_lord, "N/A")
+
+    asc_obj = {
+        "name": "Ascendant",
+        "planet": "Ascendant",
+        "longitude": asc_lon,
+        "tropical_longitude": asc_details["tropical_longitude"],
+        "degree": asc_deg,
+        "degree_formatted": asc_details["degree_formatted"],
+        "is_retrograde": False,
+        "rasi": {
+            "name": asc_sign,
+            "lord": {
+                "name": asc_lord,
+                "vedic_name": asc_vedic_lord
+            }
+        },
+        "nakshatra": asc_details["nakshatra"],
+        "nakshatra_name": asc_details["nakshatra"],
+        "padam": asc_details["pada"],
+        "pada": asc_details["pada"],
+        "nakshatra_lord": asc_details["nakshatra_lord"],
+        "sub_lord": asc_details["sub_lord"],
+        "right_ascension": asc_details["right_ascension"],
+        "ra_deg": asc_details["ra_deg"],
+        "declination": asc_details["declination"],
+        "declination_deg": asc_details["declination_deg"],
+        "declination_mag": abs(asc_details["declination_deg"]),
+        "altitude": asc_details["altitude"],
+        "azimuth": asc_details["azimuth"],
+        "house": 1
+    }
+
+    # Prepend Ascendant to planets list so it's index 0 and non-duplicated
+    filtered_planets = [p for p in planets if (p.get("name") or p.get("planet") or "").lower() not in ["ascendant", "lagna"]]
+    planets = [asc_obj] + filtered_planets
         
     for p in planets:
-        lon = p.get("longitude")
         p_name = p.get("name") or p.get("planet") or "Sun"
+        if p_name.lower() in ["ascendant", "lagna"]:
+            continue  # Exact mathematical Ascendant already populated above
+
+        lon = p.get("longitude")
         if lon is not None:
             lon = float(lon)
             
             # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
-            # 1. Normalize Display Ecliptic Longitude based on Ayanamsa setting
-            # Always store the raw tropical ecliptic longitude for chart plotting
             p["tropical_longitude"] = lon
             if provider in ['astronomyapi', 'divineapi', 'mock'] and ayanamsa == '1':
-                display_lon = (lon - 24.23) % 360
+                display_lon = (lon - 24.22) % 360
                 sign_idx = int(display_lon / 30) % 12
                 p["rasi"] = {
                     "name": signs_list[sign_idx],
                     "lord": {
                         "name": lord_map[signs_list[sign_idx]],
-                        "vedic_name": {"Sun": "Surya", "Moon": "Chandra", "Mars": "Mangala", "Mercury": "Budha", "Jupiter": "Guru", "Venus": "Shukra", "Saturn": "Shani"}.get(lord_map[signs_list[sign_idx]], "N/A")
+                        "vedic_name": vedic_lord_map.get(lord_map[signs_list[sign_idx]], "N/A")
                     }
                 }
                 p["degree"] = display_lon % 30
@@ -1250,7 +1265,7 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
                 display_lon = lon
                 if p.get("rasi") and p["rasi"].get("lord") and not p["rasi"]["lord"].get("vedic_name"):
                     l_name = p["rasi"]["lord"].get("name")
-                    p["rasi"]["lord"]["vedic_name"] = {"Sun": "Surya", "Moon": "Chandra", "Mars": "Mangala", "Mercury": "Budha", "Jupiter": "Guru", "Venus": "Shukra", "Saturn": "Shani"}.get(l_name, "N/A")
+                    p["rasi"]["lord"]["vedic_name"] = vedic_lord_map.get(l_name, "N/A")
                 
             p["longitude"] = display_lon
             p["raw_longitude_str"] = f"{round(display_lon, 2)}°"
@@ -1259,7 +1274,7 @@ def normalize_positions_helper(planets, provider, ayanamsa, dt, lat, lng):
             if ayanamsa == '1':
                 sidereal_lon = display_lon
             else:
-                sidereal_lon = (display_lon - 24.23) % 360
+                sidereal_lon = (display_lon - 24.22) % 360
             nak_name, pada, nak_lord, sub_lord = get_nakshatra_details(sidereal_lon)
             p["nakshatra"] = nak_name
             p["padam"] = pada
