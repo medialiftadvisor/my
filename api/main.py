@@ -2185,15 +2185,32 @@ class handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
+        req_uri = self.path
+        if 'x-matched-path' in self.headers:
+            req_uri = self.headers['x-matched-path']
+        elif 'x-forwarded-uri' in self.headers:
+            req_uri = self.headers['x-forwarded-uri']
+
+        parsed_url = urllib.parse.urlparse(req_uri)
         path = parsed_url.path.rstrip('/')
         if not path.startswith('/api'):
             path = '/api' + path
+            
         query_params = urllib.parse.parse_qs(parsed_url.query)
+        if not query_params:
+            self_parsed = urllib.parse.urlparse(self.path)
+            query_params = urllib.parse.parse_qs(self_parsed.query)
+
         self.handle_api_request(path, query_params)
 
     def do_POST(self):
-        parsed_url = urllib.parse.urlparse(self.path)
+        req_uri = self.path
+        if 'x-matched-path' in self.headers:
+            req_uri = self.headers['x-matched-path']
+        elif 'x-forwarded-uri' in self.headers:
+            req_uri = self.headers['x-forwarded-uri']
+
+        parsed_url = urllib.parse.urlparse(req_uri)
         path = parsed_url.path.rstrip('/')
         if not path.startswith('/api'):
             path = '/api' + path
