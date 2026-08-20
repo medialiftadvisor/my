@@ -2234,19 +2234,20 @@ class handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        
-        response_data = {}
-        
+        response_data = process_api_request(path, params)
+        self.wfile.write(json.dumps(response_data).encode('utf-8'))
+
+def process_api_request(path, params):
+    response_data = None
+    try:
         if path == '/api/config':
-            response_data = {
+            return {
                 "configured": not DEMO_MODE or bool(ASTRONOMY_APP_ID) or bool(DIVINE_API_KEY),
                 "demo_mode": DEMO_MODE and not bool(ASTRONOMY_APP_ID) and not bool(DIVINE_API_KEY),
                 "client_id_configured": bool(CLIENT_ID),
                 "astronomy_api_configured": bool(ASTRONOMY_APP_ID),
                 "divine_api_configured": bool(DIVINE_API_KEY)
             }
-            self.wfile.write(json.dumps(response_data).encode('utf-8'))
-            return
             
         def get_param(name, default=""):
             val = params.get(name)
@@ -2754,28 +2755,59 @@ class handler(http.server.BaseHTTPRequestHandler):
                     "message": str(e)
                 }
 
-        if not response_data:
-            response_data = {"status": "error", "message": f"Endpoint {path} not found or returned empty response"}
-            
-        self.wfile.write(json.dumps(response_data).encode('utf-8'))
+    except Exception as e:
+        print(f"[Backend Exception] {e}")
+        response_data = {
+            "status": "error",
+            "message": f"Server Error: {str(e)}"
+        }
 
-    def fetch_prokerala_api(self, url, token, fallback_func):
-        req = urllib.request.Request(url)
-        req.add_header('Authorization', f'Bearer {token}')
-        req.add_header('Accept', 'application/json')
+    if not response_data:
+        response_data = {"status": "error", "message": f"Endpoint {path} not found or returned empty response"}
         
-        try:
-            with urllib.request.urlopen(req, timeout=10) as response:
-                api_response = json.loads(response.read().decode('utf-8'))
-                return {
-                    "status": "success",
-                    "data": api_response.get("data")
-                }
-        except Exception as e:
-            print(f"[Backend] Error calling Prokerala API: {e}")
-            print("[Backend] Falling back to Demo/Mock responses.")
-            return fallback_func()
+    return response_data
 
+def app(environ, start_response):
+    path = environ.get('PATH_INFO', '')
+    if not path.startswith('/api'):
+        path = '/api' + path
+    path = path.rstrip('/')
+    
+    query_string = environ.get('QUERY_STRING', '')
+    params = urllib.parse.parse_qs(query_string)
+    
+    method = environ.get('REQUEST_METHOD', 'GET')
+    if method == 'POST':
+        try:
+            content_length = int(environ.get('CONTENT_LENGTH', 0))
+        except Exception:
+            content_length = 0
+        if content_length > 0:
+            post_data = environ['wsgi.input'].read(content_length).decode('utf-8')
+            try:
+                json_data = json.loads(post_data)
+                for k, v in json_data.items():
+                    params[k] = v
+            except Exception:
+                parsed_post = urllib.parse.parse_qs(post_data)
+                for k, v in parsed_post.items():
+                    params[k] = v[0]
+                    
+    response_data = process_api_request(path, params)
+    json_bytes = json.dumps(response_data).encode('utf-8')
+    
+    headers = [
+        ('Content-Type', 'application/json; charset=utf-8'),
+        ('Content-Length', str(len(json_bytes))),
+        ('Access-Control-Allow-Origin', '*'),
+        ('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'),
+        ('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    ]
+    
+    start_response('200 OK', headers)
+    return [json_bytes]
+
+handler = app
 DashboardProxyHandler = handler
 
 def run_server():
