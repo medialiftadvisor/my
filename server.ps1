@@ -359,9 +359,10 @@ while ($listener.IsListening) {
                 }
             }
 
+            $utf8NoBOM = New-Object System.Text.UTF8Encoding($false)
             $json = $resObj | ConvertTo-Json -Depth 5
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $response.ContentType = "application/json"
+            $buffer = $utf8NoBOM.GetBytes($json)
+            $response.ContentType = "application/json; charset=utf-8"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
@@ -447,9 +448,10 @@ while ($listener.IsListening) {
                 }
             }
 
+            $utf8NoBOM = New-Object System.Text.UTF8Encoding($false)
             $json = $resObj | ConvertTo-Json -Depth 5
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $response.ContentType = "application/json"
+            $buffer = $utf8NoBOM.GetBytes($json)
+            $response.ContentType = "application/json; charset=utf-8"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
@@ -577,9 +579,10 @@ while ($listener.IsListening) {
                 }
             }
 
+            $utf8NoBOM = New-Object System.Text.UTF8Encoding($false)
             $json = $resObj | ConvertTo-Json -Depth 5
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $response.ContentType = "application/json"
+            $buffer = $utf8NoBOM.GetBytes($json)
+            $response.ContentType = "application/json; charset=utf-8"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue
@@ -741,9 +744,10 @@ while ($listener.IsListening) {
                 }
             }
 
+            $utf8NoBOM = New-Object System.Text.UTF8Encoding($false)
             $json = $resObj | ConvertTo-Json -Depth 6
-            $buffer = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $response.ContentType = "application/json"
+            $buffer = $utf8NoBOM.GetBytes($json)
+            $response.ContentType = "application/json; charset=utf-8"
             $response.OutputStream.Write($buffer, 0, $buffer.Length)
             $response.Close()
             continue

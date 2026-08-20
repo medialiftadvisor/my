@@ -14,7 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 input = `${input}${separator}provider=${provider}`;
             }
         }
-        return originalFetch(input, init);
+        return originalFetch(input, init).then(response => {
+            const clonedResponse = response.clone();
+            response.json = function () {
+                return clonedResponse.text().then(text => {
+                    const cleanedText = text.replace(/^\uFEFF/, '').trim();
+                    return JSON.parse(cleanedText);
+                });
+            };
+            return response;
+        });
     };
 
     // Initialize API provider dropdown

@@ -1,7 +1,9 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/api", "destination": "/api/index.py" }
+    { "source": "/api/astrology/planet-position", "destination": "/api/astrology/planet-position.py" },
+    { "source": "/api/astrology/lagna-history", "destination": "/api/astrology/lagna-history.py" },
+    { "source": "/api/astrology/lagna-4yr-matches", "destination": "/api/astrology/lagna-4yr-matches.py" },
+    { "source": "/api/(.*)", "destination": "/api/[...path].py" }
   ]
 }
