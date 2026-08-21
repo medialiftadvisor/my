@@ -354,8 +354,16 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
     # Get target planets if not provided
     if not custom_planets:
         raw_pos = get_astronomy_planet_position(dt_str, lat, lng, ayanamsa)
-        norm_data = normalize_positions_helper(raw_pos, ayanamsa=ayanamsa, lat=lat, lng=lng, dt_str=dt_str)
-        target_planets = norm_data.get("planet_position") or norm_data.get("planetary_positions") or []
+        if not raw_pos:
+            raw_pos = get_mock_planet_position(dt_str, lat, lng, ayanamsa)
+        if isinstance(raw_pos, dict) and "data" in raw_pos:
+            raw_planets = raw_pos["data"].get("planet_position") or raw_pos["data"].get("planetary_positions") or []
+        elif isinstance(raw_pos, list):
+            raw_planets = raw_pos
+        else:
+            raw_planets = []
+        
+        target_planets = normalize_positions_helper(raw_planets, 'astronomyapi', ayanamsa, dt_str, lat, lng)
     else:
         target_planets = custom_planets
 
