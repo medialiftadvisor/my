@@ -380,6 +380,7 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
         t_sign_idx = int(target_lon // 30) % 12
         t_sign = signs[t_sign_idx]
         t_deg = target_lon % 30.0
+        int_t_deg = int(t_deg)  # Ignore minutes and seconds, match same integer degree (1-30°)
 
         matches_for_planet = []
 
@@ -389,37 +390,65 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
 
             cand_day = base_dt - datetime.timedelta(days=int(yr * 365.25))
 
-            # Fast 10-minute coarse scan of candidate day
-            best_m = 0
-            min_diff = 999.0
-            for m in range(0, 1440, 10):
+            best_match_dt = None
+            best_detail = None
+            best_score = -1
+
+            # 15-minute coarse scan across candidate day to find matching integer degree and lords
+            for m in range(0, 1440, 15):
                 t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
                 cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
                 asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
-                diff = abs((asc_detail["longitude"] - target_lon + 180) % 360 - 180)
-                if diff < min_diff:
-                    min_diff = diff
-                    best_m = m
+                
+                c_deg = asc_detail["degree"]
+                int_c_deg = int(c_deg)
+                
+                # Check integer degree match (ignoring minutes and seconds)
+                if int_c_deg == int_t_deg:
+                    c_lord = asc_detail["nakshatra_lord"]
+                    c_sub = asc_detail["sub_lord"]
+                    is_lord = (c_lord.lower() == t_lord.lower())
+                    is_sub = (c_sub.lower() == t_sub.lower())
+                    
+                    score = (3 if (is_lord and is_sub) else (2 if is_lord else 1))
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_match_dt = t_cand
+                        best_detail = asc_detail
+                        if score == 3:
+                            break  # Found exact Lord + Sub-Lord match at same integer degree
 
-            # 1-minute fine scan around best_m
-            fine_best_dt = None
-            fine_min_diff = 999.0
-            fine_detail = None
-            for m in range(max(0, best_m - 15), min(1440, best_m + 16)):
-                t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
-                cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
-                asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
-                diff = abs((asc_detail["longitude"] - target_lon + 180) % 360 - 180)
-                if diff < fine_min_diff:
-                    fine_min_diff = diff
-                    fine_best_dt = t_cand
-                    fine_detail = asc_detail
+            # If coarse scan didn't find exact degree match, do fine scan
+            if not best_detail:
+                fine_min_diff = 999.0
+                for m in range(0, 1440, 5):
+                    t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
+                    cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+                    asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
+                    
+                    c_deg = asc_detail["degree"]
+                    int_c_deg = int(c_deg)
+                    
+                    if int_c_deg == int_t_deg:
+                        best_match_dt = t_cand
+                        best_detail = asc_detail
+                        best_score = 1
+                        break
+                    
+                    diff = abs(c_deg - t_deg)
+                    if diff < fine_min_diff:
+                        fine_min_diff = diff
+                        best_match_dt = t_cand
+                        best_detail = asc_detail
 
-            if fine_best_dt and fine_min_diff <= 0.5 and fine_detail:
-                c_lord = fine_detail["nakshatra_lord"]
-                c_sub = fine_detail["sub_lord"]
+            if best_match_dt and best_detail:
+                c_lord = best_detail["nakshatra_lord"]
+                c_sub = best_detail["sub_lord"]
                 is_lord_match = (c_lord.lower() == t_lord.lower())
                 is_sub_match = (c_sub.lower() == t_sub.lower())
+
+                yr_label = f"{yr} Year(s) Ago" if yr.is_integer() else f"{yr} Years Ago"
 
                 matches_for_planet.append({
                     "target_planet": p_name,
@@ -431,18 +460,18 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
                     "target_nakshatra_lord": t_lord,
                     "target_sub_lord": t_sub,
                     "occurrence_index": len(matches_for_planet) + 1,
-                    "year_offset": f"{yr} Year(s) Ago",
-                    "datetime": fine_best_dt.strftime("%Y-%m-%d %H:%M"),
-                    "lagna_sign": fine_detail["sign"],
-                    "lagna_degree": fine_detail["degree"],
-                    "lagna_degree_formatted": fine_detail["degree_formatted"],
-                    "lagna_longitude": fine_detail["longitude"],
-                    "right_ascension": fine_detail["right_ascension"],
-                    "declination": fine_detail["declination"],
-                    "declination_deg": fine_detail.get("declination_deg", 0.0),
-                    "altitude": fine_detail["altitude"],
-                    "azimuth": fine_detail["azimuth"],
-                    "nakshatra": fine_detail["nakshatra"],
+                    "year_offset": yr_label,
+                    "datetime": best_match_dt.strftime("%Y-%m-%d %H:%M"),
+                    "lagna_sign": best_detail["sign"],
+                    "lagna_degree": best_detail["degree"],
+                    "lagna_degree_formatted": best_detail["degree_formatted"],
+                    "lagna_longitude": best_detail["longitude"],
+                    "right_ascension": best_detail["right_ascension"],
+                    "declination": best_detail["declination"],
+                    "declination_deg": best_detail.get("declination_deg", 0.0),
+                    "altitude": best_detail["altitude"],
+                    "azimuth": best_detail["azimuth"],
+                    "nakshatra": best_detail["nakshatra"],
                     "nakshatra_lord": c_lord,
                     "sub_lord": c_sub,
                     "lord_matched": is_lord_match,
