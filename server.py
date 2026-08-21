@@ -339,7 +339,7 @@ def calculate_true_ascendant_detailed(dt_str, lat, lng, ayanamsa='1'):
     }
 
 
-def calculate_4yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=None):
+def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=None):
     import datetime
     import math
 
@@ -358,8 +358,8 @@ def calculate_4yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
     signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
     results = []
 
-    # Search previous 4 years
-    years_back = [1, 2, 3, 4]
+    # Search candidates across previous 2 years
+    years_back = [1.0, 2.0, 0.5, 1.5]
 
     for p in target_planets:
         p_name = p.get("name") or p.get("planet") or "Body"
@@ -441,6 +441,8 @@ def calculate_4yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
         results.extend(matches_for_planet)
 
     return results
+
+calculate_4yr_lagna_matches = calculate_2yr_lagna_matches
 
 
 def calculate_horizontal_coords(ecl_lon, ecl_lat, dt_str, obs_lat, obs_lng):
@@ -2761,15 +2763,15 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                 }
             }
 
-        # 10. Ascendant (Lagna) 4-Year Matching Degree & Lords History (max 3 entries per planet, with Excel export support)
-        elif path == '/api/astrology/lagna-4yr-matches':
+        # 10. Ascendant (Lagna) 2-Year Matching Degree & Lords History (max 3 entries per planet, with Excel export support)
+        elif path in ['/api/astrology/lagna-2yr-matches', '/api/astrology/lagna-4yr-matches']:
             dt = get_param('datetime')
             lat = get_param('latitude', '19.0655')
             lng = get_param('longitude', '72.8644')
             ayanamsa = get_param('ayanamsa', '1')
 
             try:
-                matches_list = calculate_4yr_lagna_matches(dt, lat, lng, ayanamsa)
+                matches_list = calculate_2yr_lagna_matches(dt, lat, lng, ayanamsa)
                 response_data = {
                     "status": "success",
                     "data": {
@@ -2779,7 +2781,7 @@ class DashboardProxyHandler(http.server.SimpleHTTPRequestHandler):
                         "latitude": lat,
                         "longitude": lng,
                         "ayanamsa": "Sidereal Lahiri" if ayanamsa == '1' else "Tropical",
-                        "years_span": 4,
+                        "years_span": 2,
                         "max_entries_per_planet": 3
                     }
                 }

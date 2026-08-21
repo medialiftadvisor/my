@@ -1365,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </button>
                                     <button class="aspect-tab-btn" data-target="lagna-4yr-pane" id="load-lagna-4yr-tab-btn" style="background: none; border: none; color: var(--color-text-secondary); font-family: Outfit; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.5rem; outline: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem;">
                                         <i class="fa-solid fa-clock-rotate-left" style="color:#ffd700;"></i>
-                                        <span>4-Year Lagna (1–30° Matches &amp; Lords)</span>
+                                        <span>2-Year Lagna (1–30° Matches &amp; Lords)</span>
                                         <span style="background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 0.68rem; padding: 0.12rem 0.45rem; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">
                                             <i class="fa-solid fa-file-excel"></i> Excel
                                         </span>
@@ -1602,12 +1602,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <i class="fa-solid fa-clock-rotate-left" style="color: #ffd700; font-size: 1.3rem;"></i>
                                             <div>
                                                 <div style="font-family: Outfit; font-weight: 700; color: #ffd700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                                    4-Year Previous Ascendant (Lagna) Historical Matches
+                                                    2-Year Previous Ascendant (Lagna) Historical Matches
                                                     <span style="font-size: 0.7rem; background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.35); color: #ffd700; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">1–30° Degree, Same Lord &amp; Sub-Lord</span>
                                                     <span style="font-size: 0.7rem; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 700;">Max 3 Entries / Planet</span>
                                                 </div>
                                                 <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.15rem;">
-                                                    Past 4 years historical occurrences where Lagna was at the exact same Sign Degree (1–30°), Nakshatra Lord, and KP Sub-Lord.
+                                                    Past 2 years historical occurrences where Lagna was at the exact same Sign Degree (1–30°), Nakshatra Lord, and KP Sub-Lord.
                                                 </div>
                                             </div>
                                         </div>
@@ -1665,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <tbody id="lagna-4yr-table-body">
                                                 <tr>
                                                     <td colspan="12" style="text-align: center; opacity: 0.6; padding: 2rem 0;">
-                                                        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>4-Year Lagna Matches</strong> tab to calculate historical matches
+                                                        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 0.5rem; color: #ffd700;"></i> Click the <strong>2-Year Lagna Matches</strong> tab to calculate historical matches
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -2349,9 +2349,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         function fetchLagna4YrMatches() {
                             if (!lagna4YrTbody) return;
-                            lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:2rem 0;opacity:0.7;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Searching 4-Year Lagna Ephemeris for exact Degree, Lord &amp; Sub-Lord matches...</td></tr>`;
+                            lagna4YrTbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:2rem 0;opacity:0.7;"><i class="fa-solid fa-spinner fa-spin" style="color:#ffd700;margin-right:0.5rem;"></i> Searching 2-Year Lagna Ephemeris for exact Degree, Lord &amp; Sub-Lord matches...</td></tr>`;
 
-                            const url = `${apiBase}/astrology/lagna-4yr-matches?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&_t=${Date.now()}`;
+                            const url = `${apiBase}/astrology/lagna-2yr-matches?datetime=${encodeURIComponent(isoDt)}&latitude=${lat}&longitude=${lng}&ayanamsa=${zodiacSys}&_t=${Date.now()}`;
 
                             fetch(url)
                                 .then(res => res.json())
@@ -2431,12 +2431,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const wb = XLSX.utils.book_new();
 
                                 const headerBlock = [
-                                    ["ASCENDANT (LAGNA) 4-YEAR DEGREE & LORD MATCHING EPHEMERIS"],
+                                    ["ASCENDANT (LAGNA) 2-YEAR DEGREE & LORD MATCHING EPHEMERIS"],
                                     ["Generated At:", new Date().toISOString().replace('T', ' ').slice(0, 19)],
                                     ["Base Reference Datetime:", dateVal.replace('T', ' ')],
                                     ["Observer Coordinates:", `Lat: ${lat}°, Lng: ${lng}°`],
                                     ["Zodiac System:", zodiacSys === '0' ? 'Tropical (Western)' : 'Sidereal Lahiri (Vedic)'],
-                                    ["Lookback Span:", "4 Years Previous (Max 3 Entries per Celestial Body)"],
+                                    ["Lookback Span:", "2 Years Previous (Max 3 Entries per Celestial Body)"],
                                     ["Match Criteria:", "Same 1-30° Sign Degree, Same Nakshatra Lord, Same KP Sub-Lord"],
                                     ["Total Matches Found:", matchesData.length],
                                     [""]
@@ -2526,17 +2526,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     { wch: 24 }  // Match Type
                                 ];
 
-                                XLSX.utils.book_append_sheet(wb, ws, "4-Year Lagna Matches");
+                                XLSX.utils.book_append_sheet(wb, ws, "2-Year Lagna Matches");
 
                                 const methodologyData = [
-                                    ["4-YEAR ASCENDANT (LAGNA) DEGREE & LORD MATCHING METHODOLOGY"],
+                                    ["2-YEAR ASCENDANT (LAGNA) DEGREE & LORD MATCHING METHODOLOGY"],
                                     [""],
                                     ["Principle", "Astronomical & Astrological Rule"],
-                                    ["Lookback Span", "4 Years backwards from selected Base Datetime"],
+                                    ["Lookback Span", "2 Years backwards from selected Base Datetime"],
                                     ["Degree Matching", "Finds timestamps when Lagna (Ascendant) enters the exact same 1–30° sign degree as the reference planet"],
                                     ["Nakshatra Lord Matching", "Verifies whether the rising Lagna constellation lord equals the reference planet's Nakshatra lord (Vimshottari Dasha system)"],
                                     ["KP Sub-Lord Matching", "Verifies whether the rising Lagna KP Sub-Lord matches the reference planet's Sub-Lord (Krishnamurti Paddhati proportional divisions)"],
-                                    ["Max Entries Per Planet", "Restricted to top 3 historical occurrences across the 4-year cycle"],
+                                    ["Max Entries Per Planet", "Restricted to top 3 historical occurrences across the 2-year cycle"],
                                     ["Astronomical Engine", "Fliegel-Van Flandern JD, IAU GMST, RAMC, Obliquity ε = 23.4392911°, Exact atan2(y, x) Ascendant formula"],
                                     [""],
                                     ["Platform:", "Cosmic Dashboard AstronomyAPI Platform"]

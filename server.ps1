@@ -588,7 +588,7 @@ while ($listener.IsListening) {
             continue
         }
 
-        if ($urlPath.StartsWith("/api/astrology/lagna-4yr-matches")) {
+        if ($urlPath.StartsWith("/api/astrology/lagna-2yr-matches") -or $urlPath.StartsWith("/api/astrology/lagna-4yr-matches")) {
             $query = Parse-QueryString $request.Url.PathAndQuery
             $dtStr = $query["datetime"]
             $latStr = $query["latitude"]
@@ -642,9 +642,10 @@ while ($listener.IsListening) {
                 $tDegFormatted = "{0:D2}° {1:D2}'" -f $tDegD, $tDegM
 
                 $pMatches = @()
-                for ($yr = 1; $yr -le 4; $yr++) {
+                $yearsBack = @(1.0, 2.0, 0.5, 1.5)
+                foreach ($yr in $yearsBack) {
                     if ($pMatches.Count -ge 3) { break }
-                    $candDay = $baseDt.AddYears(-$yr)
+                    $candDay = $baseDt.AddDays(-[int]($yr * 365.25))
 
                     # Quick 10-min scan
                     $bestM = 0
@@ -739,7 +740,7 @@ while ($listener.IsListening) {
                     latitude = $lat
                     longitude = $lng
                     ayanamsa = if ($ayanamsaStr -eq "1") { "Sidereal Lahiri" } else { "Tropical" }
-                    years_span = 4
+                    years_span = 2
                     max_entries_per_planet = 3
                 }
             }
