@@ -373,6 +373,18 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
     # Search candidates across previous 2 years
     years_back = [1.0, 2.0, 0.5, 1.5]
 
+    # Pre-calculate Lagna ephemeris points for each candidate day ONCE (10-min interval: 144 points/day)
+    cand_day_ephemeris = {}
+    for yr in years_back:
+        cand_day = base_dt - datetime.timedelta(days=int(yr * 365.25))
+        day_points = []
+        for m in range(0, 1440, 10):
+            t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
+            cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
+            asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
+            day_points.append((t_cand, asc_detail))
+        cand_day_ephemeris[yr] = (cand_day, day_points)
+
     for p in target_planets:
         p_name = p.get("name") or p.get("planet") or "Body"
         target_lon = float(p.get("longitude", 0.0)) % 360.0
@@ -388,18 +400,14 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
             if len(matches_for_planet) >= 3:
                 break
 
-            cand_day = base_dt - datetime.timedelta(days=int(yr * 365.25))
+            cand_day, day_points = cand_day_ephemeris[yr]
 
             best_match_dt = None
             best_detail = None
             best_score = -1
 
-            # 15-minute coarse scan across candidate day to find matching integer degree and lords
-            for m in range(0, 1440, 15):
-                t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
-                cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
-                asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
-                
+            # Fast lookup in pre-computed day_points
+            for t_cand, asc_detail in day_points:
                 c_deg = asc_detail["degree"]
                 int_c_deg = int(c_deg)
                 
@@ -419,24 +427,12 @@ def calculate_2yr_lagna_matches(dt_str, lat, lng, ayanamsa='1', custom_planets=N
                         if score == 3:
                             break  # Found exact Lord + Sub-Lord match at same integer degree
 
-            # If coarse scan didn't find exact degree match, do fine scan
+            # Fallback if no exact integer degree match in 10-min points
             if not best_detail:
                 fine_min_diff = 999.0
-                for m in range(0, 1440, 5):
-                    t_cand = datetime.datetime(cand_day.year, cand_day.month, cand_day.day) + datetime.timedelta(minutes=m)
-                    cand_dt_str = t_cand.strftime("%Y-%m-%dT%H:%M:%S+05:30")
-                    asc_detail = calculate_true_ascendant_detailed(cand_dt_str, lat, lng, ayanamsa)
-                    
+                for t_cand, asc_detail in day_points:
                     c_deg = asc_detail["degree"]
-                    int_c_deg = int(c_deg)
-                    
-                    if int_c_deg == int_t_deg:
-                        best_match_dt = t_cand
-                        best_detail = asc_detail
-                        best_score = 1
-                        break
-                    
-                    diff = abs(c_deg - t_deg)
+                    diff = abs((asc_detail["longitude"] - target_lon + 180) % 360 - 180)
                     if diff < fine_min_diff:
                         fine_min_diff = diff
                         best_match_dt = t_cand
