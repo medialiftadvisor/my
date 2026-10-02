@@ -2916,10 +2916,144 @@ ${tableHtml}
     const closeLightboxBtn = document.getElementById('close-lightbox-modal');
     const closeLightboxBackdrop = document.getElementById('close-lightbox-backdrop');
 
+    // ── Fullscreen Wheel Modal Logic ────────────────────────────────────────
+    const wfsModal   = document.getElementById('wheel-fullscreen-modal');
+    const wfsSvgWrap = document.getElementById('wfs-svg-wrap');
+    const wfsViewport= document.getElementById('wfs-viewport');
+    const wfsZoomIn  = document.getElementById('wfs-zoom-in');
+    const wfsZoomOut = document.getElementById('wfs-zoom-out');
+    const wfsReset   = document.getElementById('wfs-zoom-reset');
+    const wfsClose   = document.getElementById('wfs-close');
+
+    let wfsScale = 1, wfsDx = 0, wfsDy = 0;
+    let wfsDragging = false, wfsDragStartX = 0, wfsDragStartY = 0, wfsDragDx = 0, wfsDragDy = 0;
+
+    function wfsApplyTransform(animated = true) {
+        if (!wfsSvgWrap) return;
+        wfsSvgWrap.style.transition = animated ? 'transform 0.15s ease' : 'none';
+        wfsSvgWrap.style.transform = `translate(${wfsDx}px,${wfsDy}px) scale(${wfsScale})`;
+    }
+
+    function wfsOpen(svgHtml) {
+        if (!wfsModal || !wfsSvgWrap) return;
+        // Strip any .wfs-hint-overlay divs from copied HTML
+        wfsSvgWrap.innerHTML = svgHtml.replace(/<div class="wfs-hint-overlay"[^>]*>[\s\S]*?<\/div>/gi, '');
+        // Ensure SVG fills the wrapper
+        const svg = wfsSvgWrap.querySelector('svg');
+        if (svg) {
+            svg.removeAttribute('width'); svg.removeAttribute('height');
+            svg.style.cssText = '';  // let CSS rule handle sizing
+        }
+        // Reset pan/zoom
+        wfsScale = 1; wfsDx = 0; wfsDy = 0;
+        wfsApplyTransform(false);
+        wfsModal.classList.add('wfs-active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function wfsCloseModal() {
+        if (!wfsModal) return;
+        wfsModal.classList.remove('wfs-active');
+        document.body.style.overflow = '';
+    }
+
+    // Button controls
+    if (wfsZoomIn)  wfsZoomIn.addEventListener('click',  () => { wfsScale = Math.min(wfsScale * 1.25, 8); wfsApplyTransform(); });
+    if (wfsZoomOut) wfsZoomOut.addEventListener('click', () => { wfsScale = Math.max(wfsScale / 1.25, 0.3); wfsApplyTransform(); });
+    if (wfsReset)   wfsReset.addEventListener('click',   () => { wfsScale = 1; wfsDx = 0; wfsDy = 0; wfsApplyTransform(); });
+    if (wfsClose)   wfsClose.addEventListener('click',   wfsCloseModal);
+
+    // Scroll to zoom
+    if (wfsViewport) {
+        wfsViewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            wfsScale = Math.min(Math.max(wfsScale * delta, 0.3), 8);
+            wfsApplyTransform();
+        }, { passive: false });
+
+        // Drag to pan
+        wfsViewport.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#wfs-toolbar')) return;
+            wfsDragging = true;
+            wfsDragStartX = e.clientX - wfsDx;
+            wfsDragStartY = e.clientY - wfsDy;
+            wfsViewport.style.cursor = 'grabbing';
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!wfsDragging) return;
+            wfsDx = e.clientX - wfsDragStartX;
+            wfsDy = e.clientY - wfsDragStartY;
+            wfsApplyTransform(false);
+        });
+        window.addEventListener('mouseup', () => {
+            wfsDragging = false;
+            if (wfsViewport) wfsViewport.style.cursor = 'grab';
+        });
+
+        // Touch zoom / pan
+        let wfsTouchLastDist = null, wfsTouchLastX = 0, wfsTouchLastY = 0;
+        wfsViewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                wfsTouchLastDist = Math.hypot(dx, dy);
+            } else if (e.touches.length === 1) {
+                wfsTouchLastX = e.touches[0].clientX - wfsDx;
+                wfsTouchLastY = e.touches[0].clientY - wfsDy;
+            }
+        }, { passive: true });
+        wfsViewport.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                if (wfsTouchLastDist) wfsScale = Math.min(Math.max(wfsScale * (dist / wfsTouchLastDist), 0.3), 8);
+                wfsTouchLastDist = dist;
+            } else if (e.touches.length === 1) {
+                wfsDx = e.touches[0].clientX - wfsTouchLastX;
+                wfsDy = e.touches[0].clientY - wfsTouchLastY;
+            }
+            wfsApplyTransform(false);
+        }, { passive: false });
+        wfsViewport.addEventListener('touchend', () => { wfsTouchLastDist = null; }, { passive: true });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (!wfsModal || !wfsModal.classList.contains('wfs-active')) return;
+        if (e.key === 'Escape') wfsCloseModal();
+        if (e.key === '+' || e.key === '=') { wfsScale = Math.min(wfsScale * 1.2, 8); wfsApplyTransform(); }
+        if (e.key === '-' || e.key === '_') { wfsScale = Math.max(wfsScale / 1.2, 0.3); wfsApplyTransform(); }
+        if (e.key === 'r' || e.key === 'R') { wfsScale = 1; wfsDx = 0; wfsDy = 0; wfsApplyTransform(); }
+    });
+
+    // Click backdrop to close
+    if (wfsViewport) {
+        wfsViewport.addEventListener('dblclick', (e) => {
+            if (e.target === wfsViewport) wfsCloseModal();
+        });
+    }
+
+    // ── Intercept .click-expand-wheel clicks → open fullscreen modal ────────
     document.addEventListener('click', (e) => {
+        // Don't intercept magnifier/sign click events
+        if (e.target.closest('#wfs-toolbar') || e.target.closest('#lightbox-magnifier-container')) return;
+
         const expandContainer = e.target.closest('.click-expand-wheel');
-        if (expandContainer) {
-            const svgContent = expandContainer.innerHTML;
+        if (!expandContainer) return;
+
+        // For the natal chart TAB (which has a magnifier panel), keep old lightbox
+        // For planet-position wheel, open the new fullscreen modal
+        const inNatalTab = expandContainer.closest('#natal-wheel-section, .natal-tab-content, [data-tab="natal"]');
+
+        if (!inNatalTab) {
+            // ── New: open dedicated fullscreen modal ──
+            wfsOpen(expandContainer.innerHTML);
+        } else {
+            // ── Old: open split lightbox with magnifier ──
+            const svgContent = expandContainer.innerHTML.replace(/<div class="wfs-hint-overlay"[^>]*>[\s\S]*?<\/div>/gi, '');
             if (wheelContainer && lightboxModal) {
                 wheelContainer.innerHTML = svgContent;
                 const modalSvg = wheelContainer.querySelector('svg');
@@ -2929,14 +3063,32 @@ ${tableHtml}
                     modalSvg.style.maxWidth = '100%';
                     modalSvg.style.maxHeight = '100%';
                 }
-                // Reset magnifier to default state
                 if (magnifierDefault) magnifierDefault.style.display = 'block';
                 if (magnifierActive) magnifierActive.style.display = 'none';
-                
                 lightboxModal.classList.add('active');
             }
         }
     });
+
+    // ── Add hover-hint overlay to every .click-expand-wheel on DOM mutation ─
+    function addWfsHintOverlay(container) {
+        if (!container || container.querySelector('.wfs-hint-overlay')) return;
+        const hint = document.createElement('div');
+        hint.className = 'wfs-hint-overlay';
+        hint.innerHTML = '<span>⛶ Full Screen</span>';
+        container.appendChild(hint);
+    }
+    // Apply to existing containers immediately
+    document.querySelectorAll('.click-expand-wheel').forEach(addWfsHintOverlay);
+    // Watch for new containers added dynamically
+    new MutationObserver(mutations => {
+        mutations.forEach(m => m.addedNodes.forEach(node => {
+            if (node.nodeType !== 1) return;
+            if (node.classList && node.classList.contains('click-expand-wheel')) addWfsHintOverlay(node);
+            node.querySelectorAll && node.querySelectorAll('.click-expand-wheel').forEach(addWfsHintOverlay);
+        }));
+    }).observe(document.body, { childList: true, subtree: true });
+
 
     // 11. Zodiac Sector Clicking, Magnification, and Multiple Selector Aspect Filtering Logic
     const selectedSigns = new Set();

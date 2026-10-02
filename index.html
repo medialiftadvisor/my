@@ -689,6 +689,118 @@
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════════════
+         Full-Screen Wheel Chart Modal  (Planet Position section)
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="wheel-fullscreen-modal" style="
+        display: none; position: fixed; inset: 0; z-index: 9999;
+        background: rgba(5,3,20,0.97); backdrop-filter: blur(8px);
+        flex-direction: column; align-items: center; justify-content: center;
+        animation: wfadeIn 0.22s ease;">
+
+        <!-- Top Toolbar -->
+        <div id="wfs-toolbar" style="
+            position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.75rem 1.2rem;
+            background: linear-gradient(180deg,rgba(0,0,0,0.85) 0%,transparent 100%);
+            pointer-events: auto;">
+
+            <!-- Title -->
+            <span style="font-family: Outfit; font-size: 1rem; font-weight: 700; color: #ffd700; letter-spacing: 0.5px; margin-right: auto;">
+                🪐 Wheel Chart — Full Screen
+            </span>
+
+            <!-- Zoom In -->
+            <button id="wfs-zoom-in" title="Zoom In (+)" style="
+                background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+                color: #ffd700; border-radius: 7px; width: 36px; height: 36px;
+                font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: background 0.18s; font-weight: 700;">+</button>
+
+            <!-- Zoom Out -->
+            <button id="wfs-zoom-out" title="Zoom Out (−)" style="
+                background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+                color: #ffd700; border-radius: 7px; width: 36px; height: 36px;
+                font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: background 0.18s; font-weight: 700;">−</button>
+
+            <!-- Reset Zoom -->
+            <button id="wfs-zoom-reset" title="Reset Zoom (R)" style="
+                background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+                color: #ccc; border-radius: 7px; padding: 0 0.9rem; height: 36px;
+                font-size: 0.78rem; cursor: pointer; font-family: Outfit; font-weight: 600;
+                transition: background 0.18s;">Reset</button>
+
+            <!-- Close -->
+            <button id="wfs-close" title="Close (Esc)" style="
+                background: rgba(255,87,87,0.12); border: 1px solid rgba(255,87,87,0.35);
+                color: #ff7b7b; border-radius: 7px; width: 36px; height: 36px;
+                font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: background 0.18s; font-weight: 700; line-height: 1;">×</button>
+        </div>
+
+        <!-- Wheel SVG Container (pannable / zoomable) -->
+        <div id="wfs-viewport" style="
+            width: 100vw; height: 100vh; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            cursor: grab; user-select: none;">
+            <div id="wfs-svg-wrap" style="
+                transform-origin: center center;
+                transition: transform 0.15s ease;
+                display: flex; align-items: center; justify-content: center;
+                min-width: min(90vw, 90vh); min-height: min(90vw, 90vh);">
+                <!-- SVG injected here -->
+            </div>
+        </div>
+
+        <!-- Bottom hint -->
+        <div style="
+            position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%);
+            font-size: 0.72rem; color: rgba(255,255,255,0.3); font-family: Outfit;
+            pointer-events: none; white-space: nowrap;">
+            Scroll to zoom · Drag to pan · Press <kbd style="background:rgba(255,255,255,0.1);border-radius:3px;padding:0 4px;">Esc</kbd> to close
+        </div>
+    </div>
+
+    <style>
+    @keyframes wfadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+    #wheel-fullscreen-modal.wfs-active { display: flex !important; }
+    #wfs-zoom-in:hover, #wfs-zoom-out:hover { background: rgba(255,215,0,0.22) !important; }
+    #wfs-zoom-reset:hover { background: rgba(255,255,255,0.12) !important; }
+    #wfs-close:hover { background: rgba(255,87,87,0.28) !important; }
+    /* Make SVG fill the wrapper fully in fullscreen */
+    #wfs-svg-wrap svg {
+        width: min(88vw, 88vh) !important;
+        height: min(88vw, 88vh) !important;
+        max-width: none !important;
+        max-height: none !important;
+        display: block;
+    }
+    /* Hover overlay on the inline wheel to hint fullscreen */
+    .click-expand-wheel {
+        position: relative;
+    }
+    .click-expand-wheel .wfs-hint-overlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,0); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.22s;
+        pointer-events: none;
+    }
+    .click-expand-wheel:hover .wfs-hint-overlay {
+        opacity: 1;
+        background: rgba(0,0,0,0.38);
+    }
+    .wfs-hint-overlay span {
+        background: rgba(255,215,0,0.92); color: #0d0826;
+        font-family: Outfit; font-size: 0.82rem; font-weight: 800;
+        padding: 0.45rem 1.1rem; border-radius: 20px; letter-spacing: 0.3px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+        display: flex; align-items: center; gap: 0.4rem;
+    }
+    </style>
+
     <!-- SheetJS / XLSX for Excel export -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="app.js"></script>
